@@ -9,11 +9,39 @@
 
 ## Introduction
 
-Calculus is fundamental to machine learning, providing the mathematical foundation for optimization algorithms, neural network training, and understanding model behavior. This section explores key applications of calculus in modern machine learning.
+Calculus is the mathematical foundation of machine learning, providing the theoretical framework and computational tools for optimization, model training, and understanding complex systems. Every machine learning algorithm relies on calculus concepts:
+
+- **Derivatives** drive optimization algorithms like gradient descent
+- **Partial derivatives** enable backpropagation in neural networks
+- **Integration** appears in probability, statistics, and model evaluation
+- **Multivariable calculus** handles high-dimensional optimization landscapes
+
+This section explores how calculus principles translate into practical machine learning algorithms, with rigorous mathematical foundations and detailed implementation insights.
 
 ## 9.1 Gradient Descent and Optimization
 
-### Basic Gradient Descent
+### Mathematical Foundations
+
+Gradient descent is an iterative optimization algorithm that finds local minima of differentiable functions. For a function \( f: \mathbb{R}^n \to \mathbb{R} \), the update rule is:
+\[
+\mathbf{x}_{k+1} = \mathbf{x}_k - \alpha \nabla f(\mathbf{x}_k)
+\]
+where \( \alpha > 0 \) is the learning rate and \( \nabla f(\mathbf{x}_k) \) is the gradient at the current point.
+
+**Key Properties:**
+- The gradient \( \nabla f \) points in the direction of steepest ascent
+- Moving in the opposite direction (descent) reduces the function value
+- The learning rate controls the step size and convergence behavior
+- Convergence depends on the function's smoothness and convexity
+
+**Relevance to ML:**
+- Loss functions in ML are typically differentiable and often convex
+- Gradient descent scales to high-dimensional parameter spaces
+- Understanding convergence helps tune hyperparameters and diagnose training issues
+
+### Python Implementation: Basic Gradient Descent
+
+The following implementation demonstrates the core principles of gradient descent with detailed commentary on each step and convergence analysis.
 
 ```python
 import numpy as np
@@ -23,15 +51,24 @@ from scipy.optimize import minimize
 # Simple gradient descent implementation
 def gradient_descent(f, grad_f, x0, learning_rate=0.1, max_iter=1000, tol=1e-6):
     """
-    Gradient descent optimization
+    Gradient descent optimization algorithm.
+    
+    Mathematical foundation:
+    - Uses the update rule: x_{k+1} = x_k - α∇f(x_k)
+    - Converges to local minima for convex functions
+    - Learning rate α controls convergence speed and stability
     
     Parameters:
-    f: objective function
-    grad_f: gradient function
+    f: objective function (scalar-valued)
+    grad_f: gradient function (vector-valued)
     x0: initial point
-    learning_rate: step size
+    learning_rate: step size (α)
     max_iter: maximum iterations
     tol: tolerance for convergence
+    
+    Returns:
+    optimal_x: approximate minimizer
+    history: optimization trajectory
     """
     x = np.array(x0, dtype=float)
     history = [x.copy()]
@@ -39,11 +76,12 @@ def gradient_descent(f, grad_f, x0, learning_rate=0.1, max_iter=1000, tol=1e-6):
     for i in range(max_iter):
         gradient = grad_f(x)
         
-        # Update rule
+        # Update rule: x_new = x - α∇f(x)
         x_new = x - learning_rate * gradient
         
-        # Check convergence
+        # Check convergence: ||x_new - x|| < tolerance
         if np.linalg.norm(x_new - x) < tol:
+            print(f"Converged after {i+1} iterations")
             break
             
         x = x_new
@@ -52,25 +90,41 @@ def gradient_descent(f, grad_f, x0, learning_rate=0.1, max_iter=1000, tol=1e-6):
     return x, np.array(history)
 
 # Example: Minimize f(x) = x² + 2x + 1
+# This is a convex quadratic function with minimum at x = -1
 def objective_function(x):
+    """
+    Objective function: f(x) = x² + 2x + 1
+    - Convex function (second derivative = 2 > 0)
+    - Global minimum at x = -1
+    - f(-1) = 0
+    """
     return x**2 + 2*x + 1
 
 def gradient_function(x):
+    """
+    Gradient: f'(x) = 2x + 2
+    - Linear function
+    - Zero at x = -1 (critical point)
+    """
     return 2*x + 2
 
 # Run gradient descent
-x0 = 5.0
+x0 = 5.0  # Start far from the minimum
 optimal_x, history = gradient_descent(objective_function, gradient_function, x0, learning_rate=0.1)
 
 print(f"Optimal x: {optimal_x:.6f}")
 print(f"Optimal value: {objective_function(optimal_x):.6f}")
 print(f"Number of iterations: {len(history)}")
+print(f"Gradient at optimum: {gradient_function(optimal_x):.6f}")
 
 # Visualize optimization
 x_vals = np.linspace(-2, 6, 100)
 y_vals = objective_function(x_vals)
 
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(12, 8))
+
+# Plot objective function
+plt.subplot(2, 1, 1)
 plt.plot(x_vals, y_vals, 'b-', linewidth=2, label='f(x) = x² + 2x + 1')
 plt.plot(history, [objective_function(x) for x in history], 'ro-', 
          markersize=4, label='Optimization path')
@@ -81,46 +135,102 @@ plt.ylabel('f(x)')
 plt.title('Gradient Descent Optimization')
 plt.legend()
 plt.grid(True)
+
+# Plot gradient and convergence
+plt.subplot(2, 1, 2)
+grad_vals = gradient_function(x_vals)
+plt.plot(x_vals, grad_vals, 'g-', linewidth=2, label="f'(x) = 2x + 2")
+plt.plot(history, [gradient_function(x) for x in history], 'mo-', 
+         markersize=4, label='Gradient along path')
+plt.axhline(y=0, color='k', linestyle='--', alpha=0.5)
+plt.xlabel('x')
+plt.ylabel("f'(x)")
+plt.title('Gradient Function and Convergence')
+plt.legend()
+plt.grid(True)
+
+plt.tight_layout()
 plt.show()
 ```
 
+**Explanation:**
+- The algorithm implements the fundamental gradient descent update rule
+- Convergence is checked using the norm of the parameter update
+- The visualization shows both the objective function and the gradient
+- The gradient approaches zero as the algorithm converges to the minimum
+- This demonstrates the core principle: gradient descent follows the direction of steepest descent
+
 ### Stochastic Gradient Descent (SGD)
+
+#### Mathematical Foundations
+
+SGD extends gradient descent to handle large datasets by using noisy gradient estimates. For a loss function \( L(\theta) = \frac{1}{n}\sum_{i=1}^n L_i(\theta) \), the update rule is:
+\[
+\theta_{k+1} = \theta_k - \alpha \nabla L_i(\theta_k)
+\]
+where \( i \) is randomly sampled from the dataset.
+
+**Key Properties:**
+- Uses mini-batches to estimate gradients
+- Introduces noise that can help escape local minima
+- Scales to large datasets with limited memory
+- Convergence is probabilistic rather than deterministic
+
+**Relevance to ML:**
+- Essential for training deep neural networks on large datasets
+- Noise can improve generalization by preventing overfitting
+- Batch size affects the trade-off between speed and stability
+
+### Python Implementation: SGD for Linear Regression
 
 ```python
 # Stochastic Gradient Descent for linear regression
 def sgd_linear_regression(X, y, learning_rate=0.01, epochs=100, batch_size=32):
     """
-    SGD for linear regression: y = w*x + b
+    SGD for linear regression: y = Xw + b
+    
+    Mathematical foundation:
+    - Loss function: L(w,b) = (1/n)∑(y_i - (X_i^T w + b))²
+    - Gradients: ∇_w L = -(2/n)X^T(y - Xw - b), ∇_b L = -(2/n)∑(y - Xw - b)
+    - Update rule: w = w - α∇_w L, b = b - α∇_b L
+    
+    Parameters:
+    X: feature matrix (n_samples, n_features)
+    y: target vector (n_samples,)
+    learning_rate: step size
+    epochs: number of passes through the dataset
+    batch_size: size of mini-batches
     """
     n_samples, n_features = X.shape
-    w = np.zeros(n_features)
-    b = 0.0
+    w = np.zeros(n_features)  # Initialize weights to zero
+    b = 0.0                   # Initialize bias to zero
     
     history = []
     
     for epoch in range(epochs):
-        # Shuffle data
+        # Shuffle data for stochastic sampling
         indices = np.random.permutation(n_samples)
         X_shuffled = X[indices]
         y_shuffled = y[indices]
         
         for i in range(0, n_samples, batch_size):
-            # Mini-batch
+            # Mini-batch: sample a subset of data
             X_batch = X_shuffled[i:i+batch_size]
             y_batch = y_shuffled[i:i+batch_size]
             
-            # Predictions
+            # Forward pass: compute predictions
             y_pred = X_batch @ w + b
             
-            # Gradients
-            dw = (2/batch_size) * X_batch.T @ (y_pred - y_batch)
-            db = (2/batch_size) * np.sum(y_pred - y_batch)
+            # Compute gradients using the mini-batch
+            error = y_pred - y_batch
+            dw = (2/batch_size) * X_batch.T @ error  # Gradient w.r.t. weights
+            db = (2/batch_size) * np.sum(error)      # Gradient w.r.t. bias
             
-            # Update parameters
+            # Update parameters using gradient descent
             w -= learning_rate * dw
             b -= learning_rate * db
         
-        # Record loss
+        # Record loss for monitoring
         y_pred_full = X @ w + b
         loss = np.mean((y_pred_full - y)**2)
         history.append(loss)
@@ -130,10 +240,10 @@ def sgd_linear_regression(X, y, learning_rate=0.01, epochs=100, batch_size=32):
 # Generate synthetic data
 np.random.seed(42)
 n_samples = 1000
-X = np.random.randn(n_samples, 2)
-true_w = np.array([2.0, -1.5])
-true_b = 1.0
-y = X @ true_w + true_b + 0.1 * np.random.randn(n_samples)
+X = np.random.randn(n_samples, 2)  # 2 features
+true_w = np.array([2.0, -1.5])     # True weights
+true_b = 1.0                       # True bias
+y = X @ true_w + true_b + 0.1 * np.random.randn(n_samples)  # Add noise
 
 # Run SGD
 w_learned, b_learned, loss_history = sgd_linear_regression(X, y, learning_rate=0.01, epochs=50)
@@ -142,70 +252,156 @@ print(f"True weights: {true_w}")
 print(f"Learned weights: {w_learned}")
 print(f"True bias: {true_b}")
 print(f"Learned bias: {b_learned}")
+print(f"Final loss: {loss_history[-1]:.6f}")
 
 # Plot training loss
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
 plt.plot(loss_history, 'b-', linewidth=2)
 plt.xlabel('Epoch')
 plt.ylabel('Mean Squared Error')
 plt.title('SGD Training Loss')
 plt.grid(True)
+
+# Visualize convergence in parameter space
+plt.subplot(1, 2, 2)
+plt.scatter(true_w[0], true_w[1], c='red', s=100, label='True weights', zorder=5)
+plt.scatter(w_learned[0], w_learned[1], c='blue', s=100, label='Learned weights', zorder=5)
+plt.xlabel('w₁')
+plt.ylabel('w₂')
+plt.title('Weight Convergence')
+plt.legend()
+plt.grid(True)
+
+plt.tight_layout()
 plt.show()
 ```
 
+**Explanation:**
+- SGD processes data in mini-batches, making it memory-efficient for large datasets
+- The gradient computation uses only a subset of the data, introducing stochasticity
+- Parameter updates follow the same gradient descent principle but with noisy gradients
+- The loss history shows convergence behavior, which can help diagnose training issues
+
 ## 9.2 Backpropagation in Neural Networks
 
-### Simple Neural Network with Backpropagation
+### Mathematical Foundations
+
+Backpropagation is an algorithm for computing gradients in neural networks using the chain rule. For a network with parameters \( \theta \), the gradient of the loss \( L \) is:
+\[
+\frac{\partial L}{\partial \theta} = \frac{\partial L}{\partial a_L} \frac{\partial a_L}{\partial z_L} \frac{\partial z_L}{\partial a_{L-1}} \cdots \frac{\partial a_1}{\partial z_1} \frac{\partial z_1}{\partial \theta}
+\]
+where \( a_l \) are activations and \( z_l \) are pre-activations.
+
+**Key Properties:**
+- Uses the chain rule to compute gradients efficiently
+- Computes gradients layer by layer, from output to input
+- Enables training of deep networks with many parameters
+- The algorithm is automatic and can be implemented using computational graphs
+
+**Relevance to ML:**
+- Essential for training deep neural networks
+- Enables automatic differentiation in modern frameworks
+- Understanding backpropagation helps debug and optimize networks
+
+### Python Implementation: Simple Neural Network
 
 ```python
 class SimpleNeuralNetwork:
+    """
+    Simple neural network with backpropagation.
+    
+    Mathematical foundation:
+    - Forward pass: z_l = W_l a_{l-1} + b_l, a_l = σ(z_l)
+    - Loss: L = (1/m)∑(y_pred - y)²
+    - Backward pass: δ_l = (∂L/∂a_l) ⊙ σ'(z_l)
+    - Gradients: ∂L/∂W_l = δ_l a_{l-1}^T, ∂L/∂b_l = δ_l
+    """
     def __init__(self, input_size, hidden_size, output_size):
-        # Initialize weights and biases
+        # Initialize weights and biases with small random values
+        # Xavier initialization: scale by 1/sqrt(input_size)
         self.W1 = np.random.randn(input_size, hidden_size) * 0.01
         self.b1 = np.zeros((1, hidden_size))
         self.W2 = np.random.randn(hidden_size, output_size) * 0.01
         self.b2 = np.zeros((1, output_size))
     
     def sigmoid(self, x):
+        """
+        Sigmoid activation function: σ(x) = 1/(1 + e^(-x))
+        - Range: (0, 1)
+        - Derivative: σ'(x) = σ(x)(1 - σ(x))
+        """
         return 1 / (1 + np.exp(-x))
     
     def sigmoid_derivative(self, x):
+        """
+        Derivative of sigmoid: σ'(x) = σ(x)(1 - σ(x))
+        - Used in backpropagation for gradient computation
+        """
         return x * (1 - x)
     
     def forward(self, X):
-        # Forward pass
+        """
+        Forward pass through the network.
+        - Computes activations for each layer
+        - Stores intermediate values for backpropagation
+        """
+        # Layer 1: z1 = XW1 + b1, a1 = σ(z1)
         self.z1 = X @ self.W1 + self.b1
         self.a1 = self.sigmoid(self.z1)
+        
+        # Layer 2: z2 = a1W2 + b2, a2 = σ(z2)
         self.z2 = self.a1 @ self.W2 + self.b2
         self.a2 = self.sigmoid(self.z2)
+        
         return self.a2
     
     def backward(self, X, y, learning_rate=0.1):
-        m = X.shape[0]
+        """
+        Backward pass (backpropagation).
+        - Computes gradients using chain rule
+        - Updates parameters using gradient descent
+        """
+        m = X.shape[0]  # Number of samples
         
-        # Backward pass
+        # Output layer gradients
+        # δ2 = ∂L/∂a2 = (a2 - y)
         dz2 = self.a2 - y
+        
+        # ∂L/∂W2 = (1/m) a1^T δ2
         dW2 = (1/m) * self.a1.T @ dz2
+        # ∂L/∂b2 = (1/m) ∑δ2
         db2 = (1/m) * np.sum(dz2, axis=0, keepdims=True)
         
+        # Hidden layer gradients
+        # δ1 = δ2 W2^T ⊙ σ'(a1)
         dz1 = dz2 @ self.W2.T * self.sigmoid_derivative(self.a1)
+        
+        # ∂L/∂W1 = (1/m) X^T δ1
         dW1 = (1/m) * X.T @ dz1
+        # ∂L/∂b1 = (1/m) ∑δ1
         db1 = (1/m) * np.sum(dz1, axis=0, keepdims=True)
         
-        # Update parameters
+        # Update parameters using gradient descent
         self.W2 -= learning_rate * dW2
         self.b2 -= learning_rate * db2
         self.W1 -= learning_rate * dW1
         self.b1 -= learning_rate * db1
     
     def train(self, X, y, epochs=1000, learning_rate=0.1):
+        """
+        Train the neural network.
+        - Performs forward and backward passes for each epoch
+        - Monitors loss for convergence
+        """
         losses = []
         
         for epoch in range(epochs):
             # Forward pass
             y_pred = self.forward(X)
             
-            # Compute loss
+            # Compute loss: MSE
             loss = np.mean((y_pred - y)**2)
             losses.append(loss)
             
@@ -217,7 +413,7 @@ class SimpleNeuralNetwork:
         
         return losses
 
-# XOR problem
+# XOR problem: non-linear classification task
 X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
 y = np.array([[0], [1], [1], [0]])
 
@@ -237,10 +433,17 @@ plt.plot(losses, 'b-', linewidth=2)
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Neural Network Training Loss')
-plt.yscale('log')
+plt.yscale('log')  # Log scale to see convergence
 plt.grid(True)
 plt.show()
 ```
+
+**Explanation:**
+- The forward pass computes activations layer by layer using the sigmoid activation function
+- The backward pass uses the chain rule to compute gradients efficiently
+- Gradients are computed for both weights and biases at each layer
+- The XOR problem demonstrates the network's ability to learn non-linear patterns
+- The loss plot shows convergence behavior, which is crucial for understanding training dynamics
 
 ## 9.3 Loss Functions and Their Derivatives
 
