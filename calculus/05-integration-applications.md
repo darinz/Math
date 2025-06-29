@@ -8,11 +8,30 @@
 
 ## Introduction
 
-Integration has numerous practical applications beyond basic antiderivatives. In this section, we explore area and volume calculations, work and energy problems, probability applications, and real-world scenarios that demonstrate the power of integration in solving complex problems.
+Integration is a fundamental tool for quantifying accumulation, area, and change. In AI/ML and data science, integration is used in probability, statistics, signal processing, and to compute expectations, areas under curves (such as ROC/AUC), and more. This section explores practical applications of integration, with a focus on mathematical rigor, intuition, and real-world relevance.
 
 ## 5.1 Area Between Curves
 
-### Basic Area Calculations
+### Mathematical Foundations
+
+The area between two curves \( y = f(x) \) and \( y = g(x) \) over an interval \([a, b]\) is given by:
+\[
+A = \int_a^b |f(x) - g(x)| \, dx
+\]
+If \( f(x) \geq g(x) \) on \([a, b]\), then:
+\[
+A = \int_a^b (f(x) - g(x)) \, dx
+\]
+This measures the net "vertical distance" between the curves, and is widely used in probability (e.g., comparing distributions), economics, and model evaluation (e.g., AUC in classification).
+
+**Relevance to AI/ML:**
+- Calculating the area under a curve (AUC) is a standard metric for classifier performance.
+- Integrals are used to compute expected values, probabilities, and normalization constants in probabilistic models.
+- Visualizing areas helps interpret model predictions and data distributions.
+
+### Python Implementation: Area Between Curves
+
+The following code demonstrates how to compute and visualize the area between two curves, with step-by-step commentary.
 
 ```python
 import numpy as np
@@ -21,14 +40,20 @@ import sympy as sp
 from scipy import integrate
 
 def area_between_curves():
-    """Calculate area between curves using integration"""
-    
-    # Example 1: Area between y = x² and y = x
+    """
+    Calculate area between curves using integration.
+    Steps:
+    1. Define the functions symbolically.
+    2. Find intersection points (limits of integration).
+    3. Integrate the difference to find the area.
+    4. Repeat for trigonometric functions.
+    """
+    # Example 1: Area between y = x^2 and y = x
     x = sp.Symbol('x')
     f1 = x**2  # Lower function
     f2 = x     # Upper function
     
-    # Find intersection points
+    # Find intersection points (solve x^2 = x)
     intersection_points = sp.solve(f1 - f2, x)
     print(f"Intersection points: {intersection_points}")
     
@@ -58,12 +83,12 @@ f1, f2, f3, f4, intersection_points, area, area2 = area_between_curves()
 def visualize_area_between_curves():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
     
-    # Example 1: y = x² and y = x
+    # Example 1: y = x^2 and y = x
     x_vals = np.linspace(-0.5, 1.5, 1000)
     y1_vals = x_vals**2
     y2_vals = x_vals
     
-    ax1.plot(x_vals, y1_vals, 'b-', linewidth=2, label='y = x²')
+    ax1.plot(x_vals, y1_vals, 'b-', linewidth=2, label='y = x^2')
     ax1.plot(x_vals, y2_vals, 'r-', linewidth=2, label='y = x')
     
     # Fill area between curves
@@ -73,7 +98,7 @@ def visualize_area_between_curves():
     
     ax1.set_xlabel('x')
     ax1.set_ylabel('y')
-    ax1.set_title('Area Between y = x² and y = x')
+    ax1.set_title('Area Between y = x^2 and y = x')
     ax1.legend()
     ax1.grid(True)
     
@@ -101,76 +126,11 @@ def visualize_area_between_curves():
 visualize_area_between_curves()
 ```
 
-### Polar Area Calculations
-
-```python
-def polar_area_calculations():
-    """Calculate areas in polar coordinates"""
-    
-    # Example: Area inside r = 2cos(θ)
-    theta = sp.Symbol('theta')
-    r = 2 * sp.cos(theta)
-    
-    # Area in polar coordinates: A = (1/2)∫r²dθ
-    area = sp.integrate(0.5 * r**2, (theta, 0, 2*sp.pi))
-    print(f"Area inside r = 2cos(θ): {area}")
-    
-    # Example: Area between r = 1 and r = 2
-    r1, r2 = 1, 2
-    area_between = sp.integrate(0.5 * (r2**2 - r1**2), (theta, 0, 2*sp.pi))
-    print(f"Area between r = 1 and r = 2: {area_between}")
-    
-    return r, area, area_between
-
-r, area, area_between = polar_area_calculations()
-
-# Visualize polar areas
-def visualize_polar_areas():
-    theta_vals = np.linspace(0, 2*np.pi, 1000)
-    
-    # r = 2cos(θ)
-    r_vals = 2 * np.cos(theta_vals)
-    x_vals = r_vals * np.cos(theta_vals)
-    y_vals = r_vals * np.sin(theta_vals)
-    
-    # r = 1 and r = 2
-    r1_vals = np.ones_like(theta_vals)
-    r2_vals = 2 * np.ones_like(theta_vals)
-    x1_vals = r1_vals * np.cos(theta_vals)
-    y1_vals = r1_vals * np.sin(theta_vals)
-    x2_vals = r2_vals * np.cos(theta_vals)
-    y2_vals = r2_vals * np.sin(theta_vals)
-    
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
-    
-    # r = 2cos(θ)
-    ax1.plot(x_vals, y_vals, 'b-', linewidth=2, label='r = 2cos(θ)')
-    ax1.fill(x_vals, y_vals, alpha=0.3, color='blue', label=f'Area = {area}')
-    ax1.set_xlabel('x')
-    ax1.set_ylabel('y')
-    ax1.set_title('Area Inside r = 2cos(θ)')
-    ax1.legend()
-    ax1.grid(True)
-    ax1.set_aspect('equal')
-    
-    # Area between r = 1 and r = 2
-    ax2.plot(x1_vals, y1_vals, 'r-', linewidth=2, label='r = 1')
-    ax2.plot(x2_vals, y2_vals, 'g-', linewidth=2, label='r = 2')
-    ax2.fill(x2_vals, y2_vals, alpha=0.3, color='green')
-    ax2.fill(x1_vals, y1_vals, alpha=0.3, color='white')
-    ax2.fill(x2_vals, y2_vals, alpha=0.3, color='green', label=f'Area = {area_between}')
-    ax2.set_xlabel('x')
-    ax2.set_ylabel('y')
-    ax2.set_title('Area Between r = 1 and r = 2')
-    ax2.legend()
-    ax2.grid(True)
-    ax2.set_aspect('equal')
-    
-    plt.tight_layout()
-    plt.show()
-
-visualize_polar_areas()
-```
+**Explanation:**
+- The functions are defined symbolically, allowing for exact intersection and area calculations.
+- The area is computed as the definite integral of the difference between the upper and lower functions.
+- Visualization highlights the region of interest, making the concept of "area between curves" concrete.
+- This approach is directly applicable to evaluating model performance (AUC), comparing distributions, and more in AI/ML.
 
 ## 5.2 Volume Calculations
 
