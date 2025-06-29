@@ -58,98 +58,399 @@ df = pd.DataFrame({
 
 ## Measures of Central Tendency
 
-Central tendency measures describe the center or typical value of a dataset.
+Central tendency measures describe the center or typical value of a dataset. These measures help us understand where the "middle" of our data lies, which is crucial for understanding the distribution and making informed decisions in data analysis.
 
 ### Mean (Arithmetic Average)
 
-The mean is the sum of all values divided by the number of values.
+The **arithmetic mean** is the most commonly used measure of central tendency. It represents the sum of all values divided by the number of values.
+
+**Mathematical Definition:**
+For a dataset with n observations: x₁, x₂, ..., xₙ
+
+$$\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i = \frac{x_1 + x_2 + ... + x_n}{n}$$
+
+**Properties of the Mean:**
+1. **Linearity**: If we multiply each value by a constant c and add a constant a, the new mean becomes: $\bar{x}_{new} = c\bar{x} + a$
+2. **Minimizes Sum of Squared Deviations**: The mean minimizes $\sum_{i=1}^{n} (x_i - \bar{x})^2$
+3. **Sensitivity to Outliers**: The mean is heavily influenced by extreme values
+
+**When to Use:**
+- Data is approximately normally distributed
+- No extreme outliers
+- Need a measure that uses all data points
 
 ```python
 def calculate_mean(data):
-    """Calculate arithmetic mean of a dataset"""
+    """
+    Calculate arithmetic mean of a dataset
+    
+    Mathematical implementation:
+    mean = (sum of all values) / (number of values)
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: arithmetic mean
+    """
+    if len(data) == 0:
+        raise ValueError("Cannot calculate mean of empty dataset")
+    
     return np.sum(data) / len(data)
 
-# Example calculations
+# Example calculations with detailed explanation
 mean_normal = calculate_mean(normal_data)
 mean_skewed = calculate_mean(skewed_data)
 
 print(f"Mean of normal distribution: {mean_normal:.2f}")
 print(f"Mean of skewed distribution: {mean_skewed:.2f}")
 
-# Using NumPy
+# Mathematical verification
+print(f"Sum of normal data: {np.sum(normal_data):.2f}")
+print(f"Count of normal data: {len(normal_data)}")
+print(f"Calculated mean: {np.sum(normal_data) / len(normal_data):.2f}")
+
+# Using NumPy (vectorized computation)
 print(f"NumPy mean - normal: {np.mean(normal_data):.2f}")
 print(f"NumPy mean - skewed: {np.mean(skewed_data):.2f}")
 
-# Pandas DataFrame
+# Pandas DataFrame (handles missing values automatically)
 print(f"DataFrame mean:\n{df.mean()}")
+
+# Demonstrate linearity property
+c, a = 2, 10
+transformed_data = c * normal_data + a
+print(f"Original mean: {np.mean(normal_data):.2f}")
+print(f"Transformed mean: {np.mean(transformed_data):.2f}")
+print(f"Expected: {c * np.mean(normal_data) + a:.2f}")
 ```
 
 ### Median
 
-The median is the middle value when data is ordered. It's robust to outliers.
+The **median** is the middle value when data is ordered from smallest to largest. It's a robust measure that is not affected by extreme values.
+
+**Mathematical Definition:**
+For ordered data: x₁ ≤ x₂ ≤ ... ≤ xₙ
+
+$$\text{Median} = \begin{cases} 
+x_{\frac{n+1}{2}} & \text{if } n \text{ is odd} \\
+\frac{x_{\frac{n}{2}} + x_{\frac{n}{2}+1}}{2} & \text{if } n \text{ is even}
+\end{cases}$$
+
+**Properties of the Median:**
+1. **Robustness**: Unaffected by extreme values (outliers)
+2. **Order Preservation**: If all values are multiplied by a positive constant, the median is multiplied by the same constant
+3. **Minimizes Sum of Absolute Deviations**: The median minimizes $\sum_{i=1}^{n} |x_i - \text{median}|$
+
+**When to Use:**
+- Data has outliers or is skewed
+- Need a robust measure of central tendency
+- Ordinal data where order matters but differences don't
 
 ```python
 def calculate_median(data):
-    """Calculate median of a dataset"""
+    """
+    Calculate median of a dataset
+    
+    Mathematical implementation:
+    - Sort the data
+    - If n is odd: median = middle value
+    - If n is even: median = average of two middle values
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: median value
+    """
     sorted_data = np.sort(data)
     n = len(sorted_data)
+    
+    if n == 0:
+        raise ValueError("Cannot calculate median of empty dataset")
+    
     if n % 2 == 0:
-        return (sorted_data[n//2 - 1] + sorted_data[n//2]) / 2
+        # Even number of elements: average of two middle values
+        mid1 = sorted_data[n//2 - 1]
+        mid2 = sorted_data[n//2]
+        return (mid1 + mid2) / 2
     else:
+        # Odd number of elements: middle value
         return sorted_data[n//2]
 
-# Example with outliers
+# Example with outliers to demonstrate robustness
 data_with_outliers = np.append(normal_data, [1000, 2000])
 print(f"Mean with outliers: {np.mean(data_with_outliers):.2f}")
 print(f"Median with outliers: {np.median(data_with_outliers):.2f}")
 
 # Compare mean vs median for skewed data
 print(f"Skewed data - Mean: {np.mean(skewed_data):.2f}, Median: {np.median(skewed_data):.2f}")
+
+# Demonstrate order preservation property
+c = 2
+transformed_data = c * normal_data
+print(f"Original median: {np.median(normal_data):.2f}")
+print(f"Transformed median: {np.median(transformed_data):.2f}")
+print(f"Expected: {c * np.median(normal_data):.2f}")
+
+# Mathematical verification of median calculation
+sorted_normal = np.sort(normal_data)
+n = len(sorted_normal)
+if n % 2 == 0:
+    median_calc = (sorted_normal[n//2 - 1] + sorted_normal[n//2]) / 2
+else:
+    median_calc = sorted_normal[n//2]
+print(f"Manual median calculation: {median_calc:.2f}")
+print(f"NumPy median: {np.median(normal_data):.2f}")
 ```
 
 ### Mode
 
-The mode is the most frequently occurring value.
+The **mode** is the most frequently occurring value in a dataset. A dataset can have one mode (unimodal), two modes (bimodal), or more modes (multimodal).
+
+**Mathematical Definition:**
+For discrete data, the mode is the value x that maximizes the frequency function f(x):
+
+$$\text{Mode} = \arg\max_{x} f(x)$$
+
+For continuous data, the mode is the value that maximizes the probability density function.
+
+**Properties of the Mode:**
+1. **Not Unique**: A dataset can have multiple modes
+2. **Categorical Data**: Works well with nominal and ordinal data
+3. **Peak of Distribution**: Represents the most common value
+
+**When to Use:**
+- Categorical or discrete data
+- Need to identify the most common category
+- Data has clear peaks in distribution
 
 ```python
 from scipy.stats import mode
 
 def calculate_mode(data):
-    """Calculate mode of a dataset"""
+    """
+    Calculate mode of a dataset
+    
+    Mathematical implementation:
+    - Count frequency of each unique value
+    - Return value(s) with highest frequency
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    tuple: (mode_value, count)
+    """
     return mode(data, keepdims=True)
 
-# Example
+# Example with categorical data
 categorical_data = ['A', 'B', 'A', 'C', 'B', 'A', 'D']
 mode_result = calculate_mode(categorical_data)
 print(f"Mode: {mode_result.mode[0]} (appears {mode_result.count[0]} times)")
 
-# For continuous data, we can use histogram bins
+# Manual calculation for categorical data
+from collections import Counter
+counter = Counter(categorical_data)
+most_common = counter.most_common(1)[0]
+print(f"Manual calculation - Mode: {most_common[0]} (appears {most_common[1]} times)")
+
+# For continuous data, we can use histogram bins to approximate mode
 hist, bins = np.histogram(normal_data, bins=20)
-mode_bin = bins[np.argmax(hist)]
-print(f"Mode bin center: {mode_bin:.2f}")
+mode_bin_index = np.argmax(hist)
+mode_bin_center = (bins[mode_bin_index] + bins[mode_bin_index + 1]) / 2
+print(f"Mode bin center: {mode_bin_center:.2f}")
+
+# Demonstrate multimodal data
+multimodal_data = np.concatenate([
+    np.random.normal(0, 1, 200),
+    np.random.normal(5, 1, 200),
+    np.random.normal(10, 1, 200)
+])
+
+# Find multiple modes using histogram
+hist_multi, bins_multi = np.histogram(multimodal_data, bins=30)
+# Find local maxima
+from scipy.signal import find_peaks
+peaks, _ = find_peaks(hist_multi, height=np.max(hist_multi)*0.5)
+mode_centers = [(bins_multi[i] + bins_multi[i+1])/2 for i in peaks]
+print(f"Multiple modes detected at: {[f'{x:.2f}' for x in mode_centers]}")
+```
+
+### Geometric Mean
+
+The **geometric mean** is useful for data that represents rates of change or multiplicative relationships.
+
+**Mathematical Definition:**
+$$\text{Geometric Mean} = \sqrt[n]{x_1 \times x_2 \times ... \times x_n} = \left(\prod_{i=1}^{n} x_i\right)^{\frac{1}{n}}$$
+
+**Properties:**
+1. **Logarithmic Relationship**: $\log(\text{GM}) = \frac{1}{n}\sum_{i=1}^{n} \log(x_i)$
+2. **Multiplicative Data**: Appropriate for growth rates, ratios, and percentages
+3. **Always ≤ Arithmetic Mean**: By the arithmetic mean-geometric mean inequality
+
+```python
+def geometric_mean(data):
+    """
+    Calculate geometric mean of a dataset
+    
+    Mathematical implementation:
+    GM = (product of all values)^(1/n)
+    
+    Parameters:
+    data: array-like, positive values
+    
+    Returns:
+    float: geometric mean
+    """
+    if np.any(data <= 0):
+        raise ValueError("Geometric mean requires all positive values")
+    
+    return np.exp(np.mean(np.log(data)))
+
+# Example with growth rates
+growth_rates = [1.05, 1.12, 0.98, 1.08, 1.15]  # 5% growth, 12% growth, etc.
+gm = geometric_mean(growth_rates)
+am = np.mean(growth_rates)
+
+print(f"Growth rates: {growth_rates}")
+print(f"Geometric mean: {gm:.4f}")
+print(f"Arithmetic mean: {am:.4f}")
+print(f"GM ≤ AM: {gm <= am}")
+
+# Demonstrate logarithmic relationship
+log_gm = np.mean(np.log(growth_rates))
+print(f"Log of geometric mean: {log_gm:.4f}")
+print(f"Exp of log mean: {np.exp(log_gm):.4f}")
+```
+
+### Harmonic Mean
+
+The **harmonic mean** is useful for rates, speeds, and other situations involving reciprocals.
+
+**Mathematical Definition:**
+$$\text{Harmonic Mean} = \frac{n}{\sum_{i=1}^{n} \frac{1}{x_i}}$$
+
+**Properties:**
+1. **Reciprocal Relationship**: Appropriate for rates and speeds
+2. **Always ≤ Geometric Mean ≤ Arithmetic Mean**: For positive data
+3. **Weighted Version**: $\text{HM} = \frac{\sum w_i}{\sum \frac{w_i}{x_i}}$
+
+```python
+def harmonic_mean(data):
+    """
+    Calculate harmonic mean of a dataset
+    
+    Mathematical implementation:
+    HM = n / (sum of reciprocals)
+    
+    Parameters:
+    data: array-like, non-zero values
+    
+    Returns:
+    float: harmonic mean
+    """
+    if np.any(data == 0):
+        raise ValueError("Harmonic mean requires all non-zero values")
+    
+    return len(data) / np.sum(1 / data)
+
+# Example with speeds
+speeds = [60, 40, 80]  # km/h for different segments
+hm = harmonic_mean(speeds)
+am = np.mean(speeds)
+
+print(f"Speeds: {speeds} km/h")
+print(f"Harmonic mean: {hm:.2f} km/h")
+print(f"Arithmetic mean: {am:.2f} km/h")
+
+# Demonstrate the relationship: HM ≤ GM ≤ AM
+gm = geometric_mean(speeds)
+print(f"Geometric mean: {gm:.2f} km/h")
+print(f"HM ≤ GM ≤ AM: {hm <= gm <= am}")
 ```
 
 ## Measures of Dispersion
 
-Dispersion measures describe how spread out the data is.
+Dispersion measures describe how spread out the data is around the central tendency. Understanding dispersion is crucial for assessing the reliability of the central tendency measures and the variability in your data.
 
 ### Variance and Standard Deviation
 
+**Variance** measures the average squared deviation from the mean, while **standard deviation** is the square root of variance.
+
+**Mathematical Definition:**
+
+**Population Variance:**
+$$\sigma^2 = \frac{1}{N}\sum_{i=1}^{N} (x_i - \mu)^2$$
+
+**Sample Variance (Bessel's correction):**
+$$s^2 = \frac{1}{n-1}\sum_{i=1}^{n} (x_i - \bar{x})^2$$
+
+**Standard Deviation:**
+$$\sigma = \sqrt{\sigma^2} \quad \text{or} \quad s = \sqrt{s^2}$$
+
+**Why n-1 for Sample Variance?**
+The n-1 correction (Bessel's correction) makes the sample variance an unbiased estimator of the population variance. This is because:
+1. We estimate the population mean μ with the sample mean x̄
+2. This estimation reduces the degrees of freedom by 1
+3. Using n-1 compensates for this reduction
+
+**Properties:**
+1. **Non-negative**: Variance is always ≥ 0
+2. **Scale Dependent**: If we multiply data by c, variance becomes c² times original
+3. **Translation Invariant**: Adding a constant doesn't change variance
+4. **Additive for Independent Variables**: Var(X+Y) = Var(X) + Var(Y) if X,Y independent
+
 ```python
 def calculate_variance(data, sample=True):
-    """Calculate variance of a dataset"""
+    """
+    Calculate variance of a dataset
+    
+    Mathematical implementation:
+    - Calculate mean
+    - Calculate squared deviations from mean
+    - Average the squared deviations
+    - Use n-1 for sample variance (Bessel's correction)
+    
+    Parameters:
+    data: array-like, input data
+    sample: bool, if True use n-1 (sample variance), if False use n (population variance)
+    
+    Returns:
+    float: variance
+    """
     mean_val = np.mean(data)
     n = len(data)
-    if sample:
-        return np.sum((data - mean_val)**2) / (n - 1)
+    
+    if n == 0:
+        raise ValueError("Cannot calculate variance of empty dataset")
+    
+    squared_deviations = (data - mean_val)**2
+    
+    if sample and n > 1:
+        # Sample variance: use n-1 (Bessel's correction)
+        return np.sum(squared_deviations) / (n - 1)
     else:
-        return np.sum((data - mean_val)**2) / n
+        # Population variance: use n
+        return np.sum(squared_deviations) / n
 
 def calculate_std(data, sample=True):
-    """Calculate standard deviation of a dataset"""
+    """
+    Calculate standard deviation of a dataset
+    
+    Mathematical implementation:
+    std = sqrt(variance)
+    
+    Parameters:
+    data: array-like, input data
+    sample: bool, if True use n-1 (sample std), if False use n (population std)
+    
+    Returns:
+    float: standard deviation
+    """
     return np.sqrt(calculate_variance(data, sample))
 
-# Example calculations
+# Example calculations with detailed explanation
 variance_normal = calculate_variance(normal_data)
 std_normal = calculate_std(normal_data)
 
@@ -157,20 +458,82 @@ print(f"Variance: {variance_normal:.2f}")
 print(f"Standard Deviation: {std_normal:.2f}")
 print(f"NumPy std: {np.std(normal_data, ddof=1):.2f}")
 
-# Population vs Sample
-print(f"Sample std: {np.std(normal_data, ddof=1):.2f}")
-print(f"Population std: {np.std(normal_data, ddof=0):.2f}")
+# Demonstrate Bessel's correction
+print(f"Sample variance (n-1): {np.var(normal_data, ddof=1):.2f}")
+print(f"Population variance (n): {np.var(normal_data, ddof=0):.2f}")
+print(f"Difference: {np.var(normal_data, ddof=1) - np.var(normal_data, ddof=0):.2f}")
+
+# Mathematical verification
+mean_val = np.mean(normal_data)
+squared_deviations = (normal_data - mean_val)**2
+manual_variance = np.sum(squared_deviations) / (len(normal_data) - 1)
+print(f"Manual calculation: {manual_variance:.2f}")
+
+# Demonstrate scale property
+c = 2
+scaled_data = c * normal_data
+print(f"Original std: {np.std(normal_data):.2f}")
+print(f"Scaled std: {np.std(scaled_data):.2f}")
+print(f"Expected: {c * np.std(normal_data):.2f}")
+
+# Demonstrate translation invariance
+a = 10
+translated_data = normal_data + a
+print(f"Original std: {np.std(normal_data):.2f}")
+print(f"Translated std: {np.std(translated_data):.2f}")
 ```
 
 ### Range and Interquartile Range (IQR)
 
+**Range** is the difference between the maximum and minimum values, while **IQR** is the difference between the 75th and 25th percentiles.
+
+**Mathematical Definition:**
+
+**Range:**
+$$\text{Range} = x_{max} - x_{min}$$
+
+**IQR:**
+$$\text{IQR} = Q_3 - Q_1$$
+
+Where Q₁ (25th percentile) and Q₃ (75th percentile) are defined as:
+- Q₁: Value below which 25% of data falls
+- Q₃: Value below which 75% of data falls
+
+**Properties:**
+1. **Range**: Simple but sensitive to outliers
+2. **IQR**: Robust measure of spread, not affected by outliers
+3. **Percentiles**: Q₁, Q₂ (median), Q₃ provide five-number summary
+
 ```python
 def calculate_range(data):
-    """Calculate range of a dataset"""
+    """
+    Calculate range of a dataset
+    
+    Mathematical implementation:
+    range = max - min
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: range
+    """
     return np.max(data) - np.min(data)
 
 def calculate_iqr(data):
-    """Calculate interquartile range"""
+    """
+    Calculate interquartile range
+    
+    Mathematical implementation:
+    IQR = Q3 - Q1
+    where Q1 = 25th percentile, Q3 = 75th percentile
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: interquartile range
+    """
     q1 = np.percentile(data, 25)
     q3 = np.percentile(data, 75)
     return q3 - q1
@@ -181,7 +544,22 @@ print(f"IQR: {calculate_iqr(normal_data):.2f}")
 
 # Five-number summary
 def five_number_summary(data):
-    """Calculate five-number summary"""
+    """
+    Calculate five-number summary
+    
+    Mathematical implementation:
+    - Minimum: smallest value
+    - Q1: 25th percentile
+    - Median: 50th percentile
+    - Q3: 75th percentile
+    - Maximum: largest value
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    dict: five-number summary
+    """
     return {
         'min': np.min(data),
         'q1': np.percentile(data, 25),
@@ -193,6 +571,122 @@ def five_number_summary(data):
 summary = five_number_summary(normal_data)
 for key, value in summary.items():
     print(f"{key.upper()}: {value:.2f}")
+
+# Demonstrate robustness of IQR vs Range with outliers
+data_with_outliers = np.append(normal_data, [1000, 2000])
+print(f"Original range: {calculate_range(normal_data):.2f}")
+print(f"Range with outliers: {calculate_range(data_with_outliers):.2f}")
+print(f"Original IQR: {calculate_iqr(normal_data):.2f}")
+print(f"IQR with outliers: {calculate_iqr(data_with_outliers):.2f}")
+
+# Mathematical verification of percentiles
+sorted_data = np.sort(normal_data)
+n = len(sorted_data)
+
+# Q1 (25th percentile)
+q1_index = 0.25 * (n - 1)
+q1_lower = int(q1_index)
+q1_upper = q1_lower + 1
+q1_weight = q1_index - q1_lower
+q1_manual = (1 - q1_weight) * sorted_data[q1_lower] + q1_weight * sorted_data[q1_upper]
+print(f"Manual Q1: {q1_manual:.2f}")
+print(f"NumPy Q1: {np.percentile(normal_data, 25):.2f}")
+```
+
+### Coefficient of Variation (CV)
+
+The **coefficient of variation** is a standardized measure of dispersion that expresses standard deviation as a percentage of the mean.
+
+**Mathematical Definition:**
+$$\text{CV} = \frac{s}{\bar{x}} \times 100\%$$
+
+**Properties:**
+1. **Dimensionless**: Allows comparison across different scales
+2. **Relative Measure**: Shows dispersion relative to the mean
+3. **Useful for**: Comparing variability across different datasets
+
+```python
+def coefficient_of_variation(data):
+    """
+    Calculate coefficient of variation
+    
+    Mathematical implementation:
+    CV = (std / mean) * 100%
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: coefficient of variation as percentage
+    """
+    mean_val = np.mean(data)
+    if mean_val == 0:
+        raise ValueError("Cannot calculate CV when mean is zero")
+    
+    std_val = np.std(data, ddof=1)
+    return (std_val / mean_val) * 100
+
+# Example
+cv_normal = coefficient_of_variation(normal_data)
+cv_skewed = coefficient_of_variation(skewed_data)
+
+print(f"CV of normal data: {cv_normal:.2f}%")
+print(f"CV of skewed data: {cv_skewed:.2f}%")
+
+# Compare variability across different scales
+small_data = np.random.normal(10, 2, 1000)  # mean=10, std=2
+large_data = np.random.normal(1000, 200, 1000)  # mean=1000, std=200
+
+cv_small = coefficient_of_variation(small_data)
+cv_large = coefficient_of_variation(large_data)
+
+print(f"Small scale data CV: {cv_small:.2f}%")
+print(f"Large scale data CV: {cv_large:.2f}%")
+print(f"Same relative variability: {abs(cv_small - cv_large) < 0.1}")
+```
+
+### Mean Absolute Deviation (MAD)
+
+**Mean absolute deviation** measures the average absolute deviation from the mean.
+
+**Mathematical Definition:**
+$$\text{MAD} = \frac{1}{n}\sum_{i=1}^{n} |x_i - \bar{x}|$$
+
+**Properties:**
+1. **Robust**: Less sensitive to outliers than variance
+2. **Interpretable**: Same units as original data
+3. **Computationally Simple**: No squaring required
+
+```python
+def mean_absolute_deviation(data):
+    """
+    Calculate mean absolute deviation
+    
+    Mathematical implementation:
+    MAD = mean of absolute deviations from mean
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: mean absolute deviation
+    """
+    mean_val = np.mean(data)
+    return np.mean(np.abs(data - mean_val))
+
+# Example
+mad_normal = mean_absolute_deviation(normal_data)
+std_normal = np.std(normal_data, ddof=1)
+
+print(f"MAD: {mad_normal:.2f}")
+print(f"Standard deviation: {std_normal:.2f}")
+
+# Relationship between MAD and standard deviation for normal distribution
+# For normal distribution: MAD ≈ 0.7979 × σ
+expected_mad = 0.7979 * std_normal
+print(f"Expected MAD for normal distribution: {expected_mad:.2f}")
+print(f"Actual MAD: {mad_normal:.2f}")
+print(f"Ratio MAD/σ: {mad_normal/std_normal:.4f}")
 ```
 
 ## Data Visualization
