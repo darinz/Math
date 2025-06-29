@@ -8,11 +8,35 @@
 
 ## Introduction
 
-Derivatives have numerous practical applications beyond basic differentiation. In this section, we explore curve sketching, related rates, optimization problems, and real-world applications that are fundamental to understanding function behavior and solving practical problems in AI/ML and data science.
+Derivatives are not just abstract mathematical constructs—they are powerful tools for analyzing and understanding the behavior of functions in real-world contexts. In AI/ML and data science, derivatives underpin optimization algorithms, sensitivity analysis, and the interpretation of model behavior. This section explores key applications of derivatives, including curve sketching, related rates, and optimization, with a focus on both mathematical rigor and practical implementation.
 
 ## 3.1 Curve Sketching and Function Analysis
 
-### First and Second Derivative Tests
+### Mathematical Foundations
+
+Curve sketching is the process of analyzing a function's graph using its derivatives. The first derivative provides information about the slope (rate of change), while the second derivative reveals concavity (the direction the curve bends). These concepts are essential for:
+- Identifying local maxima and minima (critical points)
+- Determining intervals of increase and decrease
+- Locating inflection points (where concavity changes)
+- Understanding the overall shape and behavior of a function
+
+#### First Derivative Test
+Given a differentiable function \( f(x) \), a critical point occurs at \( x = c \) if \( f'(c) = 0 \) or \( f' \) is undefined at \( c \). The sign of \( f'(x) \) around \( c \) determines whether \( c \) is a local maximum, minimum, or neither.
+
+#### Second Derivative Test
+If \( f''(c) > 0 \), the function is concave up at \( c \) (local minimum). If \( f''(c) < 0 \), it is concave down (local maximum). If \( f''(c) = 0 \), the test is inconclusive (possible inflection point).
+
+#### Inflection Points
+An inflection point occurs where the second derivative changes sign, indicating a change in concavity.
+
+**Relevance to AI/ML:**
+- In neural networks, the loss landscape is analyzed using derivatives to find optimal weights.
+- Understanding critical points helps diagnose issues like vanishing/exploding gradients.
+- Inflection points can indicate transitions in model behavior or data trends.
+
+### Python Implementation: Curve Sketching
+
+The following code demonstrates how to analyze a cubic function using symbolic and numerical methods. Each step is annotated to clarify the mathematical reasoning and its translation into code.
 
 ```python
 import numpy as np
@@ -21,23 +45,31 @@ import sympy as sp
 from scipy.optimize import minimize_scalar
 
 def analyze_function():
-    """Analyze a function using derivatives for curve sketching"""
+    """
+    Analyze a function using derivatives for curve sketching.
+    Steps:
+    1. Define the function symbolically.
+    2. Compute first and second derivatives.
+    3. Find critical points (where f'(x) = 0).
+    4. Classify critical points using f''(x).
+    5. Find inflection points (where f''(x) = 0).
+    """
     x = sp.Symbol('x')
     
-    # Example function: f(x) = x³ - 6x² + 9x + 1
+    # Example function: f(x) = x^3 - 6x^2 + 9x + 1
     f = x**3 - 6*x**2 + 9*x + 1
-    f_prime = sp.diff(f, x)
-    f_double_prime = sp.diff(f_prime, x)
+    f_prime = sp.diff(f, x)  # First derivative
+    f_double_prime = sp.diff(f_prime, x)  # Second derivative
     
     print(f"Function: f(x) = {f}")
     print(f"First derivative: f'(x) = {f_prime}")
     print(f"Second derivative: f''(x) = {f_double_prime}")
     
-    # Find critical points
+    # Find critical points (solve f'(x) = 0)
     critical_points = sp.solve(f_prime, x)
     print(f"\nCritical points: {critical_points}")
     
-    # Classify critical points
+    # Classify critical points using the second derivative
     for point in critical_points:
         second_deriv = f_double_prime.subs(x, point)
         if second_deriv > 0:
@@ -47,12 +79,13 @@ def analyze_function():
         else:
             print(f"x = {point}: Saddle point or inflection point")
     
-    # Find inflection points
+    # Find inflection points (solve f''(x) = 0)
     inflection_points = sp.solve(f_double_prime, x)
     print(f"\nInflection points: {inflection_points}")
     
     return f, f_prime, f_double_prime, critical_points, inflection_points
 
+# Run the analysis and extract results
 f, f_prime, f_double_prime, critical_points, inflection_points = analyze_function()
 
 # Visualize the function and its derivatives
@@ -63,15 +96,15 @@ ddy_vals = [f_double_prime.subs(sp.Symbol('x'), x) for x in x_vals]
 
 plt.figure(figsize=(15, 10))
 
-# Original function
+# Original function with critical and inflection points
 plt.subplot(2, 2, 1)
-plt.plot(x_vals, y_vals, 'b-', linewidth=2, label='f(x) = x³ - 6x² + 9x + 1')
+plt.plot(x_vals, y_vals, 'b-', linewidth=2, label='f(x) = x^3 - 6x^2 + 9x + 1')
 for point in critical_points:
     y_point = f.subs(sp.Symbol('x'), point)
-    plt.scatter(point, y_point, c='red', s=100, zorder=5)
+    plt.scatter(point, y_point, c='red', s=100, zorder=5, label='Critical Point' if point == critical_points[0] else None)
 for point in inflection_points:
     y_point = f.subs(sp.Symbol('x'), point)
-    plt.scatter(point, y_point, c='green', s=100, marker='s', zorder=5)
+    plt.scatter(point, y_point, c='green', s=100, marker='s', zorder=5, label='Inflection Point' if point == inflection_points[0] else None)
 plt.xlabel('x')
 plt.ylabel('f(x)')
 plt.title('Function with Critical and Inflection Points')
@@ -122,14 +155,37 @@ plt.tight_layout()
 plt.show()
 ```
 
+**Explanation:**
+- The function is defined symbolically, allowing for exact computation of derivatives and critical points.
+- The first and second derivatives are used to classify points and analyze the function's shape.
+- Visualization highlights critical and inflection points, and uses color to indicate concavity.
+- This approach is directly applicable to analyzing loss functions and model outputs in AI/ML, where understanding the landscape is crucial for optimization.
+
 ### Asymptotes and End Behavior
+
+#### Mathematical Background
+- **Vertical Asymptotes:** Occur where the denominator of a rational function is zero and the numerator is nonzero.
+- **Horizontal Asymptotes:** Determined by the limits of the function as \( x \to \pm\infty \).
+- **Slant (Oblique) Asymptotes:** Occur when the degree of the numerator is one higher than the denominator; found via polynomial division.
+
+**Relevance to AI/ML:**
+- Asymptotic analysis helps understand model behavior for extreme input values (e.g., outliers, large feature values).
+- In data science, recognizing asymptotes can inform feature engineering and model selection.
+
+### Python Implementation: Asymptote Analysis
 
 ```python
 def analyze_asymptotes():
-    """Analyze asymptotes and end behavior of rational functions"""
+    """
+    Analyze asymptotes and end behavior of rational functions.
+    Steps:
+    1. Identify vertical asymptotes (denominator = 0).
+    2. Compute horizontal asymptotes (limits at infinity).
+    3. Check for slant asymptotes (polynomial division if needed).
+    """
     x = sp.Symbol('x')
     
-    # Example: f(x) = (x² + 2x + 1) / (x + 1)
+    # Example: f(x) = (x^2 + 2x + 1) / (x + 1)
     f = (x**2 + 2*x + 1) / (x + 1)
     
     # Find vertical asymptotes (where denominator = 0)
@@ -155,12 +211,12 @@ f, vertical_asymptotes, horizontal_asymptote = analyze_asymptotes()
 
 # Visualize with asymptotes
 x_vals = np.linspace(-5, 5, 1000)
-# Remove points near vertical asymptote
+# Remove points near vertical asymptote for clarity
 x_vals = x_vals[np.abs(x_vals + 1) > 0.1]
 y_vals = [f.subs(sp.Symbol('x'), x) for x in x_vals]
 
 plt.figure(figsize=(12, 8))
-plt.plot(x_vals, y_vals, 'b-', linewidth=2, label='f(x) = (x² + 2x + 1)/(x + 1)')
+plt.plot(x_vals, y_vals, 'b-', linewidth=2, label='f(x) = (x^2 + 2x + 1)/(x + 1)')
 
 # Vertical asymptote
 for asymptote in vertical_asymptotes:
@@ -180,6 +236,11 @@ plt.xlim(-5, 5)
 plt.ylim(-10, 10)
 plt.show()
 ```
+
+**Explanation:**
+- The code symbolically analyzes a rational function to find and visualize its asymptotes.
+- Removing points near the vertical asymptote avoids plotting discontinuities.
+- This analysis is useful for understanding the limits of model predictions and the stability of algorithms for extreme values.
 
 ## 3.2 Related Rates Problems
 
