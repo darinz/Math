@@ -8,11 +8,49 @@
 
 ## Introduction
 
-Numerical methods provide computational techniques for solving calculus problems when analytical solutions are difficult or impossible to obtain. These methods are essential for practical applications in engineering, physics, and machine learning where exact solutions may not be available.
+Numerical methods provide computational techniques for solving calculus problems when analytical solutions are difficult or impossible to obtain. These methods are essential for practical applications in engineering, physics, machine learning, and data science where exact solutions may not be available or computationally feasible.
+
+**Key Concepts:**
+- **Approximation:** Numerical methods provide approximate solutions with controlled error
+- **Discretization:** Continuous problems are converted to discrete computational problems
+- **Convergence:** Methods improve accuracy as computational effort increases
+- **Stability:** Small errors in input don't lead to large errors in output
+
+**Relevance to AI/ML:**
+- Numerical integration appears in probability calculations and model evaluation
+- Numerical differentiation is used in gradient computation and sensitivity analysis
+- Understanding numerical methods helps choose appropriate algorithms and assess accuracy
+
+---
 
 ## 10.1 Numerical Integration
 
-### Rectangle Rule
+### Mathematical Foundations
+
+Numerical integration approximates definite integrals when analytical solutions are unavailable. The goal is to compute:
+\[
+\int_a^b f(x) \, dx \approx \sum_{i=1}^n w_i f(x_i)
+\]
+where \( w_i \) are weights and \( x_i \) are evaluation points.
+
+**Key Properties:**
+- **Rectangle Rule:** Uses function values at left endpoints of subintervals
+- **Trapezoidal Rule:** Uses linear interpolation between points
+- **Simpson's Rule:** Uses quadratic interpolation for higher accuracy
+- **Error Analysis:** Error typically decreases as \( O(h^p) \) where \( h \) is step size and \( p \) is order
+
+**Relevance to AI/ML:**
+- Computing expectations and probabilities in probabilistic models
+- Evaluating model performance metrics (AUC, etc.)
+- Numerical optimization and sampling methods
+
+### Python Implementation: Rectangle Rule
+
+The rectangle rule approximates the integral by summing rectangles under the curve. For a partition \( a = x_0 < x_1 < \cdots < x_n = b \):
+\[
+\int_a^b f(x) \, dx \approx h \sum_{i=0}^{n-1} f(x_i)
+\]
+where \( h = (b-a)/n \) is the step size.
 
 ```python
 import numpy as np
@@ -20,7 +58,15 @@ import matplotlib.pyplot as plt
 from scipy import integrate
 
 def rectangle_rule():
-    """Implement rectangle rule for numerical integration"""
+    """
+    Implement rectangle rule for numerical integration.
+    
+    Mathematical foundation:
+    - Approximates ∫f(x)dx ≈ h∑f(x_i) where h = (b-a)/n
+    - Uses left endpoints of subintervals
+    - Error bound: |E| ≤ (b-a)²M/(2n) where M = max|f''(x)|
+    - Order of accuracy: O(h)
+    """
     
     # Example: ∫x² dx from 0 to 2
     def f(x):
@@ -33,15 +79,21 @@ def rectangle_rule():
     n_values = [5, 10, 20, 50, 100]
     approximations = []
     
+    print("Rectangle Rule for ∫x² dx from 0 to 2:")
+    print(f"Exact value: {exact_value:.6f}")
+    print()
+    
     for n in n_values:
-        h = (b - a) / n
+        h = (b - a) / n  # Step size
         x_points = np.linspace(a, b, n+1)
         y_points = f(x_points[:-1])  # Left endpoints
         
+        # Rectangle rule: h * sum of function values at left endpoints
         approximation = h * np.sum(y_points)
         approximations.append(approximation)
         
-        print(f"n = {n:3d}: Approximation = {approximation:.6f}, Error = {abs(approximation - exact_value):.6f}")
+        error = abs(approximation - exact_value)
+        print(f"n = {n:3d}: Approximation = {approximation:.6f}, Error = {error:.6f}")
     
     return n_values, approximations, exact_value
 
@@ -49,6 +101,10 @@ n_values, approximations, exact_value = rectangle_rule()
 
 # Visualize rectangle rule
 def visualize_rectangle_rule():
+    """
+    Visualize the rectangle rule approximation.
+    Shows how rectangles approximate the area under the curve.
+    """
     def f(x):
         return x**2
     
@@ -72,11 +128,16 @@ def visualize_rectangle_rule():
         x_right = x_points[i+1]
         y_height = y_points[i]
         
+        # Draw rectangle
         plt.bar(x_left, y_height, width=h, alpha=0.3, color='red', align='edge')
+        
+        # Add rectangle borders
+        plt.plot([x_left, x_left, x_right, x_right, x_left], 
+                [0, y_height, y_height, 0, 0], 'r-', linewidth=1)
     
     plt.xlabel('x')
     plt.ylabel('f(x)')
-    plt.title('Rectangle Rule for Numerical Integration')
+    plt.title('Rectangle Rule for Numerical Integration\n(Red rectangles approximate area under curve)')
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -84,11 +145,33 @@ def visualize_rectangle_rule():
 visualize_rectangle_rule()
 ```
 
-### Trapezoidal Rule
+**Explanation:**
+- The rectangle rule approximates the integral by summing the areas of rectangles
+- Each rectangle has height equal to the function value at the left endpoint
+- The approximation improves as the number of subintervals increases
+- The visualization shows how rectangles approximate the area under the curve
+
+---
+
+### Python Implementation: Trapezoidal Rule
+
+The trapezoidal rule uses linear interpolation between points. For a partition \( a = x_0 < x_1 < \cdots < x_n = b \):
+\[
+\int_a^b f(x) \, dx \approx \frac{h}{2} \left(f(x_0) + 2\sum_{i=1}^{n-1} f(x_i) + f(x_n)\right)
+\]
+where \( h = (b-a)/n \) is the step size.
 
 ```python
 def trapezoidal_rule():
-    """Implement trapezoidal rule for numerical integration"""
+    """
+    Implement trapezoidal rule for numerical integration.
+    
+    Mathematical foundation:
+    - Approximates ∫f(x)dx ≈ (h/2)[f(x₀) + 2∑f(x_i) + f(xₙ)]
+    - Uses linear interpolation between points
+    - Error bound: |E| ≤ (b-a)³M/(12n²) where M = max|f''(x)|
+    - Order of accuracy: O(h²) - better than rectangle rule
+    """
     
     def f(x):
         return x**2
@@ -100,6 +183,10 @@ def trapezoidal_rule():
     n_values = [5, 10, 20, 50, 100]
     approximations = []
     
+    print("Trapezoidal Rule for ∫x² dx from 0 to 2:")
+    print(f"Exact value: {exact_value:.6f}")
+    print()
+    
     for n in n_values:
         h = (b - a) / n
         x_points = np.linspace(a, b, n+1)
@@ -109,7 +196,8 @@ def trapezoidal_rule():
         approximation = h/2 * (y_points[0] + 2*np.sum(y_points[1:-1]) + y_points[-1])
         approximations.append(approximation)
         
-        print(f"n = {n:3d}: Approximation = {approximation:.6f}, Error = {abs(approximation - exact_value):.6f}")
+        error = abs(approximation - exact_value)
+        print(f"n = {n:3d}: Approximation = {approximation:.6f}, Error = {error:.6f}")
     
     return n_values, approximations, exact_value
 
@@ -117,6 +205,10 @@ n_values, approximations, exact_value = trapezoidal_rule()
 
 # Visualize trapezoidal rule
 def visualize_trapezoidal_rule():
+    """
+    Visualize the trapezoidal rule approximation.
+    Shows how trapezoids approximate the area under the curve.
+    """
     def f(x):
         return x**2
     
@@ -141,12 +233,16 @@ def visualize_trapezoidal_rule():
         y_left = y_points[i]
         y_right = y_points[i+1]
         
+        # Draw trapezoid
         plt.fill([x_left, x_right, x_right, x_left], [0, 0, y_right, y_left], 
                 alpha=0.3, color='red')
+        
+        # Add trapezoid borders
+        plt.plot([x_left, x_right], [y_left, y_right], 'r-', linewidth=2)
     
     plt.xlabel('x')
     plt.ylabel('f(x)')
-    plt.title('Trapezoidal Rule for Numerical Integration')
+    plt.title('Trapezoidal Rule for Numerical Integration\n(Red trapezoids approximate area under curve)')
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -154,11 +250,33 @@ def visualize_trapezoidal_rule():
 visualize_trapezoidal_rule()
 ```
 
-### Simpson's Rule
+**Explanation:**
+- The trapezoidal rule uses linear interpolation between adjacent points
+- Each trapezoid has area \( \frac{h}{2}(f(x_i) + f(x_{i+1})) \)
+- The method is more accurate than the rectangle rule (O(h²) vs O(h))
+- The visualization shows how trapezoids approximate the area under the curve
+
+---
+
+### Python Implementation: Simpson's Rule
+
+Simpson's rule uses quadratic interpolation for even higher accuracy. For an even number of subintervals:
+\[
+\int_a^b f(x) \, dx \approx \frac{h}{3} \left(f(x_0) + 4\sum_{i=1,3,\ldots}^{n-1} f(x_i) + 2\sum_{i=2,4,\ldots}^{n-2} f(x_i) + f(x_n)\right)
+\]
 
 ```python
 def simpsons_rule():
-    """Implement Simpson's rule for numerical integration"""
+    """
+    Implement Simpson's rule for numerical integration.
+    
+    Mathematical foundation:
+    - Approximates ∫f(x)dx ≈ (h/3)[f(x₀) + 4∑f(x_odd) + 2∑f(x_even) + f(xₙ)]
+    - Uses quadratic interpolation between points
+    - Error bound: |E| ≤ (b-a)⁵M/(180n⁴) where M = max|f⁽⁴⁾(x)|
+    - Order of accuracy: O(h⁴) - much better than trapezoidal rule
+    - Requires even number of subintervals
+    """
     
     def f(x):
         return x**2
@@ -170,6 +288,10 @@ def simpsons_rule():
     n_values = [6, 10, 20, 50, 100]
     approximations = []
     
+    print("Simpson's Rule for ∫x² dx from 0 to 2:")
+    print(f"Exact value: {exact_value:.6f}")
+    print()
+    
     for n in n_values:
         h = (b - a) / n
         x_points = np.linspace(a, b, n+1)
@@ -180,7 +302,8 @@ def simpsons_rule():
                               2*np.sum(y_points[2:-1:2]) + y_points[-1])
         approximations.append(approximation)
         
-        print(f"n = {n:3d}: Approximation = {approximation:.6f}, Error = {abs(approximation - exact_value):.6f}")
+        error = abs(approximation - exact_value)
+        print(f"n = {n:3d}: Approximation = {approximation:.6f}, Error = {error:.6f}")
     
     return n_values, approximations, exact_value
 
@@ -188,6 +311,10 @@ n_values, approximations, exact_value = simpsons_rule()
 
 # Compare different integration methods
 def compare_integration_methods():
+    """
+    Compare the accuracy of different numerical integration methods.
+    Shows how error decreases with increasing n for each method.
+    """
     def f(x):
         return x**2
     
@@ -209,7 +336,7 @@ def compare_integration_methods():
     simpson_approx = h/3 * (y_points_full[0] + 4*np.sum(y_points_full[1:-1:2]) + 
                            2*np.sum(y_points_full[2:-1:2]) + y_points_full[-1])
     
-    print("Comparison of Integration Methods:")
+    print("Comparison of Integration Methods (n = 20):")
     print(f"Exact value: {exact_value:.6f}")
     print(f"Rectangle rule: {rectangle_approx:.6f}, Error: {abs(rectangle_approx - exact_value):.6f}")
     print(f"Trapezoidal rule: {trapezoidal_approx:.6f}, Error: {abs(trapezoidal_approx - exact_value):.6f}")
@@ -220,13 +347,52 @@ def compare_integration_methods():
 rectangle_approx, trapezoidal_approx, simpson_approx = compare_integration_methods()
 ```
 
+**Explanation:**
+- Simpson's rule uses quadratic interpolation for higher accuracy
+- The method requires an even number of subintervals
+- Error decreases as O(h⁴), making it much more accurate than other methods
+- The comparison shows the relative accuracy of different methods
+
+---
+
 ## 10.2 Numerical Differentiation
 
-### Finite Difference Methods
+### Mathematical Foundations
+
+Numerical differentiation approximates derivatives when analytical differentiation is difficult. The goal is to compute:
+\[
+f'(x) \approx \frac{f(x+h) - f(x)}{h}
+\]
+for some small step size \( h \).
+
+**Key Methods:**
+- **Forward Difference:** \( f'(x) \approx \frac{f(x+h) - f(x)}{h} \)
+- **Backward Difference:** \( f'(x) \approx \frac{f(x) - f(x-h)}{h} \)
+- **Central Difference:** \( f'(x) \approx \frac{f(x+h) - f(x-h)}{2h} \)
+
+**Error Analysis:**
+- Forward/Backward: Error \( O(h) \)
+- Central: Error \( O(h²) \) - more accurate
+- Trade-off between accuracy and step size
+
+**Relevance to AI/ML:**
+- Computing gradients for optimization algorithms
+- Sensitivity analysis of model parameters
+- Finite difference methods for complex functions
+
+### Python Implementation: Finite Difference Methods
 
 ```python
 def finite_differences():
-    """Implement finite difference methods for numerical differentiation"""
+    """
+    Implement finite difference methods for numerical differentiation.
+    
+    Mathematical foundation:
+    - Forward difference: f'(x) ≈ (f(x+h) - f(x))/h
+    - Backward difference: f'(x) ≈ (f(x) - f(x-h))/h  
+    - Central difference: f'(x) ≈ (f(x+h) - f(x-h))/(2h)
+    - Error analysis: Forward/Backward O(h), Central O(h²)
+    """
     
     def f(x):
         return x**3
@@ -248,7 +414,7 @@ def finite_differences():
     for h in h_values:
         forward_diff = (f(x0 + h) - f(x0)) / h
         error = abs(forward_diff - exact_derivative)
-        print(f"h = {h:.3f}: f'({x0}) ≈ {forward_diff:.6f}, Error = {error:.6f}")
+        print(f"h = {h:.3f}: Approximation = {forward_diff:.6f}, Error = {error:.6f}")
     
     print()
     
@@ -257,72 +423,29 @@ def finite_differences():
     for h in h_values:
         backward_diff = (f(x0) - f(x0 - h)) / h
         error = abs(backward_diff - exact_derivative)
-        print(f"h = {h:.3f}: f'({x0}) ≈ {backward_diff:.6f}, Error = {error:.6f}")
+        print(f"h = {h:.3f}: Approximation = {backward_diff:.6f}, Error = {error:.6f}")
     
     print()
     
     # Central difference: f'(x) ≈ (f(x+h) - f(x-h))/(2h)
     print("Central Difference Method:")
     for h in h_values:
-        central_diff = (f(x0 + h) - f(x0 - h)) / (2 * h)
+        central_diff = (f(x0 + h) - f(x0 - h)) / (2*h)
         error = abs(central_diff - exact_derivative)
-        print(f"h = {h:.3f}: f'({x0}) ≈ {central_diff:.6f}, Error = {error:.6f}")
+        print(f"h = {h:.3f}: Approximation = {central_diff:.6f}, Error = {error:.6f}")
     
     return h_values, exact_derivative
 
 h_values, exact_derivative = finite_differences()
-
-# Visualize finite differences
-def visualize_finite_differences():
-    def f(x):
-        return x**3
-    
-    x0 = 1.0
-    h = 0.2
-    
-    x_plot = np.linspace(0.5, 1.5, 1000)
-    y_plot = f(x_plot)
-    
-    plt.figure(figsize=(15, 5))
-    
-    # Forward difference
-    plt.subplot(131)
-    plt.plot(x_plot, y_plot, 'b-', linewidth=2, label='f(x) = x³')
-    plt.plot([x0, x0 + h], [f(x0), f(x0 + h)], 'r-', linewidth=2, label='Forward difference')
-    plt.scatter([x0, x0 + h], [f(x0), f(x0 + h)], c='red', s=100)
-    plt.xlabel('x')
-    plt.ylabel('f(x)')
-    plt.title('Forward Difference')
-    plt.legend()
-    plt.grid(True)
-    
-    # Backward difference
-    plt.subplot(132)
-    plt.plot(x_plot, y_plot, 'b-', linewidth=2, label='f(x) = x³')
-    plt.plot([x0 - h, x0], [f(x0 - h), f(x0)], 'g-', linewidth=2, label='Backward difference')
-    plt.scatter([x0 - h, x0], [f(x0 - h), f(x0)], c='green', s=100)
-    plt.xlabel('x')
-    plt.ylabel('f(x)')
-    plt.title('Backward Difference')
-    plt.legend()
-    plt.grid(True)
-    
-    # Central difference
-    plt.subplot(133)
-    plt.plot(x_plot, y_plot, 'b-', linewidth=2, label='f(x) = x³')
-    plt.plot([x0 - h, x0 + h], [f(x0 - h), f(x0 + h)], 'm-', linewidth=2, label='Central difference')
-    plt.scatter([x0 - h, x0, x0 + h], [f(x0 - h), f(x0), f(x0 + h)], c='magenta', s=100)
-    plt.xlabel('x')
-    plt.ylabel('f(x)')
-    plt.title('Central Difference')
-    plt.legend()
-    plt.grid(True)
-    
-    plt.tight_layout()
-    plt.show()
-
-visualize_finite_differences()
 ```
+
+**Explanation:**
+- Forward difference uses the function value at the current point and one step ahead
+- Backward difference uses the function value at the current point and one step back
+- Central difference uses points on both sides, providing better accuracy
+- The error analysis shows how accuracy depends on step size and method choice
+
+---
 
 ## 10.3 Root Finding Methods
 
