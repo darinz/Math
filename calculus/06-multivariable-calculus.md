@@ -8,11 +8,27 @@
 
 ## Introduction
 
-Multivariable calculus extends the concepts of single-variable calculus to functions of multiple variables. This is essential for understanding machine learning algorithms, optimization in high-dimensional spaces, and modeling complex systems with multiple inputs.
+Multivariable calculus generalizes the concepts of single-variable calculus to functions of several variables. This is essential for understanding high-dimensional spaces, which are ubiquitous in AI/ML and data science. Many models, such as neural networks, operate in spaces with thousands or millions of dimensions, making multivariable calculus foundational for:
+- Optimization of loss functions with many parameters
+- Sensitivity analysis and feature importance
+- Modeling complex systems with multiple inputs
 
 ## 6.1 Functions of Multiple Variables
 
-### Basic Concepts and Visualization
+### Mathematical Foundations and Visualization
+
+A function of two variables, \( f(x, y) \), assigns a real number to each point \( (x, y) \) in its domain. The graph of such a function is a surface in three-dimensional space. Key concepts include:
+- **Level curves (contours):** Curves where \( f(x, y) = c \) for constant \( c \). These help visualize the function's behavior in the plane.
+- **Surfaces:** The set of points \( (x, y, f(x, y)) \) forms a surface, which can be visualized in 3D.
+
+**Relevance to AI/ML:**
+- Loss landscapes in neural networks are high-dimensional surfaces.
+- Contour plots help visualize optimization paths and convergence.
+- Understanding the geometry of multivariable functions aids in interpreting model behavior and feature interactions.
+
+### Python Implementation: Multivariable Functions
+
+The following code demonstrates how to define and visualize several multivariable functions, with commentary on their geometric and practical significance.
 
 ```python
 import numpy as np
@@ -22,9 +38,15 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.optimize import minimize
 
 def multivariable_functions():
-    """Explore functions of multiple variables"""
+    """
+    Explore functions of multiple variables.
+    Examples:
+    1. Paraboloid: f(x, y) = x^2 + y^2 (convex surface, unique minimum)
+    2. Oscillatory: f(x, y) = sin(x) * cos(y) (multiple local extrema)
+    3. Saddle: f(x, y) = x*y (saddle point at origin)
+    """
     
-    # Example 1: f(x,y) = x² + y² (paraboloid)
+    # Example 1: f(x,y) = x^2 + y^2 (paraboloid)
     x, y = sp.symbols('x y')
     f1 = x**2 + y**2
     
@@ -49,7 +71,7 @@ def visualize_multivariable_functions():
     y = np.linspace(-3, 3, 100)
     X, Y = np.meshgrid(x, y)
     
-    # Function 1: f(x,y) = x² + y²
+    # Function 1: f(x,y) = x^2 + y^2
     Z1 = X**2 + Y**2
     
     # Function 2: f(x,y) = sin(x) * cos(y)
@@ -63,7 +85,7 @@ def visualize_multivariable_functions():
     # 3D surface plots
     ax1 = fig.add_subplot(131, projection='3d')
     surf1 = ax1.plot_surface(X, Y, Z1, cmap='viridis', alpha=0.8)
-    ax1.set_title('f(x,y) = x² + y²')
+    ax1.set_title('f(x,y) = x^2 + y^2')
     ax1.set_xlabel('x')
     ax1.set_ylabel('y')
     ax1.set_zlabel('f(x,y)')
@@ -90,7 +112,7 @@ def visualize_multivariable_functions():
     
     contour1 = ax1.contour(X, Y, Z1, levels=10)
     ax1.clabel(contour1, inline=True, fontsize=8)
-    ax1.set_title('Contours: f(x,y) = x² + y²')
+    ax1.set_title('Contours: f(x,y) = x^2 + y^2')
     ax1.set_xlabel('x')
     ax1.set_ylabel('y')
     ax1.grid(True)
@@ -115,17 +137,42 @@ def visualize_multivariable_functions():
 visualize_multivariable_functions()
 ```
 
+**Explanation:**
+- The code defines and visualizes three types of surfaces: convex (paraboloid), oscillatory, and saddle.
+- 3D plots show the geometry of each function, while contour plots reveal level curves and critical points.
+- These visualizations are directly relevant to understanding optimization landscapes and feature interactions in AI/ML.
+
 ## 6.2 Partial Derivatives
 
-### Definition and Computation
+### Mathematical Foundations and Computation
+
+A partial derivative measures how a multivariable function changes as one variable varies, holding the others constant. For \( f(x, y) \):
+\[
+\frac{\partial f}{\partial x} = \lim_{h \to 0} \frac{f(x + h, y) - f(x, y)}{h}
+\]
+\[
+\frac{\partial f}{\partial y} = \lim_{h \to 0} \frac{f(x, y + h) - f(x, y)}{h}
+\]
+Partial derivatives are the building blocks for gradients, Jacobians, and optimization in high-dimensional spaces.
+
+**Relevance to AI/ML:**
+- Gradients (vectors of partial derivatives) are used in gradient descent and backpropagation.
+- Sensitivity analysis: Partial derivatives quantify how sensitive a model's output is to each input feature.
+
+### Python Implementation: Partial Derivatives
 
 ```python
 def partial_derivatives():
-    """Compute partial derivatives of multivariable functions"""
-    
+    """
+    Compute partial derivatives of multivariable functions.
+    Steps:
+    1. Define the function symbolically.
+    2. Compute partial derivatives with respect to each variable.
+    3. Interpret the results.
+    """
     x, y = sp.symbols('x y')
     
-    # Example 1: f(x,y) = x² + y²
+    # Example 1: f(x,y) = x^2 + y^2
     f1 = x**2 + y**2
     df1_dx = sp.diff(f1, x)
     df1_dy = sp.diff(f1, y)
@@ -173,7 +220,7 @@ def visualize_partial_derivatives():
     # Original function
     ax1 = fig.add_subplot(131, projection='3d')
     surf1 = ax1.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8)
-    ax1.set_title('f(x,y) = x² + y²')
+    ax1.set_title('f(x,y) = x^2 + y^2')
     ax1.set_xlabel('x')
     ax1.set_ylabel('y')
     ax1.set_zlabel('f(x,y)')
@@ -199,6 +246,11 @@ def visualize_partial_derivatives():
 
 visualize_partial_derivatives()
 ```
+
+**Explanation:**
+- The code computes partial derivatives for several functions, illustrating how each variable affects the output.
+- 3D plots show the original function and the effect of changing each variable independently.
+- These concepts are foundational for gradient-based optimization and feature sensitivity in AI/ML.
 
 ## 6.3 Gradient and Directional Derivatives
 
