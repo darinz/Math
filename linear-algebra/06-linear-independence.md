@@ -6,19 +6,35 @@
 
 ## Introduction
 
-Linear independence and basis are fundamental concepts that determine the structure and dimension of vector spaces. Understanding these concepts is crucial for solving systems of equations, performing coordinate transformations, and analyzing data in machine learning.
+Linear independence and basis are fundamental concepts that determine the structure and dimension of vector spaces. Understanding these concepts is crucial for solving systems of equations, performing coordinate transformations, and analyzing data in machine learning. In ML, the concepts of independence and basis underlie feature selection, dimensionality reduction, and the expressiveness of models.
+
+### Why Linear Independence and Basis Matter in AI/ML
+
+1. **Feature Selection**: Redundant features are linearly dependent; removing them improves model efficiency
+2. **Dimensionality Reduction**: PCA finds a new basis of independent directions (principal components)
+3. **Model Expressiveness**: The basis determines the space of possible solutions
+4. **Coordinate Systems**: Changing basis is essential for understanding embeddings and transformations
 
 ## Linear Independence
 
-A set of vectors {v₁, v₂, ..., vₙ} is linearly independent if the only solution to:
-c₁v₁ + c₂v₂ + ... + cₙvₙ = 0
-is c₁ = c₂ = ... = cₙ = 0.
+A set of vectors $\{v_1, v_2, \ldots, v_n\}$ is linearly independent if the only solution to:
+$$c_1 v_1 + c_2 v_2 + \cdots + c_n v_n = 0$$
+is $c_1 = c_2 = \cdots = c_n = 0$ (the trivial solution).
 
 ### Mathematical Definition
-Vectors v₁, v₂, ..., vₙ are linearly independent if:
-- The equation c₁v₁ + c₂v₂ + ... + cₙvₙ = 0 has only the trivial solution
-- No vector can be written as a linear combination of the others
-- The rank of the matrix [v₁ v₂ ... vₙ] equals n
+Vectors $v_1, v_2, \ldots, v_n$ are linearly independent if:
+- The equation $c_1 v_1 + c_2 v_2 + \cdots + c_n v_n = 0$ has only the trivial solution
+- No vector in the set can be written as a linear combination of the others
+- The rank of the matrix $[v_1\ v_2\ \ldots\ v_n]$ equals $n$
+
+**Geometric Interpretation:**
+- In $\mathbb{R}^2$, two vectors are independent if they are not collinear
+- In $\mathbb{R}^3$, three vectors are independent if they do not all lie in the same plane
+
+**Why It Matters:**
+- The maximum number of linearly independent vectors in a space is its dimension
+- Basis vectors must be linearly independent
+- In ML, linearly dependent features do not add new information
 
 ```python
 import numpy as np
@@ -36,7 +52,7 @@ def is_linearly_independent(vectors, tol=1e-10):
     
     return rank == len(vectors)
 
-# Example 1: Linearly independent vectors
+# Example 1: Linearly independent vectors (standard basis in ℝ³)
 v1 = np.array([1, 0, 0])
 v2 = np.array([0, 1, 0])
 v3 = np.array([0, 0, 1])
@@ -45,14 +61,14 @@ independent_vectors = [v1, v2, v3]
 print("Example 1: Standard basis vectors")
 print(f"Are linearly independent: {is_linearly_independent(independent_vectors)}")
 
-# Example 2: Linearly dependent vectors
-v4 = np.array([1, 1, 0])  # This is v1 + v2
+# Example 2: Linearly dependent vectors (v4 = v1 + v2)
+v4 = np.array([1, 1, 0])
 dependent_vectors = [v1, v2, v4]
 print("\nExample 2: Including dependent vector")
 print(f"Are linearly independent: {is_linearly_independent(dependent_vectors)}")
 ```
 
-### Testing Linear Independence
+### Testing Linear Independence (Detailed)
 ```python
 def test_linear_independence_detailed(vectors):
     """Detailed test of linear independence"""
@@ -104,13 +120,23 @@ is_indep2, msg2 = test_linear_independence_detailed(test_vectors2)
 
 ## Basis
 
-A basis for a vector space V is a linearly independent set that spans V.
+A **basis** for a vector space $V$ is a linearly independent set that spans $V$.
 
 ### Properties of a Basis
 1. **Linear Independence**: All vectors in the basis are linearly independent
-2. **Spanning**: Every vector in V can be written as a linear combination of basis vectors
-3. **Minimal**: No proper subset spans V
+2. **Spanning**: Every vector in $V$ can be written as a linear combination of basis vectors
+3. **Minimal**: No proper subset spans $V$
 4. **Unique Representation**: Each vector has a unique representation in terms of the basis
+
+**Geometric Interpretation:**
+- In $\mathbb{R}^2$, any two non-collinear vectors form a basis
+- In $\mathbb{R}^3$, any three non-coplanar vectors form a basis
+- The standard basis for $\mathbb{R}^n$ is $\{e_1, \ldots, e_n\}$
+
+**Why It Matters:**
+- The basis provides a coordinate system for the space
+- Dimensionality reduction (PCA) finds a new basis for the data
+- The number of features in ML is the dimension of the feature space
 
 ```python
 def find_basis(vectors):
