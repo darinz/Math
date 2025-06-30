@@ -10,8 +10,17 @@
 
 A comprehensive guide to linear algebra concepts with Python code examples, specifically designed for artificial intelligence, machine learning, and data science applications.
 
+## File Formats
+
+This repository provides content in two formats:
+- **Markdown (.md)**: Static documentation with embedded code examples
+- **Jupyter Notebook (.ipynb)**: Interactive notebooks with executable code cells
+
+Both formats contain identical content - choose the format that works best for your workflow.
+
 ## Table of Contents
 
+### Markdown Format
 1. [Vectors and Vector Operations](01-vectors.md)
 2. [Matrices and Matrix Operations](02-matrices.md)
 3. [Linear Transformations](03-linear-transformations.md)
@@ -22,6 +31,17 @@ A comprehensive guide to linear algebra concepts with Python code examples, spec
 8. [Applications in Machine Learning](08-ml-applications.md)
 9. [Numerical Linear Algebra](09-numerical-linear-algebra.md)
 10. [Summary and Practice Problems](SUMMARY.md)
+
+### Jupyter Notebook Format
+1. [Vectors and Vector Operations](01-vectors.ipynb)
+2. [Matrices and Matrix Operations](02-matrices.ipynb)
+3. [Linear Transformations](03-linear-transformations.ipynb)
+4. [Eigenvalues and Eigenvectors](04-eigenvalues-eigenvectors.ipynb)
+5. [Vector Spaces and Subspaces](05-vector-spaces.ipynb)
+6. [Linear Independence and Basis](06-linear-independence.ipynb)
+7. [Matrix Decompositions](07-matrix-decompositions.ipynb)
+8. [Applications in Machine Learning](08-ml-applications.ipynb)
+9. [Numerical Linear Algebra](09-numerical-linear-algebra.ipynb)
 
 ## Prerequisites
 
