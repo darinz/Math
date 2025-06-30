@@ -39,7 +39,7 @@ Statistical foundations and methods for data science:
 - Multivariate statistics and Bayesian methods
 - Experimental design and statistical learning
 
-### [Resources](resource/)
+### [Reference](reference/)
 Additional reference materials and supplementary content:
 - Mathematical reference guides and textbooks
 - Probability and statistics resources
@@ -91,7 +91,7 @@ Math/
 │   ├── 10-advanced-topics.md
 │   ├── README.md                  # Learning guide
 │   └── SUMMARY.md                 # Complete summary
-├── resource/           # Reference materials and supplementary content
+├── reference/           # Reference materials and supplementary content
 │   ├── calculation_ref.pdf        # Mathematical calculation reference
 │   ├── linear_algebra_for_dl.pdf  # Linear Algebra for Deep Learning
 │   ├── math-of-ml-book.pdf        # Mathematics of Machine Learning
