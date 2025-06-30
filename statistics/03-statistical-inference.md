@@ -38,6 +38,25 @@ np.random.seed(42)
 
 ## Hypothesis Testing Fundamentals
 
+### Mathematical Foundation
+
+**Statistical Hypothesis Testing** is a formal procedure for making decisions about population parameters based on sample data. The process involves:
+
+1. **Formulating Hypotheses**: 
+   - **Null Hypothesis (H₀)**: A statement about the population parameter that we assume to be true
+   - **Alternative Hypothesis (H₁)**: A statement that contradicts the null hypothesis
+
+2. **Test Statistic**: A function of the sample data that follows a known probability distribution under H₀
+
+3. **Decision Rule**: Based on the test statistic and significance level α, we either reject or fail to reject H₀
+
+**Mathematical Framework:**
+For a population parameter θ, we test:
+- H₀: θ = θ₀ (null hypothesis)
+- H₁: θ ≠ θ₀ (two-sided alternative) or θ > θ₀, θ < θ₀ (one-sided alternatives)
+
+The test statistic T is calculated from sample data and compared to critical values or used to compute p-values.
+
 ### Null and Alternative Hypotheses
 
 ```python
@@ -126,6 +145,17 @@ plt.show()
 
 ### Type I and Type II Errors
 
+**Mathematical Definition:**
+- **Type I Error (α)**: Rejecting H₀ when it's true
+- **Type II Error (β)**: Failing to reject H₀ when it's false
+- **Power (1-β)**: Probability of correctly rejecting H₀ when it's false
+
+**Error Trade-off:**
+As α decreases, β increases, and vice versa. The relationship is:
+$$\beta = \Phi(z_{\alpha/2} - \frac{\delta}{\sigma/\sqrt{n}}) + \Phi(z_{\alpha/2} + \frac{\delta}{\sigma/\sqrt{n}})$$
+
+Where δ is the effect size, σ is the standard deviation, and n is the sample size.
+
 ```python
 def error_types_demonstration():
     """Demonstrate Type I and Type II errors"""
@@ -200,81 +230,134 @@ plt.show()
 
 ## One-Sample Tests
 
-### One-Sample t-Test
+### Z-Test for Population Mean
+
+**Mathematical Foundation:**
+When we know the population standard deviation σ, we use the Z-test:
+
+$$Z = \frac{\bar{X} - \mu_0}{\sigma/\sqrt{n}}$$
+
+Where:
+- $\bar{X}$ is the sample mean
+- $\mu_0$ is the hypothesized population mean
+- $\sigma$ is the population standard deviation
+- $n$ is the sample size
+
+**Assumptions:**
+1. Data is normally distributed (or n > 30 by CLT)
+2. Population standard deviation is known
+3. Independent observations
 
 ```python
-def one_sample_t_test_example():
-    """Test if sample mean differs from hypothesized value"""
-    # Generate sample data
-    true_mean = 100
-    true_std = 15
-    n = 30
-    sample = np.random.normal(true_mean, true_std, n)
+def z_test_manual(data, mu0, sigma, alpha=0.05):
+    """
+    Manual implementation of Z-test for population mean
     
-    # Hypothesized mean under null hypothesis
-    hypothesized_mean = 95
+    Mathematical steps:
+    1. Calculate sample mean: x̄ = (1/n) * Σxᵢ
+    2. Calculate standard error: SE = σ/√n
+    3. Calculate Z-statistic: Z = (x̄ - μ₀) / SE
+    4. Calculate p-value: P(|Z| > |z_observed|)
+    5. Make decision based on α
     
-    # Perform t-test
-    t_stat, p_value = ttest_1samp(sample, hypothesized_mean)
+    Parameters:
+    data: array-like, sample data
+    mu0: float, hypothesized population mean
+    sigma: float, known population standard deviation
+    alpha: float, significance level
     
-    # Calculate confidence interval
-    sample_mean = np.mean(sample)
-    sample_std = np.std(sample, ddof=1)
-    t_critical = stats.t.ppf(0.975, df=n-1)
-    margin_of_error = t_critical * sample_std / np.sqrt(n)
+    Returns:
+    dict: test results
+    """
+    n = len(data)
+    sample_mean = np.mean(data)
+    
+    # Step 1: Calculate standard error
+    standard_error = sigma / np.sqrt(n)
+    
+    # Step 2: Calculate Z-statistic
+    z_statistic = (sample_mean - mu0) / standard_error
+    
+    # Step 3: Calculate p-value (two-tailed)
+    p_value = 2 * (1 - stats.norm.cdf(abs(z_statistic)))
+    
+    # Step 4: Calculate critical values
+    z_critical = stats.norm.ppf(1 - alpha/2)
+    
+    # Step 5: Make decision
+    reject_null = abs(z_statistic) > z_critical
+    
+    # Step 6: Calculate confidence interval
+    margin_of_error = z_critical * standard_error
     ci_lower = sample_mean - margin_of_error
     ci_upper = sample_mean + margin_of_error
     
     return {
         'sample_mean': sample_mean,
-        'hypothesized_mean': hypothesized_mean,
-        't_statistic': t_stat,
+        'hypothesized_mean': mu0,
+        'standard_error': standard_error,
+        'z_statistic': z_statistic,
         'p_value': p_value,
+        'z_critical': z_critical,
+        'reject_null': reject_null,
         'confidence_interval': (ci_lower, ci_upper),
-        'sample': sample
+        'effect_size': abs(sample_mean - mu0) / sigma
     }
 
-t_test_results = one_sample_t_test_example()
-print("One-Sample t-Test")
-for key, value in t_test_results.items():
-    if key != 'sample':
-        print(f"{key}: {value}")
+# Example: Test if sample mean differs from hypothesized mean
+np.random.seed(42)
+sample_data = np.random.normal(105, 15, 50)  # True mean = 105, σ = 15
+mu0 = 100  # Hypothesized mean
+sigma = 15  # Known population standard deviation
+
+z_results = z_test_manual(sample_data, mu0, sigma)
+print("Z-Test Results:")
+for key, value in z_results.items():
+    if isinstance(value, tuple):
+        print(f"{key}: {value[0]:.3f} to {value[1]:.3f}")
+    else:
+        print(f"{key}: {value:.3f}")
 
 # Visualize the test
-plt.figure(figsize=(15, 5))
+plt.figure(figsize=(12, 4))
 
 # Sample distribution
 plt.subplot(1, 3, 1)
-plt.hist(t_test_results['sample'], bins=15, alpha=0.7, color='skyblue', edgecolor='black')
-plt.axvline(t_test_results['sample_mean'], color='red', linestyle='--', linewidth=2, label='Sample Mean')
-plt.axvline(t_test_results['hypothesized_mean'], color='green', linestyle='--', linewidth=2, label='Hypothesized Mean')
-plt.xlabel('Value')
-plt.ylabel('Frequency')
+plt.hist(sample_data, bins=15, alpha=0.7, density=True, color='skyblue', edgecolor='black')
+x = np.linspace(min(sample_data), max(sample_data), 100)
+plt.plot(x, stats.norm.pdf(x, np.mean(sample_data), np.std(sample_data, ddof=1)), 
+         'r-', linewidth=2, label='Sample distribution')
+plt.axvline(z_results['sample_mean'], color='red', linestyle='--', 
+            label=f'Sample mean: {z_results["sample_mean"]:.2f}')
+plt.axvline(mu0, color='green', linestyle='--', 
+            label=f'Hypothesized mean: {mu0}')
+plt.xlabel('Values')
+plt.ylabel('Density')
 plt.title('Sample Distribution')
 plt.legend()
 
-# t-distribution
+# Z-distribution
 plt.subplot(1, 3, 2)
-df = len(t_test_results['sample']) - 1
-x = np.linspace(-4, 4, 1000)
-y = stats.t.pdf(x, df)
-plt.plot(x, y, 'b-', linewidth=2)
-plt.fill_between(x, y, where=(x > abs(t_test_results['t_statistic'])) | (x < -abs(t_test_results['t_statistic'])), 
+z_range = np.linspace(-4, 4, 1000)
+z_pdf = stats.norm.pdf(z_range, 0, 1)
+plt.plot(z_range, z_pdf, 'b-', linewidth=2)
+plt.fill_between(z_range, z_pdf, where=(z_range > z_results['z_critical']) | (z_range < -z_results['z_critical']), 
                  alpha=0.3, color='red', label='Rejection region')
-plt.axvline(t_test_results['t_statistic'], color='red', linestyle='--', label=f't = {t_test_results["t_statistic"]:.2f}')
-plt.axvline(-t_test_results['t_statistic'], color='red', linestyle='--')
-plt.title('t-Distribution')
-plt.xlabel('t-score')
+plt.axvline(z_results['z_statistic'], color='red', linestyle='--', 
+            label=f'Z = {z_results["z_statistic"]:.2f}')
+plt.axvline(-z_results['z_statistic'], color='red', linestyle='--')
+plt.xlabel('Z-score')
 plt.ylabel('Density')
+plt.title('Z-Distribution')
 plt.legend()
 
 # Confidence interval
 plt.subplot(1, 3, 3)
-ci_lower, ci_upper = t_test_results['confidence_interval']
-plt.errorbar([1], [t_test_results['sample_mean']], 
-             yerr=[[t_test_results['sample_mean'] - ci_lower], [ci_upper - t_test_results['sample_mean']]], 
-             fmt='o', capsize=5, capthick=2, linewidth=2, label='95% CI')
-plt.axhline(t_test_results['hypothesized_mean'], color='green', linestyle='--', label='Hypothesized Mean')
+ci_lower, ci_upper = z_results['confidence_interval']
+plt.errorbar([1], [z_results['sample_mean']], 
+             yerr=[[z_results['sample_mean'] - ci_lower], [ci_upper - z_results['sample_mean']]], 
+             fmt='o', capsize=5, capthick=2, markersize=8, label='95% CI')
+plt.axhline(mu0, color='green', linestyle='--', label=f'H₀: μ = {mu0}')
 plt.xlim(0.5, 1.5)
 plt.ylabel('Mean')
 plt.title('Confidence Interval')
@@ -285,63 +368,156 @@ plt.tight_layout()
 plt.show()
 ```
 
-### Chi-Square Goodness-of-Fit Test
+### T-Test for Population Mean
+
+**Mathematical Foundation:**
+When population standard deviation is unknown, we use the t-test:
+
+$$t = \frac{\bar{X} - \mu_0}{s/\sqrt{n}}$$
+
+Where:
+- $s$ is the sample standard deviation
+- Degrees of freedom = n - 1
+
+**Key Differences from Z-test:**
+1. Uses sample standard deviation instead of population standard deviation
+2. Follows t-distribution instead of normal distribution
+3. Degrees of freedom affect the shape of the distribution
 
 ```python
-def chi_square_goodness_of_fit():
-    """Test if observed frequencies match expected frequencies"""
-    # Simulate dice rolls
-    n_rolls = 600
-    true_probabilities = [1/6] * 6  # Fair die
-    observed_counts = np.random.multinomial(n_rolls, true_probabilities)
+def t_test_manual(data, mu0, alpha=0.05):
+    """
+    Manual implementation of t-test for population mean
     
-    # Expected counts
-    expected_counts = [n_rolls * p for p in true_probabilities]
+    Mathematical steps:
+    1. Calculate sample mean: x̄ = (1/n) * Σxᵢ
+    2. Calculate sample standard deviation: s = √[Σ(xᵢ - x̄)² / (n-1)]
+    3. Calculate standard error: SE = s/√n
+    4. Calculate t-statistic: t = (x̄ - μ₀) / SE
+    5. Calculate p-value using t-distribution with df = n-1
+    6. Make decision based on α
     
-    # Perform chi-square test
-    chi2_stat, p_value = stats.chisquare(observed_counts, expected_counts)
+    Parameters:
+    data: array-like, sample data
+    mu0: float, hypothesized population mean
+    alpha: float, significance level
+    
+    Returns:
+    dict: test results
+    """
+    n = len(data)
+    df = n - 1  # degrees of freedom
+    
+    # Step 1: Calculate sample statistics
+    sample_mean = np.mean(data)
+    sample_std = np.std(data, ddof=1)  # ddof=1 for sample standard deviation
+    
+    # Step 2: Calculate standard error
+    standard_error = sample_std / np.sqrt(n)
+    
+    # Step 3: Calculate t-statistic
+    t_statistic = (sample_mean - mu0) / standard_error
+    
+    # Step 4: Calculate p-value (two-tailed)
+    p_value = 2 * (1 - stats.t.cdf(abs(t_statistic), df))
+    
+    # Step 5: Calculate critical values
+    t_critical = stats.t.ppf(1 - alpha/2, df)
+    
+    # Step 6: Make decision
+    reject_null = abs(t_statistic) > t_critical
+    
+    # Step 7: Calculate confidence interval
+    margin_of_error = t_critical * standard_error
+    ci_lower = sample_mean - margin_of_error
+    ci_upper = sample_mean + margin_of_error
+    
+    # Step 8: Calculate effect size (Cohen's d)
+    cohens_d = abs(sample_mean - mu0) / sample_std
     
     return {
-        'observed_counts': observed_counts,
-        'expected_counts': expected_counts,
-        'chi2_statistic': chi2_stat,
+        'sample_mean': sample_mean,
+        'sample_std': sample_std,
+        'hypothesized_mean': mu0,
+        'standard_error': standard_error,
+        't_statistic': t_statistic,
+        'degrees_of_freedom': df,
         'p_value': p_value,
-        'degrees_of_freedom': 5
+        't_critical': t_critical,
+        'reject_null': reject_null,
+        'confidence_interval': (ci_lower, ci_upper),
+        'cohens_d': cohens_d
     }
 
-chi2_results = chi_square_goodness_of_fit()
-print("Chi-Square Goodness-of-Fit Test")
-for key, value in chi2_results.items():
-    if key != 'observed_counts' and key != 'expected_counts':
-        print(f"{key}: {value:.4f}")
+# Example: Test if sample mean differs from hypothesized mean
+np.random.seed(42)
+sample_data = np.random.normal(105, 15, 30)  # True mean = 105, unknown σ
+mu0 = 100  # Hypothesized mean
 
-# Visualize
+t_results = t_test_manual(sample_data, mu0)
+print("T-Test Results:")
+for key, value in t_results.items():
+    if isinstance(value, tuple):
+        print(f"{key}: {value[0]:.3f} to {value[1]:.3f}")
+    else:
+        print(f"{key}: {value:.3f}")
+
+# Compare with scipy implementation
+scipy_t, scipy_p = ttest_1samp(sample_data, mu0)
+print(f"\nSciPy t-test: t = {scipy_t:.3f}, p = {scipy_p:.3f}")
+
+# Visualize t-distribution vs normal distribution
 plt.figure(figsize=(12, 4))
 
-# Observed vs expected
-plt.subplot(1, 2, 1)
-x = np.arange(1, 7)
-width = 0.35
-plt.bar(x - width/2, chi2_results['observed_counts'], width, label='Observed', alpha=0.7)
-plt.bar(x + width/2, chi2_results['expected_counts'], width, label='Expected', alpha=0.7)
-plt.xlabel('Die Face')
-plt.ylabel('Count')
-plt.title('Observed vs Expected Frequencies')
+# Sample distribution
+plt.subplot(1, 3, 1)
+plt.hist(sample_data, bins=10, alpha=0.7, density=True, color='skyblue', edgecolor='black')
+x = np.linspace(min(sample_data), max(sample_data), 100)
+plt.plot(x, stats.norm.pdf(x, np.mean(sample_data), np.std(sample_data, ddof=1)), 
+         'r-', linewidth=2, label='Sample distribution')
+plt.axvline(t_results['sample_mean'], color='red', linestyle='--', 
+            label=f'Sample mean: {t_results["sample_mean"]:.2f}')
+plt.axvline(mu0, color='green', linestyle='--', 
+            label=f'Hypothesized mean: {mu0}')
+plt.xlabel('Values')
+plt.ylabel('Density')
+plt.title('Sample Distribution')
 plt.legend()
 
-# Chi-square distribution
-plt.subplot(1, 2, 2)
-df = chi2_results['degrees_of_freedom']
-x = np.linspace(0, 20, 1000)
-y = stats.chi2.pdf(x, df)
-plt.plot(x, y, 'b-', linewidth=2)
-plt.fill_between(x, y, where=x > chi2_results['chi2_statistic'], 
+# T-distribution vs Normal
+plt.subplot(1, 3, 2)
+x = np.linspace(-4, 4, 1000)
+t_pdf = stats.t.pdf(x, t_results['degrees_of_freedom'])
+normal_pdf = stats.norm.pdf(x, 0, 1)
+plt.plot(x, t_pdf, 'b-', linewidth=2, label=f't-distribution (df={t_results["degrees_of_freedom"]})')
+plt.plot(x, normal_pdf, 'r--', linewidth=2, label='Normal distribution')
+plt.fill_between(x, t_pdf, where=(x > t_results['t_critical']) | (x < -t_results['t_critical']), 
                  alpha=0.3, color='red', label='Rejection region')
-plt.axvline(chi2_results['chi2_statistic'], color='red', linestyle='--', 
-           label=f'χ² = {chi2_results["chi2_statistic"]:.2f}')
-plt.title('Chi-Square Distribution')
-plt.xlabel('Chi-Square Statistic')
+plt.axvline(t_results['t_statistic'], color='red', linestyle='--', 
+            label=f't = {t_results["t_statistic"]:.2f}')
+plt.xlabel('t-score')
 plt.ylabel('Density')
+plt.title('T-Distribution vs Normal')
+plt.legend()
+
+# Effect size interpretation
+plt.subplot(1, 3, 3)
+effect_sizes = [0.2, 0.5, 0.8, 1.2]
+interpretations = ['Small', 'Medium', 'Large', 'Very Large']
+colors = ['lightblue', 'skyblue', 'blue', 'darkblue']
+
+for i, (effect, interpret, color) in enumerate(zip(effect_sizes, interpretations, colors)):
+    plt.bar(i, effect, color=color, alpha=0.7, label=interpret)
+
+plt.bar(4, t_results['cohens_d'], color='red', alpha=0.7, label='Observed')
+plt.axhline(0.2, color='gray', linestyle='--', alpha=0.5, label='Small threshold')
+plt.axhline(0.5, color='gray', linestyle='--', alpha=0.5, label='Medium threshold')
+plt.axhline(0.8, color='gray', linestyle='--', alpha=0.5, label='Large threshold')
+
+plt.xlabel('Effect Size Categories')
+plt.ylabel("Cohen's d")
+plt.title("Effect Size (Cohen's d)")
+plt.xticks(range(5), ['Small', 'Medium', 'Large', 'Very Large', 'Observed'])
 plt.legend()
 
 plt.tight_layout()
