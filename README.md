@@ -12,7 +12,7 @@ A comprehensive collection of mathematical concepts, methods, and Python impleme
 
 ## Overview
 
-This repository contains three major mathematical disciplines, each organized into progressive learning modules:
+This repository contains three major mathematical disciplines, each organized into progressive learning modules, plus a comprehensive resource collection:
 
 ### [Calculus](calculus/)
 Comprehensive coverage from fundamental concepts to advanced applications in machine learning:
@@ -38,6 +38,14 @@ Statistical foundations and methods for data science:
 - Regression analysis and time series
 - Multivariate statistics and Bayesian methods
 - Experimental design and statistical learning
+
+### [Resources](resource/)
+Additional reference materials and supplementary content:
+- Mathematical reference guides and textbooks
+- Probability and statistics resources
+- Linear algebra materials for deep learning
+- Numerical methods documentation
+- MIT course materials and additional learning resources
 
 ## Repository Structure
 
@@ -83,6 +91,16 @@ Math/
 │   ├── 10-advanced-topics.md
 │   ├── README.md                  # Learning guide
 │   └── SUMMARY.md                 # Complete summary
+├── resource/           # Reference materials and supplementary content
+│   ├── calculation_ref.pdf        # Mathematical calculation reference
+│   ├── linear_algebra_for_deep-Learning.pdf
+│   ├── math-of-ml-book.pdf        # Mathematics of Machine Learning
+│   ├── math51book.pdf             # Stanford Math 51 textbook
+│   ├── MIT_ProbStats.zip          # MIT Probability & Statistics materials
+│   ├── numerical_for_deep_learning.pdf
+│   ├── prob_for_deep_learning.pdf # Probability for Deep Learning
+│   ├── prob_reference.pdf         # Probability reference guide
+│   └── ProbabilityForComputerScientists.pdf
 └── README.md                      # This file
 ```
 
