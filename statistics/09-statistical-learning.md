@@ -63,9 +63,33 @@ sns.set_palette("husl")
 
 Cross-validation is a technique for assessing how well a model will generalize to new, unseen data. It helps prevent overfitting and provides a more reliable estimate of model performance.
 
+### Mathematical Foundation
+
+**Cross-Validation Framework:**
+The goal is to estimate the generalization error:
+$$E_{gen} = E_{(X,Y)}[L(Y, f(X))]$$
+where $L$ is the loss function and $f$ is our learned model.
+
+**K-Fold Cross-Validation:**
+1. Partition data into K folds: $D = D_1 \cup D_2 \cup ... \cup D_K$
+2. For each fold k, train on $D_{-k} = D \setminus D_k$ and validate on $D_k$
+3. Estimate generalization error:
+   $$\hat{E}_{CV} = \frac{1}{K}\sum_{k=1}^{K} \frac{1}{|D_k|}\sum_{(x_i,y_i) \in D_k} L(y_i, f_{-k}(x_i))$$
+   where $f_{-k}$ is the model trained on $D_{-k}$
+
+**Properties:**
+- **Unbiased**: $E[\hat{E}_{CV}] = E_{gen}$ under certain conditions
+- **Variance**: $Var(\hat{E}_{CV}) \approx \frac{1}{K}Var(L(Y,f(X))) + \frac{K-1}{K}Cov(L(Y,f_{-k}(X)), L(Y,f_{-k'}(X)))$
+
 ### 1.1 Holdout Validation
 
 The simplest form of validation splits data into training and test sets.
+
+**Mathematical Implementation:**
+- Training set: $D_{train} = \{(x_i, y_i)\}_{i=1}^{n_{train}}$
+- Test set: $D_{test} = \{(x_i, y_i)\}_{i=n_{train}+1}^{n}$
+- Model training: $f_{train} = \arg\min_f \sum_{i=1}^{n_{train}} L(y_i, f(x_i))$
+- Test error: $\hat{E}_{test} = \frac{1}{n_{test}}\sum_{i=n_{train}+1}^{n} L(y_i, f_{train}(x_i))$
 
 ```python
 # Generate sample data
@@ -88,11 +112,33 @@ test_score = model.score(X_test, y_test)
 
 print(f"Training R²: {train_score:.4f}")
 print(f"Test R²: {test_score:.4f}")
+
+# Calculate MSE for comparison
+train_mse = mean_squared_error(y_train, model.predict(X_train))
+test_mse = mean_squared_error(y_test, model.predict(X_test))
+print(f"Training MSE: {train_mse:.4f}")
+print(f"Test MSE: {test_mse:.4f}")
+
+# Overfitting check
+overfitting_ratio = train_mse / test_mse
+print(f"Overfitting ratio (train/test MSE): {overfitting_ratio:.3f}")
+if overfitting_ratio < 0.8:
+    print("Warning: Possible overfitting detected")
 ```
 
 ### 1.2 K-Fold Cross-Validation
 
 K-fold cross-validation divides data into K folds and trains K models, each using K-1 folds for training and 1 fold for validation.
+
+**Mathematical Implementation:**
+For K-fold CV with K=5:
+1. Partition: $D = D_1 \cup D_2 \cup D_3 \cup D_4 \cup D_5$
+2. Train models: $f_{-k}$ on $D \setminus D_k$ for k=1,2,3,4,5
+3. CV error: $\hat{E}_{CV} = \frac{1}{5}\sum_{k=1}^{5} \frac{1}{|D_k|}\sum_{(x_i,y_i) \in D_k} L(y_i, f_{-k}(x_i))$
+
+**Standard Error of CV Estimate:**
+$$SE(\hat{E}_{CV}) = \sqrt{\frac{1}{K(K-1)}\sum_{k=1}^{K}(E_k - \bar{E})^2}$$
+where $E_k$ is the error on fold k and $\bar{E}$ is the mean CV error.
 
 ```python
 # K-fold cross-validation
@@ -102,20 +148,89 @@ cv_scores = cross_val_score(LinearRegression(), X, y, cv=kfold, scoring='r2')
 print(f"Cross-validation scores: {cv_scores}")
 print(f"Mean CV score: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
 
+# Manual K-fold implementation for understanding
+def manual_kfold_cv(X, y, k=5, model_class=LinearRegression):
+    """
+    Manual implementation of K-fold cross-validation
+    
+    Mathematical steps:
+    1. Partition data into k folds
+    2. For each fold k:
+       - Train model on all folds except k
+       - Predict on fold k
+       - Calculate error
+    3. Average errors across all folds
+    
+    Parameters:
+    X: array-like, features
+    y: array-like, target
+    k: int, number of folds
+    model_class: class, model to use
+    
+    Returns:
+    tuple: (mean_score, std_score, fold_scores)
+    """
+    n_samples = len(X)
+    fold_size = n_samples // k
+    fold_scores = []
+    
+    for i in range(k):
+        # Define test indices for this fold
+        test_start = i * fold_size
+        test_end = test_start + fold_size if i < k-1 else n_samples
+        test_indices = list(range(test_start, test_end))
+        train_indices = list(set(range(n_samples)) - set(test_indices))
+        
+        # Split data
+        X_train_fold = X[train_indices]
+        y_train_fold = y[train_indices]
+        X_test_fold = X[test_indices]
+        y_test_fold = y[test_indices]
+        
+        # Train and evaluate
+        model = model_class()
+        model.fit(X_train_fold, y_train_fold)
+        score = model.score(X_test_fold, y_test_fold)
+        fold_scores.append(score)
+    
+    return np.mean(fold_scores), np.std(fold_scores), fold_scores
+
+manual_mean, manual_std, manual_scores = manual_kfold_cv(X, y, k=5)
+print(f"\nManual K-fold CV:")
+print(f"Mean score: {manual_mean:.4f}")
+print(f"Std score: {manual_std:.4f}")
+print(f"Individual fold scores: {[f'{s:.4f}' for s in manual_scores]}")
+
 # Visualize CV scores
-plt.figure(figsize=(10, 6))
-plt.subplot(1, 2, 1)
-plt.plot(range(1, 6), cv_scores, 'bo-')
+plt.figure(figsize=(12, 4))
+
+plt.subplot(1, 3, 1)
+plt.plot(range(1, 6), cv_scores, 'bo-', label='sklearn')
+plt.plot(range(1, 6), manual_scores, 'ro-', label='manual')
 plt.xlabel('Fold')
 plt.ylabel('R² Score')
 plt.title('K-Fold Cross-Validation Scores')
+plt.legend()
 plt.grid(True)
 
-plt.subplot(1, 2, 2)
-plt.boxplot(cv_scores)
+plt.subplot(1, 3, 2)
+plt.boxplot([cv_scores, manual_scores], labels=['sklearn', 'manual'])
 plt.ylabel('R² Score')
 plt.title('Distribution of CV Scores')
 plt.grid(True)
+
+plt.subplot(1, 3, 3)
+# Show fold assignments
+fold_assignments = np.zeros(len(X))
+for i, (train_idx, test_idx) in enumerate(kfold.split(X)):
+    fold_assignments[test_idx] = i + 1
+
+plt.scatter(range(len(X)), fold_assignments, alpha=0.6)
+plt.xlabel('Sample Index')
+plt.ylabel('Fold Assignment')
+plt.title('K-Fold Data Partitioning')
+plt.yticks(range(1, 6))
+
 plt.tight_layout()
 plt.show()
 ```
@@ -124,6 +239,15 @@ plt.show()
 
 LOOCV uses n-1 samples for training and 1 sample for validation, repeated n times.
 
+**Mathematical Implementation:**
+$$\hat{E}_{LOOCV} = \frac{1}{n}\sum_{i=1}^{n} L(y_i, f_{-i}(x_i))$$
+where $f_{-i}$ is trained on all data except observation i.
+
+**Properties:**
+- **Unbiased**: $E[\hat{E}_{LOOCV}] = E_{gen}$
+- **High Variance**: Due to high correlation between predictions
+- **Computational Cost**: O(n) model fits
+
 ```python
 # Leave-One-Out CV (computationally expensive for large datasets)
 loocv = LeaveOneOut()
@@ -131,17 +255,55 @@ loocv_scores = cross_val_score(LinearRegression(), X[:100], y[:100], cv=loocv, s
 
 print(f"LOOCV mean score: {loocv_scores.mean():.4f}")
 print(f"LOOCV std score: {loocv_scores.std():.4f}")
+
+# Compare with K-fold
+kfold_scores = cross_val_score(LinearRegression(), X[:100], y[:100], cv=5, scoring='r2')
+print(f"5-fold CV mean score: {kfold_scores.mean():.4f}")
+print(f"5-fold CV std score: {kfold_scores.std():.4f}")
+
+# Computational comparison
+import time
+
+# Time K-fold
+start_time = time.time()
+kfold_scores = cross_val_score(LinearRegression(), X[:100], y[:100], cv=5, scoring='r2')
+kfold_time = time.time() - start_time
+
+# Time LOOCV
+start_time = time.time()
+loocv_scores = cross_val_score(LinearRegression(), X[:100], y[:100], cv=LeaveOneOut(), scoring='r2')
+loocv_time = time.time() - start_time
+
+print(f"\nComputational Comparison:")
+print(f"K-fold time: {kfold_time:.3f} seconds")
+print(f"LOOCV time: {loocv_time:.3f} seconds")
+print(f"Speed ratio: {loocv_time/kfold_time:.1f}x slower")
 ```
 
 ### 1.4 Stratified Cross-Validation
 
 For classification problems, stratified CV maintains the proportion of samples for each class.
 
+**Mathematical Implementation:**
+For binary classification with classes 0 and 1:
+- Original proportions: $p_0 = \frac{n_0}{n}$, $p_1 = \frac{n_1}{n}$
+- In each fold k: maintain $p_0^{(k)} \approx p_0$, $p_1^{(k)} \approx p_1$
+
+**Benefits:**
+1. **Balanced Folds**: Prevents folds with only one class
+2. **Better Estimates**: More reliable performance estimates
+3. **Reduced Variance**: Especially important for imbalanced datasets
+
 ```python
 # Generate classification data
 np.random.seed(42)
 X_clf = np.random.randn(1000, 5)
 y_clf = (X_clf[:, 0] + X_clf[:, 1] > 0).astype(int)
+
+# Check class distribution
+print(f"Original class distribution:")
+print(f"Class 0: {np.sum(y_clf == 0)} ({np.mean(y_clf == 0)*100:.1f}%)")
+print(f"Class 1: {np.sum(y_clf == 1)} ({np.mean(y_clf == 1)*100:.1f}%)")
 
 # Stratified K-fold for classification
 stratified_kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -150,7 +312,25 @@ clf_scores = cross_val_score(
     cv=stratified_kfold, scoring='accuracy'
 )
 
-print(f"Stratified CV accuracy: {clf_scores.mean():.4f} (+/- {clf_scores.std() * 2:.4f})")
+print(f"\nStratified CV accuracy: {clf_scores.mean():.4f} (+/- {clf_scores.std() * 2:.4f})")
+
+# Compare with regular K-fold
+regular_kfold = KFold(n_splits=5, shuffle=True, random_state=42)
+regular_scores = cross_val_score(
+    LogisticRegression(), X_clf, y_clf, 
+    cv=regular_kfold, scoring='accuracy'
+)
+
+print(f"Regular CV accuracy: {regular_scores.mean():.4f} (+/- {regular_scores.std() * 2:.4f})")
+
+# Check class distribution in folds
+print(f"\nClass distribution in first fold (stratified):")
+for i, (train_idx, test_idx) in enumerate(stratified_kfold.split(X_clf, y_clf)):
+    if i == 0:  # Show only first fold
+        test_y = y_clf[test_idx]
+        print(f"Test fold - Class 0: {np.sum(test_y == 0)} ({np.mean(test_y == 0)*100:.1f}%)")
+        print(f"Test fold - Class 1: {np.sum(test_y == 1)} ({np.mean(test_y == 1)*100:.1f}%)")
+        break
 ```
 
 ---
@@ -159,11 +339,40 @@ print(f"Stratified CV accuracy: {clf_scores.mean():.4f} (+/- {clf_scores.std() *
 
 The bias-variance tradeoff is a fundamental concept in machine learning that describes the relationship between model complexity and generalization error.
 
+### Mathematical Foundation
+
+**Decomposition of Expected Prediction Error:**
+For a model $f(x)$ and true function $f^*(x)$:
+$$E[(Y - f(X))^2] = \underbrace{(E[f(X)] - f^*(X))^2}_{\text{Bias}^2} + \underbrace{E[(f(X) - E[f(X)])^2]}_{\text{Variance}} + \underbrace{\sigma^2}_{\text{Irreducible Error}}$$
+
+**Interpretation:**
+- **Bias**: How far the average prediction is from the true value (underfitting)
+- **Variance**: How much predictions vary around their average (overfitting)
+- **Irreducible Error**: Noise in the data that cannot be reduced
+
+**Tradeoff:**
+- **Simple models**: High bias, low variance
+- **Complex models**: Low bias, high variance
+- **Optimal complexity**: Minimizes total error
+
 ### 2.1 Understanding Bias and Variance
 
 ```python
 def generate_polynomial_data(n_samples=100, noise=0.1, degree=1):
-    """Generate polynomial data with noise"""
+    """
+    Generate polynomial data with noise
+    
+    Mathematical implementation:
+    y = f*(x) + ε where f*(x) = 2x + 1 and ε ~ N(0, noise²)
+    
+    Parameters:
+    n_samples: int, number of samples
+    noise: float, standard deviation of noise
+    degree: int, true polynomial degree (always 1 in this case)
+    
+    Returns:
+    tuple: (X, y_noisy, y_true)
+    """
     np.random.seed(42)
     X = np.linspace(-3, 3, n_samples)
     y_true = 2 * X + 1  # True linear relationship
@@ -171,7 +380,20 @@ def generate_polynomial_data(n_samples=100, noise=0.1, degree=1):
     return X.reshape(-1, 1), y_noisy, y_true
 
 def fit_polynomial(X, y, degree):
-    """Fit polynomial of given degree"""
+    """
+    Fit polynomial of given degree
+    
+    Mathematical implementation:
+    f(x) = β₀ + β₁x + β₂x² + ... + βₖxᵏ
+    
+    Parameters:
+    X: array-like, features
+    y: array-like, target
+    degree: int, polynomial degree
+    
+    Returns:
+    Pipeline: fitted polynomial model
+    """
     from sklearn.preprocessing import PolynomialFeatures
     from sklearn.pipeline import Pipeline
     from sklearn.linear_model import LinearRegression
@@ -184,6 +406,61 @@ def fit_polynomial(X, y, degree):
     model.fit(X, y)
     return model
 
+def estimate_bias_variance(X, y, model_class, n_bootstrap=100):
+    """
+    Estimate bias and variance using bootstrap sampling
+    
+    Mathematical implementation:
+    1. Generate B bootstrap samples
+    2. Train model on each bootstrap sample: f^b(x)
+    3. Calculate predictions: f^b(xᵢ) for each sample
+    4. Bias² = (E[f^b(x)] - f*(x))²
+    5. Variance = E[(f^b(x) - E[f^b(x)])²]
+    
+    Parameters:
+    X: array-like, features
+    y: array-like, target
+    model_class: class, model to use
+    n_bootstrap: int, number of bootstrap samples
+    
+    Returns:
+    tuple: (bias_squared, variance, total_error)
+    """
+    n_samples = len(X)
+    predictions = np.zeros((n_bootstrap, n_samples))
+    
+    # Generate bootstrap samples and predictions
+    for i in range(n_bootstrap):
+        # Bootstrap sample
+        indices = np.random.choice(n_samples, n_samples, replace=True)
+        X_boot = X[indices]
+        y_boot = y[indices]
+        
+        # Train model
+        model = model_class()
+        model.fit(X_boot, y_boot)
+        
+        # Predict on original X
+        predictions[i, :] = model.predict(X)
+    
+    # Calculate bias and variance
+    mean_predictions = np.mean(predictions, axis=0)
+    
+    # Bias² = (E[f(x)] - f*(x))²
+    # We approximate f*(x) with the true function values
+    X_flat = X.flatten()
+    true_function = 2 * X_flat + 1  # True f*(x)
+    bias_squared = np.mean((mean_predictions - true_function)**2)
+    
+    # Variance = E[(f(x) - E[f(x)])²]
+    variance = np.mean(np.var(predictions, axis=0))
+    
+    # Total error = Bias² + Variance + Irreducible Error
+    irreducible_error = 0.1**2  # noise variance
+    total_error = bias_squared + variance + irreducible_error
+    
+    return bias_squared, variance, total_error
+
 # Generate data
 X, y, y_true = generate_polynomial_data(n_samples=50, noise=0.5)
 
@@ -191,86 +468,101 @@ X, y, y_true = generate_polynomial_data(n_samples=50, noise=0.5)
 degrees = [1, 3, 10, 15]
 models = []
 predictions = []
+bias_var_results = []
 
 for degree in degrees:
     model = fit_polynomial(X, y, degree)
     models.append(model)
     pred = model.predict(X)
     predictions.append(pred)
+    
+    # Estimate bias and variance
+    bias_sq, var, total_err = estimate_bias_variance(X, y, 
+                                                   lambda: fit_polynomial(X, y, degree))
+    bias_var_results.append({
+        'degree': degree,
+        'bias_squared': bias_sq,
+        'variance': var,
+        'total_error': total_err
+    })
 
 # Visualize bias-variance tradeoff
-plt.figure(figsize=(15, 10))
+plt.figure(figsize=(15, 5))
 
-for i, (degree, pred) in enumerate(zip(degrees, predictions)):
-    plt.subplot(2, 2, i+1)
-    plt.scatter(X, y, alpha=0.6, label='Data')
-    plt.plot(X, y_true, 'g-', linewidth=2, label='True relationship')
-    plt.plot(X, pred, 'r-', linewidth=2, label=f'Degree {degree}')
-    plt.title(f'Polynomial Degree {degree}')
-    plt.xlabel('X')
-    plt.ylabel('y')
-    plt.legend()
-    plt.grid(True)
+# Model fits
+plt.subplot(1, 3, 1)
+X_plot = np.linspace(-3, 3, 100).reshape(-1, 1)
+colors = ['blue', 'green', 'orange', 'red']
 
-plt.tight_layout()
-plt.show()
+for i, (degree, pred, color) in enumerate(zip(degrees, predictions, colors)):
+    plt.plot(X_plot.flatten(), models[i].predict(X_plot), 
+             color=color, linewidth=2, label=f'Degree {degree}')
 
-# Calculate bias and variance
-def calculate_bias_variance(X, y, y_true, model, n_iterations=100):
-    """Calculate bias and variance of model predictions"""
-    predictions = []
-    
-    for _ in range(n_iterations):
-        # Add noise to data
-        y_noisy = y + np.random.normal(0, 0.1, len(y))
-        model.fit(X, y_noisy)
-        pred = model.predict(X)
-        predictions.append(pred)
-    
-    predictions = np.array(predictions)
-    mean_pred = np.mean(predictions, axis=0)
-    
-    # Bias: difference between mean prediction and true values
-    bias = np.mean((mean_pred - y_true) ** 2)
-    
-    # Variance: variability of predictions
-    variance = np.mean(np.var(predictions, axis=0))
-    
-    return bias, variance
+plt.scatter(X.flatten(), y, alpha=0.6, color='black', label='Data')
+plt.plot(X.flatten(), y_true, 'k--', linewidth=2, label='True function')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('Polynomial Fits')
+plt.legend()
+plt.grid(True)
 
-# Calculate for different polynomial degrees
-bias_scores = []
-variance_scores = []
+# Bias-Variance decomposition
+plt.subplot(1, 3, 2)
+degrees_plot = [r['degree'] for r in bias_var_results]
+bias_sq_plot = [r['bias_squared'] for r in bias_var_results]
+variance_plot = [r['variance'] for r in bias_var_results]
+total_error_plot = [r['total_error'] for r in bias_var_results]
 
-for degree in degrees:
-    model = fit_polynomial(X, y, degree)
-    bias, variance = calculate_bias_variance(X, y, y_true, model)
-    bias_scores.append(bias)
-    variance_scores.append(variance)
-
-# Plot bias-variance tradeoff
-plt.figure(figsize=(12, 5))
-
-plt.subplot(1, 2, 1)
-plt.plot(degrees, bias_scores, 'bo-', label='Bias²')
-plt.plot(degrees, variance_scores, 'ro-', label='Variance')
+plt.plot(degrees_plot, bias_sq_plot, 'bo-', linewidth=2, label='Bias²')
+plt.plot(degrees_plot, variance_plot, 'ro-', linewidth=2, label='Variance')
+plt.plot(degrees_plot, total_error_plot, 'go-', linewidth=2, label='Total Error')
 plt.xlabel('Polynomial Degree')
 plt.ylabel('Error')
 plt.title('Bias-Variance Tradeoff')
 plt.legend()
 plt.grid(True)
 
-plt.subplot(1, 2, 2)
-total_error = np.array(bias_scores) + np.array(variance_scores)
-plt.plot(degrees, total_error, 'go-', label='Total Error')
+# Training vs Test error
+plt.subplot(1, 3, 3)
+train_errors = []
+test_errors = []
+
+for degree in degrees:
+    model = fit_polynomial(X, y, degree)
+    
+    # Training error
+    train_pred = model.predict(X)
+    train_error = mean_squared_error(y, train_pred)
+    train_errors.append(train_error)
+    
+    # Test error (simulate with new data)
+    X_test = np.random.uniform(-3, 3, 100).reshape(-1, 1)
+    y_test_true = 2 * X_test.flatten() + 1
+    y_test_noisy = y_test_true + np.random.normal(0, 0.5, 100)
+    test_pred = model.predict(X_test)
+    test_error = mean_squared_error(y_test_noisy, test_pred)
+    test_errors.append(test_error)
+
+plt.plot(degrees, train_errors, 'bo-', linewidth=2, label='Training Error')
+plt.plot(degrees, test_errors, 'ro-', linewidth=2, label='Test Error')
 plt.xlabel('Polynomial Degree')
-plt.ylabel('Total Error')
-plt.title('Total Error (Bias² + Variance)')
+plt.ylabel('Mean Squared Error')
+plt.title('Training vs Test Error')
 plt.legend()
 plt.grid(True)
 
 plt.tight_layout()
 plt.show()
+
+# Print numerical results
+print("Bias-Variance Analysis:")
+for result in bias_var_results:
+    print(f"Degree {result['degree']}:")
+    print(f"  Bias²: {result['bias_squared']:.4f}")
+    print(f"  Variance: {result['variance']:.4f}")
+    print(f"  Total Error: {result['total_error']:.4f}")
+    print(f"  Bias/Variance Ratio: {result['bias_squared']/result['variance']:.2f}")
+    print()
 ```
 
 ---
