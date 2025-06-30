@@ -38,90 +38,686 @@ sns.set_palette("husl")
 np.random.seed(42)
 ```
 
-## Bayesian Inference Fundamentals
+## Bayesian Inference
 
-### Bayes' Theorem Implementation
+Bayesian inference provides a coherent framework for updating beliefs about parameters based on observed data, combining prior knowledge with new evidence.
+
+### Mathematical Foundation
+
+**Bayes' Theorem:**
+$$P(\theta | D) = \frac{P(D | \theta) P(\theta)}{P(D)}$$
+
+Where:
+- $P(\theta | D)$ = **Posterior distribution** (updated belief about θ given data)
+- $P(D | \theta)$ = **Likelihood function** (probability of data given θ)
+- $P(\theta)$ = **Prior distribution** (initial belief about θ)
+- $P(D)$ = **Evidence/Marginal likelihood** (normalizing constant)
+
+**Continuous Case:**
+$$f(\theta | D) = \frac{f(D | \theta) f(\theta)}{\int f(D | \theta) f(\theta) d\theta}$$
+
+**Log-Posterior:**
+$$\log f(\theta | D) = \log f(D | \theta) + \log f(\theta) - \log \int f(D | \theta) f(\theta) d\theta$$
+
+### Prior Distributions
+
+**Conjugate Priors:**
+A prior is **conjugate** to a likelihood if the posterior belongs to the same family as the prior.
+
+**Common Conjugate Pairs:**
+
+**1. Normal-Normal:**
+- Likelihood: $X_i \sim N(\mu, \sigma^2)$ (σ² known)
+- Prior: $\mu \sim N(\mu_0, \tau_0^2)$
+- Posterior: $\mu | D \sim N(\mu_n, \tau_n^2)$
+
+Where:
+$$\mu_n = \frac{\frac{\mu_0}{\tau_0^2} + \frac{n\bar{x}}{\sigma^2}}{\frac{1}{\tau_0^2} + \frac{n}{\sigma^2}}$$
+$$\frac{1}{\tau_n^2} = \frac{1}{\tau_0^2} + \frac{n}{\sigma^2}$$
+
+**2. Beta-Binomial:**
+- Likelihood: $X \sim \text{Binomial}(n, \theta)$
+- Prior: $\theta \sim \text{Beta}(\alpha, \beta)$
+- Posterior: $\theta | D \sim \text{Beta}(\alpha + x, \beta + n - x)$
+
+**3. Gamma-Poisson:**
+- Likelihood: $X_i \sim \text{Poisson}(\lambda)$
+- Prior: $\lambda \sim \text{Gamma}(\alpha, \beta)$
+- Posterior: $\lambda | D \sim \text{Gamma}(\alpha + \sum x_i, \beta + n)$
+
+**4. Inverse Gamma-Normal:**
+- Likelihood: $X_i \sim N(\mu, \sigma^2)$ (μ known)
+- Prior: $\sigma^2 \sim \text{InvGamma}(\alpha, \beta)$
+- Posterior: $\sigma^2 | D \sim \text{InvGamma}(\alpha + n/2, \beta + \frac{1}{2}\sum(x_i - \mu)^2)$
+
+**Non-Informative Priors:**
+
+**1. Jeffreys Prior:**
+$$f(\theta) \propto \sqrt{I(\theta)}$$
+
+Where $I(\theta)$ is the Fisher information:
+$$I(\theta) = -E\left[\frac{\partial^2}{\partial \theta^2} \log f(X | \theta)\right]$$
+
+**2. Uniform Prior:**
+$$f(\theta) \propto 1$$
+
+**3. Reference Prior:**
+Maximizes the expected Kullback-Leibler divergence between prior and posterior.
+
+### Posterior Analysis
+
+**Posterior Mean (Bayes Estimator):**
+$$\hat{\theta}_{Bayes} = E[\theta | D] = \int \theta f(\theta | D) d\theta$$
+
+**Posterior Variance:**
+$$\text{Var}(\theta | D) = E[(\theta - \hat{\theta}_{Bayes})^2 | D]$$
+
+**Posterior Mode (Maximum A Posteriori):**
+$$\hat{\theta}_{MAP} = \arg\max_{\theta} f(\theta | D)$$
+
+**Credible Intervals:**
+A $(1-\alpha)$ credible interval satisfies:
+$$P(\theta_L \leq \theta \leq \theta_U | D) = 1 - \alpha$$
+
+**Highest Posterior Density (HPD) Interval:**
+The shortest interval containing $(1-\alpha)$ of the posterior probability.
+
+### Predictive Distributions
+
+**Posterior Predictive Distribution:**
+$$f(x_{new} | D) = \int f(x_{new} | \theta) f(\theta | D) d\theta$$
+
+**Prior Predictive Distribution:**
+$$f(x) = \int f(x | \theta) f(\theta) d\theta$$
+
+### Model Comparison
+
+**Bayes Factor:**
+$$BF_{12} = \frac{P(D | M_1)}{P(D | M_2)} = \frac{\int f(D | \theta_1, M_1) f(\theta_1 | M_1) d\theta_1}{\int f(D | \theta_2, M_2) f(\theta_2 | M_2) d\theta_2}$$
+
+**Posterior Model Probabilities:**
+$$P(M_i | D) = \frac{P(D | M_i) P(M_i)}{\sum_j P(D | M_j) P(M_j)}$$
+
+### Computational Methods
+
+**1. Markov Chain Monte Carlo (MCMC):**
+- **Metropolis-Hastings Algorithm**
+- **Gibbs Sampling**
+- **Hamiltonian Monte Carlo**
+
+**2. Variational Inference:**
+Approximate the posterior with a simpler distribution.
+
+**3. Laplace Approximation:**
+Approximate the posterior as a normal distribution around the MAP.
 
 ```python
-def bayesian_update_example():
-    """Demonstrate Bayesian updating with coin flips"""
-    
-    # Prior: Beta distribution (conjugate prior for Bernoulli)
-    prior_alpha, prior_beta = 2, 2  # Beta(2,2) - slightly favoring heads
-    
-    # Data: sequence of coin flips
-    flips = [1, 0, 1, 1, 0, 1, 1, 1, 0, 1]  # 7 heads, 3 tails
-    
-    # Calculate posterior
-    posterior_alpha = prior_alpha + sum(flips)
-    posterior_beta = prior_beta + len(flips) - sum(flips)
-    
-    # Generate points for plotting
-    theta = np.linspace(0, 1, 1000)
-    prior_pdf = beta.pdf(theta, prior_alpha, prior_beta)
-    posterior_pdf = beta.pdf(theta, posterior_alpha, posterior_beta)
-    
-    return theta, prior_pdf, posterior_pdf, flips
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+from scipy.optimize import minimize
+import seaborn as sns
 
-theta, prior_pdf, posterior_pdf, flips = bayesian_update_example()
+def normal_normal_conjugate(x, mu0, tau0_sq, sigma_sq):
+    """
+    Normal-Normal conjugate pair
+    
+    Mathematical implementation:
+    Prior: μ ~ N(μ₀, τ₀²)
+    Likelihood: Xᵢ ~ N(μ, σ²)
+    Posterior: μ|D ~ N(μₙ, τₙ²)
+    
+    Where:
+    μₙ = (μ₀/τ₀² + nẍ/σ²) / (1/τ₀² + n/σ²)
+    1/τₙ² = 1/τ₀² + n/σ²
+    
+    Parameters:
+    x: array, observed data
+    mu0: float, prior mean
+    tau0_sq: float, prior variance
+    sigma_sq: float, known data variance
+    
+    Returns:
+    tuple: (posterior_mean, posterior_variance)
+    """
+    n = len(x)
+    x_bar = np.mean(x)
+    
+    # Posterior parameters
+    tau_n_sq_inv = 1/tau0_sq + n/sigma_sq
+    tau_n_sq = 1/tau_n_sq_inv
+    
+    mu_n = (mu0/tau0_sq + n*x_bar/sigma_sq) / tau_n_sq_inv
+    
+    return mu_n, tau_n_sq
 
-print("Bayesian Coin Flip Example")
-print(f"Prior: Beta({2}, {2})")
-print(f"Data: {flips}")
-print(f"Posterior: Beta({2 + sum(flips)}, {2 + len(flips) - sum(flips)})")
+def beta_binomial_conjugate(x, n, alpha, beta):
+    """
+    Beta-Binomial conjugate pair
+    
+    Mathematical implementation:
+    Prior: θ ~ Beta(α, β)
+    Likelihood: X ~ Binomial(n, θ)
+    Posterior: θ|D ~ Beta(α + x, β + n - x)
+    
+    Parameters:
+    x: int, number of successes
+    n: int, number of trials
+    alpha, beta: float, prior parameters
+    
+    Returns:
+    tuple: (posterior_alpha, posterior_beta)
+    """
+    alpha_post = alpha + x
+    beta_post = beta + n - x
+    
+    return alpha_post, beta_post
 
-# Visualize Bayesian updating
-plt.figure(figsize=(15, 5))
+def gamma_poisson_conjugate(x, alpha, beta):
+    """
+    Gamma-Poisson conjugate pair
+    
+    Mathematical implementation:
+    Prior: λ ~ Gamma(α, β)
+    Likelihood: Xᵢ ~ Poisson(λ)
+    Posterior: λ|D ~ Gamma(α + Σxᵢ, β + n)
+    
+    Parameters:
+    x: array, observed data
+    alpha, beta: float, prior parameters
+    
+    Returns:
+    tuple: (posterior_alpha, posterior_beta)
+    """
+    n = len(x)
+    sum_x = np.sum(x)
+    
+    alpha_post = alpha + sum_x
+    beta_post = beta + n
+    
+    return alpha_post, beta_post
 
-# Prior distribution
-plt.subplot(1, 3, 1)
-plt.plot(theta, prior_pdf, 'b-', linewidth=2, label='Prior')
-plt.fill_between(theta, prior_pdf, alpha=0.3, color='blue')
-plt.xlabel('θ (Probability of Heads)')
+def jeffreys_prior_normal():
+    """
+    Jeffreys prior for normal distribution with unknown mean
+    
+    Mathematical implementation:
+    f(μ) ∝ 1 (uniform prior)
+    f(σ²) ∝ 1/σ² (scale-invariant prior)
+    """
+    return "f(μ) ∝ 1, f(σ²) ∝ 1/σ²"
+
+def posterior_predictive_normal(mu_post, sigma_post_sq, sigma_data_sq):
+    """
+    Posterior predictive distribution for normal model
+    
+    Mathematical implementation:
+    X_new|D ~ N(μ_post, σ_post² + σ_data²)
+    
+    Parameters:
+    mu_post: float, posterior mean
+    sigma_post_sq: float, posterior variance
+    sigma_data_sq: float, data variance
+    
+    Returns:
+    tuple: (predictive_mean, predictive_variance)
+    """
+    pred_mean = mu_post
+    pred_var = sigma_post_sq + sigma_data_sq
+    
+    return pred_mean, pred_var
+
+def bayes_factor_normal(x, mu1, sigma1_sq, mu2, sigma2_sq, prior1=0.5, prior2=0.5):
+    """
+    Calculate Bayes factor for two normal models
+    
+    Mathematical implementation:
+    BF₁₂ = P(D|M₁) / P(D|M₂)
+    
+    Parameters:
+    x: array, observed data
+    mu1, sigma1_sq: parameters of model 1
+    mu2, sigma2_sq: parameters of model 2
+    prior1, prior2: prior model probabilities
+    
+    Returns:
+    float: Bayes factor
+    """
+    n = len(x)
+    
+    # Calculate marginal likelihoods
+    def marginal_likelihood_normal(x, mu, sigma_sq):
+        # Assuming conjugate normal-normal with non-informative prior
+        x_bar = np.mean(x)
+        s_sq = np.var(x, ddof=1)
+        
+        # Marginal likelihood for normal with unknown mean
+        log_ml = -(n/2) * np.log(2*np.pi) - (n/2) * np.log(sigma_sq) - \
+                 (1/(2*sigma_sq)) * (np.sum((x - x_bar)**2) + n*(x_bar - mu)**2)
+        return np.exp(log_ml)
+    
+    ml1 = marginal_likelihood_normal(x, mu1, sigma1_sq)
+    ml2 = marginal_likelihood_normal(x, mu2, sigma2_sq)
+    
+    bayes_factor = ml1 / ml2
+    return bayes_factor
+
+def credible_interval_normal(mu_post, sigma_post_sq, alpha=0.05):
+    """
+    Calculate credible interval for normal posterior
+    
+    Mathematical implementation:
+    P(μ_L ≤ μ ≤ μ_U | D) = 1 - α
+    
+    Parameters:
+    mu_post: float, posterior mean
+    sigma_post_sq: float, posterior variance
+    alpha: float, significance level
+    
+    Returns:
+    tuple: (lower_bound, upper_bound)
+    """
+    z_alpha_2 = stats.norm.ppf(1 - alpha/2)
+    margin = z_alpha_2 * np.sqrt(sigma_post_sq)
+    
+    lower = mu_post - margin
+    upper = mu_post + margin
+    
+    return lower, upper
+
+def metropolis_hastings_normal(log_posterior, x0, n_samples=10000, proposal_std=0.1):
+    """
+    Metropolis-Hastings algorithm for normal posterior
+    
+    Mathematical implementation:
+    1. Propose θ* ~ q(θ*|θₜ)
+    2. Accept with probability min(1, f(θ*|D)/f(θₜ|D) × q(θₜ|θ*)/q(θ*|θₜ))
+    
+    Parameters:
+    log_posterior: function, log posterior density
+    x0: float, initial value
+    n_samples: int, number of samples
+    proposal_std: float, proposal standard deviation
+    
+    Returns:
+    array: MCMC samples
+    """
+    samples = np.zeros(n_samples)
+    samples[0] = x0
+    
+    accepted = 0
+    
+    for i in range(1, n_samples):
+        # Propose new value
+        proposal = np.random.normal(samples[i-1], proposal_std)
+        
+        # Calculate acceptance probability
+        log_alpha = log_posterior(proposal) - log_posterior(samples[i-1])
+        alpha = min(1, np.exp(log_alpha))
+        
+        # Accept or reject
+        if np.random.random() < alpha:
+            samples[i] = proposal
+            accepted += 1
+        else:
+            samples[i] = samples[i-1]
+    
+    acceptance_rate = accepted / (n_samples - 1)
+    print(f"Acceptance rate: {acceptance_rate:.3f}")
+    
+    return samples
+
+def laplace_approximation(log_posterior, x0):
+    """
+    Laplace approximation to posterior
+    
+    Mathematical implementation:
+    f(θ|D) ≈ N(θ̂, -1/H(θ̂))
+    where θ̂ is the MAP and H(θ̂) is the Hessian at θ̂
+    
+    Parameters:
+    log_posterior: function, log posterior density
+    x0: float, initial guess
+    
+    Returns:
+    tuple: (map_estimate, laplace_variance)
+    """
+    # Find MAP
+    result = minimize(lambda x: -log_posterior(x), x0, method='BFGS')
+    map_estimate = result.x[0]
+    
+    # Calculate Hessian (second derivative)
+    h = 1e-6
+    hessian = -(log_posterior(map_estimate + h) - 2*log_posterior(map_estimate) + 
+                log_posterior(map_estimate - h)) / (h**2)
+    
+    laplace_variance = 1 / hessian
+    
+    return map_estimate, laplace_variance
+
+# Example: Normal-Normal conjugate analysis
+np.random.seed(42)
+
+# True parameters
+true_mu = 5.0
+true_sigma = 2.0
+n_data = 20
+
+# Generate data
+data = np.random.normal(true_mu, true_sigma, n_data)
+
+# Prior parameters
+mu0 = 0.0
+tau0_sq = 10.0
+sigma_sq = true_sigma**2  # Assume known
+
+print("Bayesian Inference: Normal-Normal Conjugate Analysis")
+print("=" * 60)
+
+# Calculate posterior
+mu_post, tau_post_sq = normal_normal_conjugate(data, mu0, tau0_sq, sigma_sq)
+
+print(f"Data: n = {n_data}, x̄ = {np.mean(data):.3f}, s² = {np.var(data, ddof=1):.3f}")
+print(f"Prior: μ ~ N({mu0}, {tau0_sq})")
+print(f"Posterior: μ|D ~ N({mu_post:.3f}, {tau_post_sq:.3f})")
+
+# Compare with frequentist estimate
+freq_estimate = np.mean(data)
+freq_var = sigma_sq / n_data
+
+print(f"\nComparison:")
+print(f"Frequentist: μ̂ = {freq_estimate:.3f}, Var(μ̂) = {freq_var:.3f}")
+print(f"Bayesian: μ̂ = {mu_post:.3f}, Var(μ|D) = {tau_post_sq:.3f}")
+
+# Credible interval
+ci_lower, ci_upper = credible_interval_normal(mu_post, tau_post_sq, alpha=0.05)
+print(f"95% Credible Interval: [{ci_lower:.3f}, {ci_upper:.3f}]")
+
+# Posterior predictive distribution
+pred_mean, pred_var = posterior_predictive_normal(mu_post, tau_post_sq, sigma_sq)
+print(f"Posterior Predictive: X_new|D ~ N({pred_mean:.3f}, {pred_var:.3f})")
+
+# MCMC sampling
+def log_posterior_normal(mu):
+    """Log posterior for normal model with normal prior"""
+    # Log likelihood
+    log_likelihood = -0.5 * np.sum((data - mu)**2) / sigma_sq
+    
+    # Log prior
+    log_prior = -0.5 * (mu - mu0)**2 / tau0_sq
+    
+    return log_likelihood + log_prior
+
+mcmc_samples = metropolis_hastings_normal(log_posterior_normal, x0=0.0, n_samples=5000)
+print(f"MCMC mean: {np.mean(mcmc_samples):.3f}")
+print(f"MCMC variance: {np.var(mcmc_samples):.3f}")
+
+# Laplace approximation
+map_est, laplace_var = laplace_approximation(log_posterior_normal, x0=0.0)
+print(f"Laplace approximation: μ̂ = {map_est:.3f}, Var(μ|D) = {laplace_var:.3f}")
+
+# Visualize Bayesian analysis
+plt.figure(figsize=(15, 10))
+
+# 1. Prior, likelihood, and posterior
+plt.subplot(2, 3, 1)
+mu_range = np.linspace(-2, 12, 1000)
+
+# Prior
+prior = stats.norm.pdf(mu_range, mu0, np.sqrt(tau0_sq))
+plt.plot(mu_range, prior, 'b-', linewidth=2, label='Prior')
+
+# Likelihood (scaled)
+likelihood = stats.norm.pdf(mu_range, np.mean(data), np.sqrt(sigma_sq/n_data))
+likelihood = likelihood / np.max(likelihood) * np.max(prior)  # Scale for visualization
+plt.plot(mu_range, likelihood, 'g-', linewidth=2, label='Likelihood (scaled)')
+
+# Posterior
+posterior = stats.norm.pdf(mu_range, mu_post, np.sqrt(tau_post_sq))
+plt.plot(mu_range, posterior, 'r-', linewidth=2, label='Posterior')
+
+plt.axvline(true_mu, color='k', linestyle='--', alpha=0.7, label='True μ')
+plt.xlabel('μ')
 plt.ylabel('Density')
-plt.title('Prior Distribution')
+plt.title('Prior, Likelihood, and Posterior')
 plt.legend()
+plt.grid(True, alpha=0.3)
 
-# Likelihood
-plt.subplot(1, 3, 2)
-n_heads = sum(flips)
-n_tails = len(flips) - n_heads
-likelihood = theta**n_heads * (1-theta)**n_tails
-likelihood = likelihood / np.trapz(likelihood, theta)  # Normalize
-plt.plot(theta, likelihood, 'g-', linewidth=2, label='Likelihood')
-plt.fill_between(theta, likelihood, alpha=0.3, color='green')
-plt.xlabel('θ (Probability of Heads)')
-plt.ylabel('Density')
-plt.title('Likelihood')
-plt.legend()
+# 2. Data histogram with predictive distribution
+plt.subplot(2, 3, 2)
+plt.hist(data, bins=10, alpha=0.7, density=True, label='Data')
 
-# Posterior distribution
-plt.subplot(1, 3, 3)
-plt.plot(theta, posterior_pdf, 'r-', linewidth=2, label='Posterior')
-plt.fill_between(theta, posterior_pdf, alpha=0.3, color='red')
-plt.xlabel('θ (Probability of Heads)')
+# Predictive distribution
+x_pred = np.linspace(min(data) - 2, max(data) + 2, 1000)
+pred_pdf = stats.norm.pdf(x_pred, pred_mean, np.sqrt(pred_var))
+plt.plot(x_pred, pred_pdf, 'r-', linewidth=2, label='Predictive')
+
+plt.xlabel('X')
 plt.ylabel('Density')
-plt.title('Posterior Distribution')
+plt.title('Data and Predictive Distribution')
 plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 3. MCMC trace plot
+plt.subplot(2, 3, 3)
+plt.plot(mcmc_samples[:1000], alpha=0.7)
+plt.axhline(mu_post, color='r', linestyle='--', label='Analytical Posterior Mean')
+plt.xlabel('Iteration')
+plt.ylabel('μ')
+plt.title('MCMC Trace Plot')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 4. MCMC histogram
+plt.subplot(2, 3, 4)
+plt.hist(mcmc_samples, bins=50, alpha=0.7, density=True, label='MCMC Samples')
+
+# Analytical posterior
+posterior_mcmc = stats.norm.pdf(mu_range, mu_post, np.sqrt(tau_post_sq))
+plt.plot(mu_range, posterior_mcmc, 'r-', linewidth=2, label='Analytical Posterior')
+
+plt.xlabel('μ')
+plt.ylabel('Density')
+plt.title('MCMC vs Analytical Posterior')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 5. Credible intervals comparison
+plt.subplot(2, 3, 5)
+intervals = []
+labels = []
+
+# Frequentist confidence interval
+freq_ci = stats.norm.interval(0.95, loc=freq_estimate, scale=np.sqrt(freq_var))
+intervals.append(freq_ci)
+labels.append('Frequentist 95% CI')
+
+# Bayesian credible interval
+intervals.append((ci_lower, ci_upper))
+labels.append('Bayesian 95% CI')
+
+# Plot intervals
+y_positions = np.arange(len(intervals))
+for i, (lower, upper) in enumerate(intervals):
+    plt.hlines(y_positions[i], lower, upper, linewidth=3, alpha=0.7)
+    plt.plot([lower, upper], [y_positions[i], y_positions[i]], 'o', markersize=8)
+
+plt.axvline(true_mu, color='k', linestyle='--', alpha=0.7, label='True μ')
+plt.yticks(y_positions, labels)
+plt.xlabel('μ')
+plt.title('Confidence vs Credible Intervals')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 6. Bayes factor analysis
+plt.subplot(2, 3, 6)
+# Compare two models
+mu1, sigma1_sq = 3.0, 1.0
+mu2, sigma2_sq = 7.0, 1.0
+
+bf = bayes_factor_normal(data, mu1, sigma1_sq, mu2, sigma2_sq)
+log_bf = np.log(bf)
+
+plt.bar(['Model 1 vs Model 2'], [log_bf], alpha=0.7, color='skyblue')
+plt.axhline(y=0, color='k', linestyle='-', alpha=0.5)
+plt.ylabel('log(Bayes Factor)')
+plt.title('Model Comparison')
+plt.grid(True, alpha=0.3)
+
+# Add interpretation
+if log_bf > 2:
+    interpretation = "Strong evidence for Model 1"
+elif log_bf > 1:
+    interpretation = "Moderate evidence for Model 1"
+elif log_bf > 0:
+    interpretation = "Weak evidence for Model 1"
+elif log_bf > -1:
+    interpretation = "Weak evidence for Model 2"
+elif log_bf > -2:
+    interpretation = "Moderate evidence for Model 2"
+else:
+    interpretation = "Strong evidence for Model 2"
+
+plt.text(0, log_bf + 0.1, interpretation, ha='center', fontsize=8)
 
 plt.tight_layout()
 plt.show()
 
-# Credible intervals
-def calculate_credible_intervals(alpha, beta, confidence=0.95):
-    """Calculate credible intervals for Beta distribution"""
-    lower = beta.ppf((1-confidence)/2, alpha, beta)
-    upper = beta.ppf((1+confidence)/2, alpha, beta)
-    mean = alpha / (alpha + beta)
-    mode = (alpha - 1) / (alpha + beta - 2) if alpha > 1 and beta > 1 else mean
-    return lower, upper, mean, mode
+# Example: Beta-Binomial conjugate analysis
+print(f"\nBeta-Binomial Conjugate Analysis")
+print("=" * 40)
 
-prior_ci = calculate_credible_intervals(2, 2)
-posterior_ci = calculate_credible_intervals(2 + sum(flips), 2 + len(flips) - sum(flips))
+# Generate binomial data
+n_trials = 50
+true_theta = 0.3
+x_successes = np.random.binomial(n_trials, true_theta)
 
-print(f"\nCredible Intervals (95%):")
-print(f"Prior: [{prior_ci[0]:.3f}, {prior_ci[1]:.3f}], Mean: {prior_ci[2]:.3f}")
-print(f"Posterior: [{posterior_ci[0]:.3f}, {posterior_ci[1]:.3f}], Mean: {posterior_ci[2]:.3f}")
+# Prior parameters
+alpha_prior = 2.0
+beta_prior = 5.0
+
+# Calculate posterior
+alpha_post, beta_post = beta_binomial_conjugate(x_successes, n_trials, alpha_prior, beta_prior)
+
+print(f"Data: {x_successes} successes out of {n_trials} trials")
+print(f"Prior: θ ~ Beta({alpha_prior}, {beta_prior})")
+print(f"Posterior: θ|D ~ Beta({alpha_post}, {beta_post})")
+
+# Posterior statistics
+posterior_mean = alpha_post / (alpha_post + beta_post)
+posterior_var = (alpha_post * beta_post) / ((alpha_post + beta_post)**2 * (alpha_post + beta_post + 1))
+
+print(f"Posterior mean: {posterior_mean:.3f}")
+print(f"Posterior variance: {posterior_var:.6f}")
+
+# Frequentist comparison
+freq_estimate = x_successes / n_trials
+freq_var = freq_estimate * (1 - freq_estimate) / n_trials
+
+print(f"Frequentist: θ̂ = {freq_estimate:.3f}, Var(θ̂) = {freq_var:.6f}")
+
+# Credible interval for beta distribution
+ci_lower_beta = stats.beta.ppf(0.025, alpha_post, beta_post)
+ci_upper_beta = stats.beta.ppf(0.975, alpha_post, beta_post)
+print(f"95% Credible Interval: [{ci_lower_beta:.3f}, {ci_upper_beta:.3f}]")
+
+# Visualize beta-binomial analysis
+plt.figure(figsize=(12, 8))
+
+# Prior, likelihood, and posterior
+theta_range = np.linspace(0, 1, 1000)
+
+# Prior
+prior_beta = stats.beta.pdf(theta_range, alpha_prior, beta_prior)
+plt.subplot(2, 2, 1)
+plt.plot(theta_range, prior_beta, 'b-', linewidth=2, label='Prior')
+plt.xlabel('θ')
+plt.ylabel('Density')
+plt.title('Beta Prior')
+plt.grid(True, alpha=0.3)
+
+# Likelihood (scaled)
+likelihood_binom = stats.binom.pmf(x_successes, n_trials, theta_range)
+likelihood_binom = likelihood_binom / np.max(likelihood_binom) * np.max(prior_beta)
+plt.subplot(2, 2, 2)
+plt.plot(theta_range, likelihood_binom, 'g-', linewidth=2, label='Likelihood (scaled)')
+plt.xlabel('θ')
+plt.ylabel('Density')
+plt.title('Binomial Likelihood')
+plt.grid(True, alpha=0.3)
+
+# Posterior
+posterior_beta = stats.beta.pdf(theta_range, alpha_post, beta_post)
+plt.subplot(2, 2, 3)
+plt.plot(theta_range, posterior_beta, 'r-', linewidth=2, label='Posterior')
+plt.axvline(true_theta, color='k', linestyle='--', alpha=0.7, label='True θ')
+plt.axvline(posterior_mean, color='orange', linestyle='--', alpha=0.7, label='Posterior Mean')
+plt.xlabel('θ')
+plt.ylabel('Density')
+plt.title('Beta Posterior')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# Predictive distribution
+plt.subplot(2, 2, 4)
+n_new = 20
+pred_successes = np.arange(0, n_new + 1)
+pred_probs = stats.betabinom.pmf(pred_successes, n_new, alpha_post, beta_post)
+
+plt.bar(pred_successes, pred_probs, alpha=0.7, color='purple')
+plt.xlabel('Number of Successes')
+plt.ylabel('Probability')
+plt.title(f'Predictive Distribution (n={n_new})')
+plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# Demonstrate mathematical properties
+print(f"\nMathematical Properties Verification:")
+
+# 1. Conjugate property
+print(f"1. Conjugate Property:")
+print(f"   Prior: Beta({alpha_prior}, {beta_prior})")
+print(f"   Likelihood: Binomial({n_trials}, θ)")
+print(f"   Posterior: Beta({alpha_post}, {beta_post})")
+print(f"   Conjugate property holds: {alpha_post == alpha_prior + x_successes and beta_post == beta_prior + n_trials - x_successes}")
+
+# 2. Posterior mean as weighted average
+print(f"\n2. Posterior Mean as Weighted Average:")
+prior_mean = alpha_prior / (alpha_prior + beta_prior)
+likelihood_mean = x_successes / n_trials
+weight_prior = (alpha_prior + beta_prior) / (alpha_prior + beta_prior + n_trials)
+weight_likelihood = n_trials / (alpha_prior + beta_prior + n_trials)
+
+weighted_avg = weight_prior * prior_mean + weight_likelihood * likelihood_mean
+print(f"   Prior mean: {prior_mean:.3f}")
+print(f"   Likelihood mean: {likelihood_mean:.3f}")
+print(f"   Weighted average: {weighted_avg:.3f}")
+print(f"   Posterior mean: {posterior_mean:.3f}")
+print(f"   Agreement: {abs(weighted_avg - posterior_mean) < 1e-10}")
+
+# 3. Effect of sample size
+print(f"\n3. Effect of Sample Size:")
+# Compare with different sample sizes
+sample_sizes = [10, 50, 100, 500]
+for n in sample_sizes:
+    x_n = np.random.binomial(n, true_theta)
+    alpha_n, beta_n = beta_binomial_conjugate(x_n, n, alpha_prior, beta_prior)
+    mean_n = alpha_n / (alpha_n + beta_n)
+    var_n = (alpha_n * beta_n) / ((alpha_n + beta_n)**2 * (alpha_n + beta_n + 1))
+    print(f"   n={n}: θ̂={mean_n:.3f}, Var(θ|D)={var_n:.6f}")
+
+# 4. Bayes factor interpretation
+print(f"\n4. Bayes Factor Interpretation:")
+bf_values = [0.01, 0.1, 0.3, 1, 3, 10, 100]
+interpretations = ["Very strong evidence for M2", "Strong evidence for M2", 
+                   "Moderate evidence for M2", "No preference", 
+                   "Moderate evidence for M1", "Strong evidence for M1", 
+                   "Very strong evidence for M1"]
+
+for bf, interpretation in zip(bf_values, interpretations):
+    print(f"   BF = {bf}: {interpretation}")
 ```
 
 ## Conjugate Priors
