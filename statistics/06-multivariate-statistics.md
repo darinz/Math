@@ -745,6 +745,615 @@ plt.show()
 print(f"Canonical Correlations: {diagonal_correlations}")
 ```
 
+## Multivariate Normal Distribution
+
+The **multivariate normal distribution** is the most important distribution in multivariate statistics, serving as the foundation for many statistical methods.
+
+### Mathematical Definition
+
+A random vector **X** = (X₁, X₂, ..., Xₚ)ᵀ follows a **p-dimensional multivariate normal distribution** if its joint probability density function is:
+
+$$f(\mathbf{x}) = \frac{1}{(2\pi)^{p/2} |\mathbf{\Sigma}|^{1/2}} \exp\left(-\frac{1}{2}(\mathbf{x} - \mathbf{\mu})^T \mathbf{\Sigma}^{-1} (\mathbf{x} - \mathbf{\mu})\right)$$
+
+Where:
+- **μ** = (μ₁, μ₂, ..., μₚ)ᵀ is the **mean vector**
+- **Σ** is the **covariance matrix** (p × p symmetric positive definite)
+- |**Σ**| is the determinant of **Σ**
+
+**Notation:** **X** ~ Nₚ(**μ**, **Σ**)
+
+### Properties of Multivariate Normal Distribution
+
+**1. Marginal Distributions:**
+If **X** ~ Nₚ(**μ**, **Σ**), then any subset of components follows a multivariate normal distribution:
+- Xᵢ ~ N(μᵢ, σᵢ²) for individual components
+- **X**₍₁,₂₎ ~ N₂(**μ**₍₁,₂₎, **Σ**₍₁,₂₎) for any 2-dimensional subset
+
+**2. Linear Transformations:**
+If **X** ~ Nₚ(**μ**, **Σ**) and **Y** = **AX** + **b**, then:
+**Y** ~ Nₘ(**Aμ** + **b**, **AΣA**ᵀ)
+
+Where **A** is an m × p matrix and **b** is an m-dimensional vector.
+
+**3. Independence:**
+For multivariate normal, uncorrelated components are independent:
+- If Cov(Xᵢ, Xⱼ) = 0 for all i ≠ j, then Xᵢ and Xⱼ are independent
+- This is a unique property of the normal distribution
+
+**4. Conditional Distributions:**
+If **X** ~ Nₚ(**μ**, **Σ**), partitioned as:
+$$\mathbf{X} = \begin{pmatrix} \mathbf{X}_1 \\ \mathbf{X}_2 \end{pmatrix}, \quad \mathbf{\mu} = \begin{pmatrix} \mathbf{\mu}_1 \\ \mathbf{\mu}_2 \end{pmatrix}, \quad \mathbf{\Sigma} = \begin{pmatrix} \mathbf{\Sigma}_{11} & \mathbf{\Sigma}_{12} \\ \mathbf{\Sigma}_{21} & \mathbf{\Sigma}_{22} \end{pmatrix}$$
+
+Then the conditional distribution is:
+$$\mathbf{X}_1 | \mathbf{X}_2 = \mathbf{x}_2 \sim N_{p_1}(\mathbf{\mu}_{1|2}, \mathbf{\Sigma}_{1|2})$$
+
+Where:
+$$\mathbf{\mu}_{1|2} = \mathbf{\mu}_1 + \mathbf{\Sigma}_{12}\mathbf{\Sigma}_{22}^{-1}(\mathbf{x}_2 - \mathbf{\mu}_2)$$
+$$\mathbf{\Sigma}_{1|2} = \mathbf{\Sigma}_{11} - \mathbf{\Sigma}_{12}\mathbf{\Sigma}_{22}^{-1}\mathbf{\Sigma}_{21}$$
+
+**5. Maximum Likelihood Estimation:**
+For a sample **X**₁, **X**₂, ..., **X**ₙ ~ Nₚ(**μ**, **Σ**), the MLEs are:
+$$\hat{\mathbf{\mu}} = \frac{1}{n}\sum_{i=1}^{n} \mathbf{X}_i = \bar{\mathbf{X}}$$
+$$\hat{\mathbf{\Sigma}} = \frac{1}{n}\sum_{i=1}^{n} (\mathbf{X}_i - \bar{\mathbf{X}})(\mathbf{X}_i - \bar{\mathbf{X}})^T$$
+
+**6. Mahalanobis Distance:**
+The squared Mahalanobis distance is:
+$$D^2(\mathbf{x}) = (\mathbf{x} - \mathbf{\mu})^T \mathbf{\Sigma}^{-1} (\mathbf{x} - \mathbf{\mu})$$
+
+This follows a χ²(p) distribution under the null hypothesis.
+
+### Characteristic Function
+
+The characteristic function of **X** ~ Nₚ(**μ**, **Σ**) is:
+$$\phi_{\mathbf{X}}(\mathbf{t}) = E[e^{i\mathbf{t}^T\mathbf{X}}] = \exp\left(i\mathbf{t}^T\mathbf{\mu} - \frac{1}{2}\mathbf{t}^T\mathbf{\Sigma}\mathbf{t}\right)$$
+
+### Moment Generating Function
+
+The moment generating function is:
+$$M_{\mathbf{X}}(\mathbf{t}) = E[e^{\mathbf{t}^T\mathbf{X}}] = \exp\left(\mathbf{t}^T\mathbf{\mu} + \frac{1}{2}\mathbf{t}^T\mathbf{\Sigma}\mathbf{t}\right)$$
+
+### Central Limit Theorem (Multivariate)
+
+If **X**₁, **X**₂, ..., **X**ₙ are independent random vectors with E[**X**ᵢ] = **μ** and Cov(**X**ᵢ) = **Σ**, then:
+$$\sqrt{n}(\bar{\mathbf{X}} - \mathbf{\mu}) \xrightarrow{d} N_p(\mathbf{0}, \mathbf{\Sigma})$$
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import multivariate_normal, chi2
+from scipy.linalg import cholesky, inv
+import seaborn as sns
+from mpl_toolkits.mplot3d import Axes3D
+
+def multivariate_normal_pdf(x, mu, sigma):
+    """
+    Calculate multivariate normal PDF
+    
+    Mathematical implementation:
+    f(x) = (2π)^(-p/2) |Σ|^(-1/2) exp(-0.5(x-μ)ᵀΣ⁻¹(x-μ))
+    
+    Parameters:
+    x: array, point to evaluate
+    mu: array, mean vector
+    sigma: array, covariance matrix
+    
+    Returns:
+    float: PDF value
+    """
+    p = len(mu)
+    
+    # Check dimensions
+    if len(x) != p:
+        raise ValueError("Dimensions of x and mu must match")
+    
+    if sigma.shape != (p, p):
+        raise ValueError("Sigma must be p×p matrix")
+    
+    # Calculate determinant
+    det_sigma = np.linalg.det(sigma)
+    if det_sigma <= 0:
+        raise ValueError("Sigma must be positive definite")
+    
+    # Calculate inverse
+    sigma_inv = np.linalg.inv(sigma)
+    
+    # Calculate quadratic form
+    diff = x - mu
+    quadratic_form = diff.T @ sigma_inv @ diff
+    
+    # Calculate PDF
+    pdf = (1 / ((2 * np.pi) ** (p/2) * np.sqrt(det_sigma))) * np.exp(-0.5 * quadratic_form)
+    
+    return pdf
+
+def generate_multivariate_normal(n, mu, sigma, method='cholesky'):
+    """
+    Generate samples from multivariate normal distribution
+    
+    Mathematical implementation:
+    X = μ + LZ where L is Cholesky factor of Σ and Z ~ N(0,I)
+    
+    Parameters:
+    n: int, number of samples
+    mu: array, mean vector
+    sigma: array, covariance matrix
+    method: str, generation method
+    
+    Returns:
+    array: n×p matrix of samples
+    """
+    p = len(mu)
+    
+    if method == 'cholesky':
+        # Cholesky decomposition method
+        L = cholesky(sigma, lower=True)
+        Z = np.random.normal(0, 1, (n, p))
+        X = mu + Z @ L.T
+        return X
+    
+    elif method == 'eigenvalue':
+        # Eigenvalue decomposition method
+        eigenvals, eigenvecs = np.linalg.eigh(sigma)
+        D_sqrt = np.diag(np.sqrt(eigenvals))
+        Z = np.random.normal(0, 1, (n, p))
+        X = mu + Z @ D_sqrt @ eigenvecs.T
+        return X
+    
+    else:
+        raise ValueError(f"Unknown method: {method}")
+
+def mahalanobis_distance(x, mu, sigma):
+    """
+    Calculate Mahalanobis distance
+    
+    Mathematical implementation:
+    D²(x) = (x-μ)ᵀΣ⁻¹(x-μ)
+    
+    Parameters:
+    x: array, point
+    mu: array, mean vector
+    sigma: array, covariance matrix
+    
+    Returns:
+    float: Mahalanobis distance
+    """
+    sigma_inv = np.linalg.inv(sigma)
+    diff = x - mu
+    distance_squared = diff.T @ sigma_inv @ diff
+    return np.sqrt(distance_squared)
+
+def conditional_multivariate_normal(x2, mu, sigma, partition_idx):
+    """
+    Calculate conditional distribution parameters
+    
+    Mathematical implementation:
+    μ₁|₂ = μ₁ + Σ₁₂Σ₂₂⁻¹(x₂ - μ₂)
+    Σ₁|₂ = Σ₁₁ - Σ₁₂Σ₂₂⁻¹Σ₂₁
+    
+    Parameters:
+    x2: array, conditioning values
+    mu: array, mean vector
+    sigma: array, covariance matrix
+    partition_idx: list, indices for partition
+    
+    Returns:
+    tuple: (conditional_mean, conditional_covariance)
+    """
+    p = len(mu)
+    
+    # Create partition indices
+    idx1 = [i for i in range(p) if i not in partition_idx]
+    idx2 = partition_idx
+    
+    # Extract submatrices
+    mu1 = mu[idx1]
+    mu2 = mu[idx2]
+    sigma11 = sigma[np.ix_(idx1, idx1)]
+    sigma12 = sigma[np.ix_(idx1, idx2)]
+    sigma21 = sigma[np.ix_(idx2, idx1)]
+    sigma22 = sigma[np.ix_(idx2, idx2)]
+    
+    # Calculate conditional parameters
+    sigma22_inv = np.linalg.inv(sigma22)
+    conditional_mean = mu1 + sigma12 @ sigma22_inv @ (x2 - mu2)
+    conditional_covariance = sigma11 - sigma12 @ sigma22_inv @ sigma21
+    
+    return conditional_mean, conditional_covariance
+
+def multivariate_normal_mle(X):
+    """
+    Calculate maximum likelihood estimates for multivariate normal
+    
+    Mathematical implementation:
+    μ̂ = (1/n)ΣᵢXᵢ
+    Σ̂ = (1/n)Σᵢ(Xᵢ-μ̂)(Xᵢ-μ̂)ᵀ
+    
+    Parameters:
+    X: array, n×p data matrix
+    
+    Returns:
+    tuple: (mu_hat, sigma_hat)
+    """
+    n, p = X.shape
+    
+    # MLE for mean
+    mu_hat = np.mean(X, axis=0)
+    
+    # MLE for covariance
+    centered_X = X - mu_hat
+    sigma_hat = (centered_X.T @ centered_X) / n
+    
+    return mu_hat, sigma_hat
+
+def multivariate_normal_log_likelihood(X, mu, sigma):
+    """
+    Calculate log-likelihood for multivariate normal
+    
+    Mathematical implementation:
+    log L = -(n/2)log|Σ| - (1/2)Σᵢ(xᵢ-μ)ᵀΣ⁻¹(xᵢ-μ) - (np/2)log(2π)
+    
+    Parameters:
+    X: array, n×p data matrix
+    mu: array, mean vector
+    sigma: array, covariance matrix
+    
+    Returns:
+    float: log-likelihood
+    """
+    n, p = X.shape
+    
+    # Calculate determinant and inverse
+    det_sigma = np.linalg.det(sigma)
+    sigma_inv = np.linalg.inv(sigma)
+    
+    # Calculate log-likelihood
+    log_det = np.log(det_sigma)
+    
+    # Calculate quadratic form for all observations
+    centered_X = X - mu
+    quadratic_terms = np.sum(centered_X @ sigma_inv * centered_X, axis=1)
+    total_quadratic = np.sum(quadratic_terms)
+    
+    log_likelihood = -(n/2) * log_det - (1/2) * total_quadratic - (n*p/2) * np.log(2*np.pi)
+    
+    return log_likelihood
+
+def multivariate_normal_entropy(mu, sigma):
+    """
+    Calculate entropy of multivariate normal distribution
+    
+    Mathematical implementation:
+    H(X) = (p/2)log(2πe) + (1/2)log|Σ|
+    
+    Parameters:
+    mu: array, mean vector
+    sigma: array, covariance matrix
+    
+    Returns:
+    float: entropy
+    """
+    p = len(mu)
+    det_sigma = np.linalg.det(sigma)
+    
+    entropy = (p/2) * np.log(2*np.pi*np.e) + (1/2) * np.log(det_sigma)
+    return entropy
+
+def multivariate_normal_kl_divergence(mu1, sigma1, mu2, sigma2):
+    """
+    Calculate KL divergence between two multivariate normal distributions
+    
+    Mathematical implementation:
+    KL(N₁||N₂) = (1/2)[tr(Σ₂⁻¹Σ₁) + (μ₂-μ₁)ᵀΣ₂⁻¹(μ₂-μ₁) - p - log(|Σ₁|/|Σ₂|)]
+    
+    Parameters:
+    mu1, sigma1: parameters of first distribution
+    mu2, sigma2: parameters of second distribution
+    
+    Returns:
+    float: KL divergence
+    """
+    p = len(mu1)
+    
+    sigma2_inv = np.linalg.inv(sigma2)
+    diff = mu2 - mu1
+    
+    term1 = np.trace(sigma2_inv @ sigma1)
+    term2 = diff.T @ sigma2_inv @ diff
+    term3 = np.log(np.linalg.det(sigma2) / np.linalg.det(sigma1))
+    
+    kl_div = (1/2) * (term1 + term2 - p - term3)
+    return kl_div
+
+# Example: 2-dimensional multivariate normal
+np.random.seed(42)
+
+# Parameters
+mu = np.array([2.0, 3.0])
+sigma = np.array([[4.0, 1.5],
+                  [1.5, 2.0]])
+
+print("Multivariate Normal Distribution Analysis")
+print("=" * 50)
+
+# Generate samples
+n_samples = 1000
+X = generate_multivariate_normal(n_samples, mu, sigma, method='cholesky')
+
+print(f"Generated {n_samples} samples from N₂(μ, Σ)")
+print(f"μ = {mu}")
+print(f"Σ = \n{sigma}")
+
+# Calculate MLE
+mu_hat, sigma_hat = multivariate_normal_mle(X)
+print(f"\nMaximum Likelihood Estimates:")
+print(f"μ̂ = {mu_hat}")
+print(f"Σ̂ = \n{sigma_hat}")
+
+# Calculate log-likelihood
+log_likelihood = multivariate_normal_log_likelihood(X, mu_hat, sigma_hat)
+print(f"Log-likelihood: {log_likelihood:.4f}")
+
+# Calculate entropy
+entropy = multivariate_normal_entropy(mu, sigma)
+print(f"Entropy: {entropy:.4f}")
+
+# Calculate Mahalanobis distances
+mahal_distances = np.array([mahalanobis_distance(x, mu, sigma) for x in X])
+print(f"Mean Mahalanobis distance: {np.mean(mahal_distances):.4f}")
+print(f"Mahalanobis distance variance: {np.var(mahal_distances):.4f}")
+
+# Test theoretical properties
+print(f"\nTheoretical Properties Verification:")
+
+# 1. Marginal distributions
+print(f"1. Marginal distributions:")
+print(f"   X₁ ~ N({mu[0]}, {sigma[0,0]})")
+print(f"   X₂ ~ N({mu[1]}, {sigma[1,1]})")
+print(f"   Sample means: {np.mean(X, axis=0)}")
+print(f"   Sample variances: {np.var(X, axis=0)}")
+
+# 2. Correlation
+theoretical_corr = sigma[0,1] / np.sqrt(sigma[0,0] * sigma[1,1])
+sample_corr = np.corrcoef(X.T)[0,1]
+print(f"2. Correlation:")
+print(f"   Theoretical: {theoretical_corr:.4f}")
+print(f"   Sample: {sample_corr:.4f}")
+
+# 3. Mahalanobis distance distribution
+# Should follow χ²(2) distribution
+chi2_quantiles = chi2.ppf(np.linspace(0.01, 0.99, 100), df=2)
+mahal_squared = mahal_distances**2
+mahal_quantiles = np.percentile(mahal_squared, np.linspace(1, 99, 100))
+
+print(f"3. Mahalanobis distance squared ~ χ²(2):")
+print(f"   Sample mean: {np.mean(mahal_squared):.4f} (theoretical: 2.0)")
+print(f"   Sample variance: {np.var(mahal_squared):.4f} (theoretical: 4.0)")
+
+# Conditional distribution example
+print(f"\nConditional Distribution Example:")
+x2_condition = 4.0  # Condition on X₂ = 4.0
+cond_mu, cond_sigma = conditional_multivariate_normal(x2_condition, mu, sigma, [1])
+print(f"X₁ | X₂ = {x2_condition} ~ N({cond_mu[0]:.4f}, {cond_sigma[0,0]:.4f})")
+
+# Generate conditional samples
+conditional_samples = np.random.normal(cond_mu[0], np.sqrt(cond_sigma[0,0]), 100)
+print(f"Conditional sample mean: {np.mean(conditional_samples):.4f}")
+print(f"Conditional sample variance: {np.var(conditional_samples):.4f}")
+
+# Visualize multivariate normal
+plt.figure(figsize=(15, 12))
+
+# 1. Scatter plot with contours
+plt.subplot(2, 3, 1)
+plt.scatter(X[:, 0], X[:, 1], alpha=0.6, s=20)
+
+# Create contour plot
+x1_range = np.linspace(mu[0] - 3*np.sqrt(sigma[0,0]), mu[0] + 3*np.sqrt(sigma[0,0]), 100)
+x2_range = np.linspace(mu[1] - 3*np.sqrt(sigma[1,1]), mu[1] + 3*np.sqrt(sigma[1,1]), 100)
+X1, X2 = np.meshgrid(x1_range, x2_range)
+Z = np.zeros_like(X1)
+
+for i in range(X1.shape[0]):
+    for j in range(X1.shape[1]):
+        x = np.array([X1[i,j], X2[i,j]])
+        Z[i,j] = multivariate_normal_pdf(x, mu, sigma)
+
+plt.contour(X1, X2, Z, levels=10, colors='red', alpha=0.7)
+plt.xlabel('X₁')
+plt.ylabel('X₂')
+plt.title('Multivariate Normal Samples with Contours')
+plt.grid(True, alpha=0.3)
+
+# 2. Marginal distributions
+plt.subplot(2, 3, 2)
+plt.hist(X[:, 0], bins=30, alpha=0.7, density=True, label='X₁')
+plt.hist(X[:, 1], bins=30, alpha=0.7, density=True, label='X₂')
+
+# Theoretical marginal PDFs
+x1_theoretical = np.linspace(mu[0] - 4*np.sqrt(sigma[0,0]), mu[0] + 4*np.sqrt(sigma[0,0]), 100)
+x2_theoretical = np.linspace(mu[1] - 4*np.sqrt(sigma[1,1]), mu[1] + 4*np.sqrt(sigma[1,1]), 100)
+
+pdf1 = (1/np.sqrt(2*np.pi*sigma[0,0])) * np.exp(-0.5*(x1_theoretical - mu[0])**2/sigma[0,0])
+pdf2 = (1/np.sqrt(2*np.pi*sigma[1,1])) * np.exp(-0.5*(x2_theoretical - mu[1])**2/sigma[1,1])
+
+plt.plot(x1_theoretical, pdf1, 'r-', linewidth=2, label='X₁ PDF')
+plt.plot(x2_theoretical, pdf2, 'g-', linewidth=2, label='X₂ PDF')
+plt.xlabel('Value')
+plt.ylabel('Density')
+plt.title('Marginal Distributions')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 3. Mahalanobis distance distribution
+plt.subplot(2, 3, 3)
+plt.hist(mahal_squared, bins=30, alpha=0.7, density=True, label='Sample')
+
+# Theoretical χ²(2) distribution
+chi2_x = np.linspace(0, np.max(mahal_squared), 100)
+chi2_pdf = chi2.pdf(chi2_x, df=2)
+plt.plot(chi2_x, chi2_pdf, 'r-', linewidth=2, label='χ²(2) PDF')
+
+plt.xlabel('Mahalanobis Distance²')
+plt.ylabel('Density')
+plt.title('Mahalanobis Distance Distribution')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 4. Q-Q plot for Mahalanobis distances
+plt.subplot(2, 3, 4)
+from scipy.stats import probplot
+probplot(mahal_squared, dist=chi2, sparams=(2,), plot=plt)
+plt.title('Q-Q Plot: Mahalanobis Distance² vs χ²(2)')
+plt.grid(True, alpha=0.3)
+
+# 5. Correlation structure
+plt.subplot(2, 3, 5)
+correlation_matrix = np.corrcoef(X.T)
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0,
+            xticklabels=['X₁', 'X₂'], yticklabels=['X₁', 'X₂'])
+plt.title('Sample Correlation Matrix')
+
+# 6. 3D surface plot of PDF
+ax = plt.subplot(2, 3, 6, projection='3d')
+surf = ax.plot_surface(X1, X2, Z, cmap='viridis', alpha=0.8)
+ax.set_xlabel('X₁')
+ax.set_ylabel('X₂')
+ax.set_zlabel('PDF')
+ax.set_title('Multivariate Normal PDF Surface')
+
+plt.tight_layout()
+plt.show()
+
+# Demonstrate linear transformation properties
+print(f"\nLinear Transformation Properties:")
+
+# Define transformation: Y = AX + b
+A = np.array([[1.5, 0.5],
+              [0.5, 1.0]])
+b = np.array([1.0, 2.0])
+
+# Theoretical transformed parameters
+mu_transformed = A @ mu + b
+sigma_transformed = A @ sigma @ A.T
+
+print(f"Transformation: Y = AX + b")
+print(f"A = \n{A}")
+print(f"b = {b}")
+print(f"Theoretical μ_Y = {mu_transformed}")
+print(f"Theoretical Σ_Y = \n{sigma_transformed}")
+
+# Apply transformation to samples
+Y = X @ A.T + b
+
+# Calculate sample parameters
+mu_Y_hat, sigma_Y_hat = multivariate_normal_mle(Y)
+print(f"Sample μ_Y = {mu_Y_hat}")
+print(f"Sample Σ_Y = \n{sigma_Y_hat}")
+
+# Verify transformation property
+transformation_error_mu = np.linalg.norm(mu_transformed - mu_Y_hat)
+transformation_error_sigma = np.linalg.norm(sigma_transformed - sigma_Y_hat)
+print(f"Transformation property verification:")
+print(f"  μ error: {transformation_error_mu:.6f}")
+print(f"  Σ error: {transformation_error_sigma:.6f}")
+
+# KL divergence example
+print(f"\nKL Divergence Example:")
+# Create two different multivariate normal distributions
+mu2 = np.array([3.0, 4.0])
+sigma2 = np.array([[3.0, 1.0],
+                   [1.0, 2.5]])
+
+kl_div_12 = multivariate_normal_kl_divergence(mu, sigma, mu2, sigma2)
+kl_div_21 = multivariate_normal_kl_divergence(mu2, sigma2, mu, sigma)
+
+print(f"KL(N₁||N₂) = {kl_div_12:.4f}")
+print(f"KL(N₂||N₁) = {kl_div_21:.4f}")
+print(f"KL divergence is asymmetric: {abs(kl_div_12 - kl_div_21) > 1e-10}")
+
+# Entropy comparison
+entropy1 = multivariate_normal_entropy(mu, sigma)
+entropy2 = multivariate_normal_entropy(mu2, sigma2)
+
+print(f"Entropy N₁: {entropy1:.4f}")
+print(f"Entropy N₂: {entropy2:.4f}")
+print(f"Entropy difference: {abs(entropy1 - entropy2):.4f}")
+
+# Visualize transformation
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.scatter(X[:, 0], X[:, 1], alpha=0.6, s=20, label='Original X')
+plt.scatter(Y[:, 0], Y[:, 1], alpha=0.6, s=20, label='Transformed Y')
+plt.xlabel('X₁ / Y₁')
+plt.ylabel('X₂ / Y₂')
+plt.title('Linear Transformation')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.subplot(1, 2, 2)
+# Show how transformation affects the distribution
+plt.hist(X[:, 0], bins=30, alpha=0.7, density=True, label='X₁')
+plt.hist(Y[:, 0], bins=30, alpha=0.7, density=True, label='Y₁')
+
+# Theoretical PDFs
+x1_pdf = (1/np.sqrt(2*np.pi*sigma[0,0])) * np.exp(-0.5*(x1_theoretical - mu[0])**2/sigma[0,0])
+y1_theoretical = np.linspace(mu_transformed[0] - 4*np.sqrt(sigma_transformed[0,0]), 
+                            mu_transformed[0] + 4*np.sqrt(sigma_transformed[0,0]), 100)
+y1_pdf = (1/np.sqrt(2*np.pi*sigma_transformed[0,0])) * np.exp(-0.5*(y1_theoretical - mu_transformed[0])**2/sigma_transformed[0,0])
+
+plt.plot(x1_theoretical, x1_pdf, 'r-', linewidth=2, label='X₁ PDF')
+plt.plot(y1_theoretical, y1_pdf, 'g-', linewidth=2, label='Y₁ PDF')
+plt.xlabel('Value')
+plt.ylabel('Density')
+plt.title('Marginal Distribution Transformation')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# Demonstrate independence property
+print(f"\nIndependence Property:")
+# Create uncorrelated multivariate normal
+sigma_uncorr = np.array([[4.0, 0.0],
+                         [0.0, 2.0]])
+
+X_uncorr = generate_multivariate_normal(n_samples, mu, sigma_uncorr)
+corr_uncorr = np.corrcoef(X_uncorr.T)[0,1]
+
+print(f"Uncorrelated case:")
+print(f"  Theoretical correlation: 0.0")
+print(f"  Sample correlation: {corr_uncorr:.6f}")
+print(f"  Components independent: {abs(corr_uncorr) < 0.1}")
+
+# Test independence by checking if joint PDF equals product of marginals
+def test_independence(X, mu, sigma):
+    """Test independence by comparing joint and marginal PDFs"""
+    n_test = 100
+    test_points = generate_multivariate_normal(n_test, mu, sigma)
+    
+    joint_pdf_values = np.array([multivariate_normal_pdf(x, mu, sigma) for x in test_points])
+    
+    # Calculate product of marginal PDFs
+    marginal_pdf_values = np.ones(n_test)
+    for i, x in enumerate(test_points):
+        pdf1 = (1/np.sqrt(2*np.pi*sigma[0,0])) * np.exp(-0.5*(x[0] - mu[0])**2/sigma[0,0])
+        pdf2 = (1/np.sqrt(2*np.pi*sigma[1,1])) * np.exp(-0.5*(x[1] - mu[1])**2/sigma[1,1])
+        marginal_pdf_values[i] = pdf1 * pdf2
+    
+    # Calculate correlation between joint and marginal PDFs
+    independence_corr = np.corrcoef(joint_pdf_values, marginal_pdf_values)[0,1]
+    return independence_corr
+
+independence_corr_uncorr = test_independence(X_uncorr, mu, sigma_uncorr)
+independence_corr_corr = test_independence(X, mu, sigma)
+
+print(f"Independence test (correlation between joint and marginal PDFs):")
+print(f"  Uncorrelated case: {independence_corr_uncorr:.6f} (should be ≈ 1.0)")
+print(f"  Correlated case: {independence_corr_corr:.6f} (should be < 1.0)")
+```
+
 ## Practical Applications
 
 ### Customer Segmentation
