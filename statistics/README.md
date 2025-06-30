@@ -11,8 +11,17 @@
 
 A comprehensive guide to statistical concepts, methods, and Python implementations for artificial intelligence, machine learning, and data science applications.
 
+## File Formats
+
+This repository provides content in two formats:
+- **Markdown (.md)**: Static documentation with embedded code examples
+- **Jupyter Notebook (.ipynb)**: Interactive notebooks with executable code cells
+
+Both formats contain identical content - choose the format that works best for your workflow.
+
 ## Table of Contents
 
+### Markdown Format
 1. [Descriptive Statistics](01-descriptive-statistics.md) - Central tendency, dispersion, and data visualization
 2. [Probability Fundamentals](02-probability-fundamentals.md) - Probability theory, distributions, and random variables
 3. [Statistical Inference](03-statistical-inference.md) - Hypothesis testing, confidence intervals, and p-values
@@ -23,6 +32,18 @@ A comprehensive guide to statistical concepts, methods, and Python implementatio
 8. [Experimental Design](08-experimental-design.md) - A/B testing, randomized controlled trials
 9. [Statistical Learning](09-statistical-learning.md) - Cross-validation, model selection, and regularization
 10. [Advanced Topics](10-advanced-topics.md) - Non-parametric methods, survival analysis, and more
+
+### Jupyter Notebook Format
+1. [Descriptive Statistics](01-descriptive-statistics.ipynb) - Central tendency, dispersion, and data visualization
+2. [Probability Fundamentals](02-probability-fundamentals.ipynb) - Probability theory, distributions, and random variables
+3. [Statistical Inference](03-statistical-inference.ipynb) - Hypothesis testing, confidence intervals, and p-values
+4. [Regression Analysis](04-regression-analysis.ipynb) - Linear and multiple regression, model diagnostics
+5. [Time Series Analysis](05-time-series-analysis.ipynb) - Trend analysis, seasonality, and forecasting
+6. [Multivariate Statistics](06-multivariate-statistics.ipynb) - Principal component analysis, factor analysis
+7. [Bayesian Statistics](07-bayesian-statistics.ipynb) - Bayesian inference, priors, and posterior distributions
+8. [Experimental Design](08-experimental-design.ipynb) - A/B testing, randomized controlled trials
+9. [Statistical Learning](09-statistical-learning.ipynb) - Cross-validation, model selection, and regularization
+10. [Advanced Topics](10-advanced-topics.ipynb) - Non-parametric methods, survival analysis, and more
 
 ## Learning Objectives
 
