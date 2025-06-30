@@ -44,9 +44,46 @@ Statistical foundations and methods for data science:
 ```
 Math/
 ├── calculus/           # 10 comprehensive chapters
+│   ├── 01-limits-continuity.md
+│   ├── 02-derivatives.md
+│   ├── 03-derivative-applications.md
+│   ├── 04-integration.md
+│   ├── 05-integration-applications.md
+│   ├── 06-multivariable-calculus.md
+│   ├── 07-vector-calculus.md
+│   ├── 08-optimization.md
+│   ├── 09-ml-applications.md
+│   ├── 10-numerical-methods.md
+│   ├── calculus_examples.ipynb    # Interactive Jupyter notebook
+│   ├── requirements.txt           # Python dependencies
+│   ├── README.md                  # Learning guide
+│   └── SUMMARY.md                 # Complete summary
 ├── linear-algebra/     # 9 structured modules
+│   ├── 01-vectors.md
+│   ├── 02-matrices.md
+│   ├── 03-linear-transformations.md
+│   ├── 04-eigenvalues-eigenvectors.md
+│   ├── 05-vector-spaces.md
+│   ├── 06-linear-independence.md
+│   ├── 07-matrix-decompositions.md
+│   ├── 08-ml-applications.md
+│   ├── 09-numerical-linear-algebra.md
+│   ├── README.md                  # Learning guide
+│   └── SUMMARY.md                 # Complete summary
 ├── statistics/         # 10 statistical topics
-└── README.md           # This file
+│   ├── 01-descriptive-statistics.md
+│   ├── 02-probability-fundamentals.md
+│   ├── 03-statistical-inference.md
+│   ├── 04-regression-analysis.md
+│   ├── 05-time-series-analysis.md
+│   ├── 06-multivariate-statistics.md
+│   ├── 07-bayesian-statistics.md
+│   ├── 08-experimental-design.md
+│   ├── 09-statistical-learning.md
+│   ├── 10-advanced-topics.md
+│   ├── README.md                  # Learning guide
+│   └── SUMMARY.md                 # Complete summary
+└── README.md                      # This file
 ```
 
 Each discipline folder contains:
@@ -55,6 +92,7 @@ Each discipline folder contains:
 - Practical exercises and applications
 - Comprehensive README with learning paths
 - Summary files for navigation
+- Additional resources (Jupyter notebooks, requirements files)
 
 ## Getting Started
 
