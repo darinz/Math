@@ -9,7 +9,7 @@
 [![Statsmodels](https://img.shields.io/badge/Statsmodels-0.13+-blue.svg)](https://www.statsmodels.org/)
 [![Scikit-learn](https://img.shields.io/badge/Scikit--learn-1.0+-orange.svg)](https://scikit-learn.org/)
 
-Regression analysis is a fundamental statistical technique for modeling relationships between variables. This chapter covers linear regression, multiple regression, model diagnostics, and their applications in AI/ML.
+Regression analysis is a fundamental statistical technique for modeling relationships between variables. It's essential for prediction, understanding causal relationships, and making data-driven decisions in AI/ML.
 
 ## Table of Contents
 - [Simple Linear Regression](#simple-linear-regression)
@@ -43,148 +43,606 @@ np.random.seed(42)
 
 ## Simple Linear Regression
 
-### Basic Concepts
+Simple linear regression models the relationship between a dependent variable (Y) and a single independent variable (X) using a linear function.
+
+### Mathematical Foundation
+
+**Model Specification:**
+$$Y_i = \beta_0 + \beta_1 X_i + \epsilon_i, \quad i = 1, 2, \ldots, n$$
+
+Where:
+- $Y_i$ is the dependent variable for observation i
+- $X_i$ is the independent variable for observation i
+- $\beta_0$ is the intercept (y-intercept)
+- $\beta_1$ is the slope coefficient
+- $\epsilon_i$ is the error term (residual)
+
+**Assumptions:**
+1. **Linearity**: The relationship between X and Y is linear
+2. **Independence**: Observations are independent
+3. **Homoscedasticity**: Error variance is constant
+4. **Normality**: Errors are normally distributed
+5. **No multicollinearity**: Not applicable for simple regression
+
+**Least Squares Estimation:**
+The goal is to minimize the sum of squared residuals:
+$$\min_{\beta_0, \beta_1} \sum_{i=1}^{n} (Y_i - \hat{Y}_i)^2 = \min_{\beta_0, \beta_1} \sum_{i=1}^{n} (Y_i - \beta_0 - \beta_1 X_i)^2$$
+
+**Normal Equations:**
+$$\frac{\partial}{\partial \beta_0} \sum_{i=1}^{n} (Y_i - \beta_0 - \beta_1 X_i)^2 = 0$$
+$$\frac{\partial}{\partial \beta_1} \sum_{i=1}^{n} (Y_i - \beta_0 - \beta_1 X_i)^2 = 0$$
+
+**Solution:**
+$$\hat{\beta_1} = \frac{\sum_{i=1}^{n} (X_i - \bar{X})(Y_i - \bar{Y})}{\sum_{i=1}^{n} (X_i - \bar{X})^2} = \frac{\text{Cov}(X, Y)}{\text{Var}(X)}$$
+$$\hat{\beta_0} = \bar{Y} - \hat{\beta_1} \bar{X}$$
+
+**Derivation of Slope Coefficient:**
+Starting with the normal equation for β₁:
+$$\sum_{i=1}^{n} (Y_i - \beta_0 - \beta_1 X_i) X_i = 0$$
+$$\sum_{i=1}^{n} Y_i X_i - \beta_0 \sum_{i=1}^{n} X_i - \beta_1 \sum_{i=1}^{n} X_i^2 = 0$$
+
+Substituting $\beta_0 = \bar{Y} - \beta_1 \bar{X}$:
+$$\sum_{i=1}^{n} Y_i X_i - (\bar{Y} - \beta_1 \bar{X}) \sum_{i=1}^{n} X_i - \beta_1 \sum_{i=1}^{n} X_i^2 = 0$$
+$$\sum_{i=1}^{n} Y_i X_i - \bar{Y} \sum_{i=1}^{n} X_i + \beta_1 \bar{X} \sum_{i=1}^{n} X_i - \beta_1 \sum_{i=1}^{n} X_i^2 = 0$$
+$$\sum_{i=1}^{n} Y_i X_i - n \bar{Y} \bar{X} = \beta_1 (\sum_{i=1}^{n} X_i^2 - n \bar{X}^2)$$
+$$\beta_1 = \frac{\sum_{i=1}^{n} (X_i - \bar{X})(Y_i - \bar{Y})}{\sum_{i=1}^{n} (X_i - \bar{X})^2}$$
 
 ```python
-def generate_linear_data(n=100):
-    """Generate synthetic linear data"""
-    x = np.random.uniform(0, 10, n)
-    true_slope = 2.5
-    true_intercept = 1.0
-    noise = np.random.normal(0, 1, n)
-    y = true_slope * x + true_intercept + noise
+def simple_linear_regression(X, y):
+    """
+    Perform simple linear regression using least squares
     
-    return x, y, true_slope, true_intercept
-
-x, y, true_slope, true_intercept = generate_linear_data(100)
-
-# Manual calculation of regression coefficients
-def manual_linear_regression(x, y):
-    """Calculate linear regression coefficients manually"""
-    n = len(x)
-    x_mean = np.mean(x)
+    Mathematical implementation:
+    β₁ = Cov(X,Y) / Var(X)
+    β₀ = Ȳ - β₁X̄
+    
+    Parameters:
+    X: array-like, independent variable
+    y: array-like, dependent variable
+    
+    Returns:
+    dict: regression results
+    """
+    X = np.array(X)
+    y = np.array(y)
+    
+    n = len(X)
+    
+    # Calculate means
+    X_mean = np.mean(X)
     y_mean = np.mean(y)
     
-    # Calculate slope
-    numerator = np.sum((x - x_mean) * (y - y_mean))
-    denominator = np.sum((x - x_mean)**2)
-    slope = numerator / denominator
+    # Calculate slope (β₁)
+    numerator = np.sum((X - X_mean) * (y - y_mean))
+    denominator = np.sum((X - X_mean) ** 2)
     
-    # Calculate intercept
-    intercept = y_mean - slope * x_mean
+    if denominator == 0:
+        raise ValueError("X has zero variance")
+    
+    beta_1 = numerator / denominator
+    
+    # Calculate intercept (β₀)
+    beta_0 = y_mean - beta_1 * X_mean
+    
+    # Calculate predicted values
+    y_pred = beta_0 + beta_1 * X
+    
+    # Calculate residuals
+    residuals = y - y_pred
     
     # Calculate R-squared
-    y_pred = slope * x + intercept
-    ss_res = np.sum((y - y_pred)**2)
-    ss_tot = np.sum((y - y_mean)**2)
+    ss_res = np.sum(residuals ** 2)
+    ss_tot = np.sum((y - y_mean) ** 2)
     r_squared = 1 - (ss_res / ss_tot)
     
-    return slope, intercept, r_squared
+    # Calculate standard errors
+    mse = ss_res / (n - 2)  # Mean squared error
+    se_beta_1 = np.sqrt(mse / np.sum((X - X_mean) ** 2))
+    se_beta_0 = np.sqrt(mse * (1/n + X_mean**2 / np.sum((X - X_mean) ** 2)))
+    
+    return {
+        'intercept': beta_0,
+        'slope': beta_1,
+        'r_squared': r_squared,
+        'residuals': residuals,
+        'y_pred': y_pred,
+        'se_intercept': se_beta_0,
+        'se_slope': se_beta_1,
+        'mse': mse,
+        'n': n
+    }
 
-slope, intercept, r_squared = manual_linear_regression(x, y)
+def calculate_correlation(X, y):
+    """
+    Calculate correlation coefficient
+    
+    Mathematical implementation:
+    r = Cov(X,Y) / (σ_X × σ_Y)
+    
+    Parameters:
+    X: array-like, independent variable
+    y: array-like, dependent variable
+    
+    Returns:
+    float: correlation coefficient
+    """
+    X = np.array(X)
+    y = np.array(y)
+    
+    # Calculate means
+    X_mean = np.mean(X)
+    y_mean = np.mean(y)
+    
+    # Calculate correlation
+    numerator = np.sum((X - X_mean) * (y - y_mean))
+    denominator = np.sqrt(np.sum((X - X_mean) ** 2) * np.sum((y - y_mean) ** 2))
+    
+    if denominator == 0:
+        return 0
+    
+    return numerator / denominator
 
-print("Simple Linear Regression Results")
-print(f"True slope: {true_slope:.3f}, Estimated slope: {slope:.3f}")
-print(f"True intercept: {true_intercept:.3f}, Estimated intercept: {intercept:.3f}")
-print(f"R-squared: {r_squared:.3f}")
+# Generate sample data
+n_samples = 100
+X = np.random.uniform(0, 10, n_samples)
+true_slope = 2.5
+true_intercept = 1.0
+noise_std = 1.5
+
+# True relationship: Y = 1.0 + 2.5*X + ε
+y_true = true_intercept + true_slope * X
+y = y_true + np.random.normal(0, noise_std, n_samples)
+
+# Perform regression
+results = simple_linear_regression(X, y)
+correlation = calculate_correlation(X, y)
+
+print("Simple Linear Regression Results:")
+print(f"True intercept: {true_intercept:.2f}")
+print(f"Estimated intercept: {results['intercept']:.4f}")
+print(f"True slope: {true_slope:.2f}")
+print(f"Estimated slope: {results['slope']:.4f}")
+print(f"R-squared: {results['r_squared']:.4f}")
+print(f"Correlation coefficient: {correlation:.4f}")
+print(f"Standard error (intercept): {results['se_intercept']:.4f}")
+print(f"Standard error (slope): {results['se_slope']:.4f}")
+
+# Verify mathematical relationship: R² = r² for simple linear regression
+print(f"R² = r²: {abs(results['r_squared'] - correlation**2) < 1e-10}")
 
 # Visualize the regression
-plt.figure(figsize=(12, 4))
+plt.figure(figsize=(15, 10))
 
-# Scatter plot with regression line
-plt.subplot(1, 3, 1)
-plt.scatter(x, y, alpha=0.7, color='skyblue')
-x_line = np.linspace(0, 10, 100)
-y_line = slope * x_line + intercept
-plt.plot(x_line, y_line, 'r-', linewidth=2, label=f'y = {slope:.2f}x + {intercept:.2f}')
-plt.plot(x_line, true_slope * x_line + true_intercept, 'g--', linewidth=2, label=f'True: y = {true_slope:.2f}x + {true_intercept:.2f}')
+# Plot 1: Scatter plot with regression line
+plt.subplot(2, 3, 1)
+plt.scatter(X, y, alpha=0.6, color='blue', label='Data points')
+plt.plot(X, y_true, 'r--', linewidth=2, label='True relationship')
+plt.plot(X, results['y_pred'], 'g-', linewidth=2, label='Fitted line')
 plt.xlabel('X')
 plt.ylabel('Y')
-plt.title('Linear Regression')
+plt.title('Simple Linear Regression')
 plt.legend()
+plt.grid(True, alpha=0.3)
 
-# Residuals
-plt.subplot(1, 3, 2)
-y_pred = slope * x + intercept
-residuals = y - y_pred
-plt.scatter(y_pred, residuals, alpha=0.7, color='lightgreen')
-plt.axhline(0, color='red', linestyle='--', alpha=0.7)
+# Plot 2: Residuals vs X
+plt.subplot(2, 3, 2)
+plt.scatter(X, results['residuals'], alpha=0.6, color='orange')
+plt.axhline(y=0, color='red', linestyle='--')
+plt.xlabel('X')
+plt.ylabel('Residuals')
+plt.title('Residuals vs X')
+plt.grid(True, alpha=0.3)
+
+# Plot 3: Residuals vs Predicted
+plt.subplot(2, 3, 3)
+plt.scatter(results['y_pred'], results['residuals'], alpha=0.6, color='green')
+plt.axhline(y=0, color='red', linestyle='--')
 plt.xlabel('Predicted Y')
 plt.ylabel('Residuals')
-plt.title('Residual Plot')
+plt.title('Residuals vs Predicted')
+plt.grid(True, alpha=0.3)
 
-# Q-Q plot of residuals
-plt.subplot(1, 3, 3)
-stats.probplot(residuals, dist="norm", plot=plt)
+# Plot 4: Q-Q plot of residuals
+plt.subplot(2, 3, 4)
+from scipy.stats import probplot
+probplot(results['residuals'], dist="norm", plot=plt)
 plt.title('Q-Q Plot of Residuals')
+plt.grid(True, alpha=0.3)
+
+# Plot 5: Histogram of residuals
+plt.subplot(2, 3, 5)
+plt.hist(results['residuals'], bins=15, alpha=0.7, color='purple', edgecolor='black')
+plt.xlabel('Residuals')
+plt.ylabel('Frequency')
+plt.title('Histogram of Residuals')
+plt.grid(True, alpha=0.3)
+
+# Plot 6: Leverage plot (studentized residuals)
+plt.subplot(2, 3, 6)
+# Calculate leverage
+X_with_const = np.column_stack([np.ones(len(X)), X])
+H = X_with_const @ np.linalg.inv(X_with_const.T @ X_with_const) @ X_with_const.T
+leverage = np.diag(H)
+
+# Calculate studentized residuals
+mse = results['mse']
+studentized_residuals = results['residuals'] / np.sqrt(mse * (1 - leverage))
+
+plt.scatter(leverage, studentized_residuals, alpha=0.6, color='brown')
+plt.axhline(y=0, color='red', linestyle='--')
+plt.xlabel('Leverage')
+plt.ylabel('Studentized Residuals')
+plt.title('Leverage Plot')
+plt.grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.show()
+
+# Demonstrate the mathematical relationship between correlation and slope
+print(f"\nMathematical Relationship:")
+print(f"Correlation coefficient (r): {correlation:.4f}")
+print(f"Slope coefficient (β₁): {results['slope']:.4f}")
+print(f"Standard deviation of X: {np.std(X):.4f}")
+print(f"Standard deviation of Y: {np.std(y):.4f}")
+print(f"r × (σ_Y / σ_X) = {correlation * np.std(y) / np.std(X):.4f}")
+print(f"β₁ = r × (σ_Y / σ_X): {abs(results['slope'] - correlation * np.std(y) / np.std(X)) < 1e-10}")
 ```
 
-### Using Scikit-learn
+### Statistical Inference in Regression
+
+**Hypothesis Testing for Slope:**
+- **Null Hypothesis**: H₀: β₁ = 0 (no linear relationship)
+- **Alternative Hypothesis**: H₁: β₁ ≠ 0 (linear relationship exists)
+
+**Test Statistic:**
+$$t = \frac{\hat{\beta_1} - 0}{\text{SE}(\hat{\beta_1})} \sim t_{n-2}$$
+
+**Confidence Interval for Slope:**
+$$\hat{\beta_1} \pm t_{\alpha/2, n-2} \times \text{SE}(\hat{\beta_1})$$
+
+**Prediction Interval:**
+For a new observation X₀:
+$$\hat{Y}_0 \pm t_{\alpha/2, n-2} \times \sqrt{\text{MSE} \left(1 + \frac{1}{n} + \frac{(X_0 - \bar{X})^2}{\sum_{i=1}^{n} (X_i - \bar{X})^2}\right)}$$
 
 ```python
-def sklearn_linear_regression(x, y):
-    """Perform linear regression using scikit-learn"""
-    # Reshape x for sklearn
-    X = x.reshape(-1, 1)
+def regression_inference(X, y, alpha=0.05):
+    """
+    Perform statistical inference for regression parameters
     
-    # Create and fit model
-    model = LinearRegression()
-    model.fit(X, y)
+    Mathematical implementation:
+    t = β₁ / SE(β₁)
+    CI = β₁ ± t_{α/2, n-2} × SE(β₁)
     
-    # Make predictions
-    y_pred = model.predict(X)
+    Parameters:
+    X: array-like, independent variable
+    y: array-like, dependent variable
+    alpha: float, significance level
     
-    # Calculate metrics
-    r2 = r2_score(y, y_pred)
-    mse = mean_squared_error(y, y_pred)
-    rmse = np.sqrt(mse)
+    Returns:
+    dict: inference results
+    """
+    results = simple_linear_regression(X, y)
     
-    return model, y_pred, r2, mse, rmse
+    # Degrees of freedom
+    df = results['n'] - 2
+    
+    # T-statistic for slope
+    t_stat_slope = results['slope'] / results['se_slope']
+    
+    # P-value for slope (two-tailed)
+    from scipy.stats import t
+    p_value_slope = 2 * (1 - t.cdf(abs(t_stat_slope), df))
+    
+    # Critical value
+    t_critical = t.ppf(1 - alpha/2, df)
+    
+    # Confidence intervals
+    ci_slope_lower = results['slope'] - t_critical * results['se_slope']
+    ci_slope_upper = results['slope'] + t_critical * results['se_slope']
+    
+    ci_intercept_lower = results['intercept'] - t_critical * results['se_intercept']
+    ci_intercept_upper = results['intercept'] + t_critical * results['se_intercept']
+    
+    return {
+        't_statistic_slope': t_stat_slope,
+        'p_value_slope': p_value_slope,
+        'ci_slope': (ci_slope_lower, ci_slope_upper),
+        'ci_intercept': (ci_intercept_lower, ci_intercept_upper),
+        't_critical': t_critical,
+        'degrees_of_freedom': df,
+        **results
+    }
 
-model, y_pred, r2, mse, rmse = sklearn_linear_regression(x, y)
+def prediction_interval(X, y, X_new, alpha=0.05):
+    """
+    Calculate prediction interval for new observations
+    
+    Mathematical implementation:
+    PI = Ŷ₀ ± t_{α/2, n-2} × √(MSE × (1 + 1/n + (X₀-X̄)²/SSX))
+    
+    Parameters:
+    X: array-like, independent variable
+    y: array-like, dependent variable
+    X_new: array-like, new X values
+    alpha: float, significance level
+    
+    Returns:
+    tuple: (predictions, lower_bounds, upper_bounds)
+    """
+    results = simple_linear_regression(X, y)
+    
+    # Degrees of freedom
+    df = results['n'] - 2
+    
+    # Critical value
+    from scipy.stats import t
+    t_critical = t.ppf(1 - alpha/2, df)
+    
+    # Calculate predictions
+    y_pred_new = results['intercept'] + results['slope'] * X_new
+    
+    # Calculate prediction intervals
+    X_mean = np.mean(X)
+    ssx = np.sum((X - X_mean) ** 2)
+    
+    # Standard error of prediction
+    se_pred = np.sqrt(results['mse'] * (1 + 1/results['n'] + (X_new - X_mean)**2 / ssx))
+    
+    # Prediction intervals
+    lower_bounds = y_pred_new - t_critical * se_pred
+    upper_bounds = y_pred_new + t_critical * se_pred
+    
+    return y_pred_new, lower_bounds, upper_bounds
 
-print("Scikit-learn Linear Regression")
-print(f"Slope: {model.coef_[0]:.3f}")
-print(f"Intercept: {model.intercept_:.3f}")
-print(f"R-squared: {r2:.3f}")
-print(f"MSE: {mse:.3f}")
-print(f"RMSE: {rmse:.3f}")
+# Perform inference
+inference_results = regression_inference(X, y, alpha=0.05)
 
-# Cross-validation
-cv_scores = cross_val_score(model, x.reshape(-1, 1), y, cv=5, scoring='r2')
-print(f"Cross-validation R² scores: {cv_scores}")
-print(f"Mean CV R²: {cv_scores.mean():.3f} (+/- {cv_scores.std() * 2:.3f})")
+print("Statistical Inference Results:")
+print(f"T-statistic for slope: {inference_results['t_statistic_slope']:.4f}")
+print(f"P-value for slope: {inference_results['p_value_slope']:.4f}")
+print(f"95% CI for slope: ({inference_results['ci_slope'][0]:.4f}, {inference_results['ci_slope'][1]:.4f})")
+print(f"95% CI for intercept: ({inference_results['ci_intercept'][0]:.4f}, {inference_results['ci_intercept'][1]:.4f})")
+print(f"Degrees of freedom: {inference_results['degrees_of_freedom']}")
+
+# Test if slope is significantly different from zero
+alpha = 0.05
+if inference_results['p_value_slope'] < alpha:
+    print(f"Reject H₀: Slope is significantly different from zero (p < {alpha})")
+else:
+    print(f"Fail to reject H₀: No evidence that slope differs from zero (p ≥ {alpha})")
+
+# Calculate prediction intervals
+X_new = np.linspace(0, 10, 50)
+y_pred_new, lower_bounds, upper_bounds = prediction_interval(X, y, X_new, alpha=0.05)
+
+# Visualize inference results
+plt.figure(figsize=(15, 5))
+
+# Plot 1: Regression with confidence and prediction intervals
+plt.subplot(1, 3, 1)
+plt.scatter(X, y, alpha=0.6, color='blue', label='Data points')
+plt.plot(X_new, y_pred_new, 'g-', linewidth=2, label='Regression line')
+plt.fill_between(X_new, lower_bounds, upper_bounds, alpha=0.3, color='red', label='95% Prediction interval')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.title('Regression with Prediction Intervals')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# Plot 2: T-distribution with critical region
+plt.subplot(1, 3, 2)
+from scipy.stats import t
+t_range = np.linspace(-4, 4, 1000)
+t_pdf = t.pdf(t_range, inference_results['degrees_of_freedom'])
+
+plt.plot(t_range, t_pdf, 'b-', linewidth=2, label=f't-distribution (df={inference_results["degrees_of_freedom"]})')
+plt.axvline(inference_results['t_statistic_slope'], color='red', linestyle='--', 
+            label=f't = {inference_results["t_statistic_slope"]:.3f}')
+plt.axvline(inference_results['t_critical'], color='orange', linestyle=':', 
+            label=f'Critical value = {inference_results["t_critical"]:.3f}')
+plt.axvline(-inference_results['t_critical'], color='orange', linestyle=':', 
+            label=f'Critical value = -{inference_results["t_critical"]:.3f}')
+plt.fill_between(t_range, t_pdf, where=(t_range > inference_results['t_critical']) | (t_range < -inference_results['t_critical']), 
+                 alpha=0.3, color='red', label='Rejection region')
+plt.xlabel('t')
+plt.ylabel('Probability Density')
+plt.title('T-Distribution')
+plt.legend()
+
+# Plot 3: Confidence intervals
+plt.subplot(1, 3, 3)
+parameters = ['Intercept', 'Slope']
+estimates = [inference_results['intercept'], inference_results['slope']]
+ci_lower = [inference_results['ci_intercept'][0], inference_results['ci_slope'][0]]
+ci_upper = [inference_results['ci_intercept'][1], inference_results['ci_slope'][1]]
+
+x_pos = np.arange(len(parameters))
+plt.errorbar(x_pos, estimates, yerr=[estimates[i] - ci_lower[i] for i in range(len(parameters))], 
+             fmt='o', capsize=5, capthick=2, linewidth=2, label='95% CI')
+plt.axhline(y=0, color='red', linestyle='--', alpha=0.7, label='H₀: β = 0')
+plt.xticks(x_pos, parameters)
+plt.ylabel('Parameter Estimate')
+plt.title('Parameter Estimates with 95% CI')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# Demonstrate the relationship between R² and correlation
+print(f"\nRelationship between R² and correlation:")
+print(f"R²: {inference_results['r_squared']:.4f}")
+print(f"Correlation coefficient: {correlation:.4f}")
+print(f"Correlation squared: {correlation**2:.4f}")
+print(f"R² = r²: {abs(inference_results['r_squared'] - correlation**2) < 1e-10}")
 ```
 
-### Using Statsmodels
+### Model Diagnostics
+
+**Residual Analysis:**
+1. **Normality**: Residuals should be normally distributed
+2. **Independence**: Residuals should be independent
+3. **Homoscedasticity**: Residual variance should be constant
+4. **Linearity**: Relationship should be linear
+
+**Influence Diagnostics:**
+- **Leverage**: Measures how far an observation is from the center of X
+- **Cook's Distance**: Measures the influence of each observation
+- **DFFITS**: Measures the influence on fitted values
 
 ```python
-def statsmodels_linear_regression(x, y):
-    """Perform linear regression using statsmodels"""
-    # Add constant for intercept
-    X = sm.add_constant(x)
+def regression_diagnostics(X, y):
+    """
+    Perform comprehensive regression diagnostics
     
-    # Create and fit model
-    model = sm.OLS(y, X).fit()
+    Parameters:
+    X: array-like, independent variable
+    y: array-like, dependent variable
     
-    return model
+    Returns:
+    dict: diagnostic results
+    """
+    results = simple_linear_regression(X, y)
+    
+    # Calculate leverage
+    X_with_const = np.column_stack([np.ones(len(X)), X])
+    H = X_with_const @ np.linalg.inv(X_with_const.T @ X_with_const) @ X_with_const.T
+    leverage = np.diag(H)
+    
+    # Calculate studentized residuals
+    mse = results['mse']
+    studentized_residuals = results['residuals'] / np.sqrt(mse * (1 - leverage))
+    
+    # Calculate Cook's distance
+    p = 2  # Number of parameters
+    cook_distance = (studentized_residuals**2 / p) * (leverage / (1 - leverage))
+    
+    # Calculate DFFITS
+    dffits = studentized_residuals * np.sqrt(leverage / (1 - leverage))
+    
+    # Test for normality (Shapiro-Wilk)
+    from scipy.stats import shapiro
+    shapiro_stat, shapiro_p = shapiro(results['residuals'])
+    
+    # Test for homoscedasticity (Breusch-Pagan)
+    # Using a simplified version
+    squared_residuals = results['residuals']**2
+    X_with_const_resid = np.column_stack([np.ones(len(X)), X])
+    try:
+        from scipy.stats import f
+        # Calculate R² for squared residuals
+        res_results = simple_linear_regression(X, squared_residuals)
+        bp_stat = res_results['r_squared'] * len(X)
+        bp_p = 1 - chi2.cdf(bp_stat, 1)  # 1 degree of freedom
+    except:
+        bp_stat, bp_p = np.nan, np.nan
+    
+    return {
+        'leverage': leverage,
+        'studentized_residuals': studentized_residuals,
+        'cook_distance': cook_distance,
+        'dffits': dffits,
+        'shapiro_stat': shapiro_stat,
+        'shapiro_p': shapiro_p,
+        'bp_stat': bp_stat,
+        'bp_p': bp_p,
+        **results
+    }
 
-sm_model = statsmodels_linear_regression(x, y)
+# Perform diagnostics
+diagnostics = regression_diagnostics(X, y)
 
-print("Statsmodels Linear Regression")
-print(sm_model.summary())
+print("Regression Diagnostics:")
+print(f"Shapiro-Wilk test for normality:")
+print(f"  Statistic: {diagnostics['shapiro_stat']:.4f}")
+print(f"  P-value: {diagnostics['shapiro_p']:.4f}")
+print(f"  Normality assumption: {'Rejected' if diagnostics['shapiro_p'] < 0.05 else 'Not rejected'}")
 
-# Extract key statistics
-print(f"\nKey Statistics:")
-print(f"R-squared: {sm_model.rsquared:.3f}")
-print(f"Adjusted R-squared: {sm_model.rsquared_adj:.3f}")
-print(f"F-statistic: {sm_model.fvalue:.3f}")
-print(f"P-value (F-test): {sm_model.f_pvalue:.3e}")
-print(f"AIC: {sm_model.aic:.3f}")
-print(f"BIC: {sm_model.bic:.3f}")
+print(f"\nBreusch-Pagan test for homoscedasticity:")
+print(f"  Statistic: {diagnostics['bp_stat']:.4f}")
+print(f"  P-value: {diagnostics['bp_p']:.4f}")
+print(f"  Homoscedasticity assumption: {'Rejected' if diagnostics['bp_p'] < 0.05 else 'Not rejected'}")
+
+# Identify influential observations
+high_leverage = diagnostics['leverage'] > 2 * (2 + 1) / len(X)  # 2(p+1)/n
+high_cook = diagnostics['cook_distance'] > 4 / len(X)  # 4/n
+high_dffits = abs(diagnostics['dffits']) > 2 * np.sqrt(2 / len(X))  # 2√(2/n)
+
+print(f"\nInfluential Observations:")
+print(f"High leverage: {np.sum(high_leverage)} observations")
+print(f"High Cook's distance: {np.sum(high_cook)} observations")
+print(f"High DFFITS: {np.sum(high_dffits)} observations")
+
+# Visualize diagnostics
+plt.figure(figsize=(15, 10))
+
+# Plot 1: Residuals vs Fitted
+plt.subplot(2, 3, 1)
+plt.scatter(diagnostics['y_pred'], diagnostics['residuals'], alpha=0.6, color='blue')
+plt.axhline(y=0, color='red', linestyle='--')
+plt.xlabel('Fitted Values')
+plt.ylabel('Residuals')
+plt.title('Residuals vs Fitted')
+plt.grid(True, alpha=0.3)
+
+# Plot 2: Q-Q plot
+plt.subplot(2, 3, 2)
+probplot(diagnostics['residuals'], dist="norm", plot=plt)
+plt.title('Q-Q Plot of Residuals')
+plt.grid(True, alpha=0.3)
+
+# Plot 3: Leverage plot
+plt.subplot(2, 3, 3)
+plt.scatter(diagnostics['leverage'], diagnostics['studentized_residuals'], alpha=0.6, color='green')
+plt.axhline(y=0, color='red', linestyle='--')
+plt.axhline(y=2, color='orange', linestyle=':', alpha=0.7)
+plt.axhline(y=-2, color='orange', linestyle=':', alpha=0.7)
+plt.xlabel('Leverage')
+plt.ylabel('Studentized Residuals')
+plt.title('Leverage Plot')
+plt.grid(True, alpha=0.3)
+
+# Plot 4: Cook's distance
+plt.subplot(2, 3, 4)
+plt.plot(diagnostics['cook_distance'], 'o-', alpha=0.7, color='purple')
+plt.axhline(y=4/len(X), color='red', linestyle='--', label='4/n threshold')
+plt.xlabel('Observation')
+plt.ylabel("Cook's Distance")
+plt.title("Cook's Distance")
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# Plot 5: DFFITS
+plt.subplot(2, 3, 5)
+plt.plot(diagnostics['dffits'], 'o-', alpha=0.7, color='brown')
+threshold = 2 * np.sqrt(2 / len(X))
+plt.axhline(y=threshold, color='red', linestyle='--', label=f'±{threshold:.3f} threshold')
+plt.axhline(y=-threshold, color='red', linestyle='--')
+plt.xlabel('Observation')
+plt.ylabel('DFFITS')
+plt.title('DFFITS')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# Plot 6: Scale-location plot
+plt.subplot(2, 3, 6)
+sqrt_abs_residuals = np.sqrt(np.abs(diagnostics['residuals']))
+plt.scatter(diagnostics['y_pred'], sqrt_abs_residuals, alpha=0.6, color='orange')
+plt.xlabel('Fitted Values')
+plt.ylabel('√|Residuals|')
+plt.title('Scale-Location Plot')
+plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# Summary of diagnostic findings
+print(f"\nDiagnostic Summary:")
+print(f"✓ Linearity: Check residuals vs fitted plot")
+print(f"✓ Normality: {'✓' if diagnostics['shapiro_p'] >= 0.05 else '✗'} (Shapiro-Wilk p = {diagnostics['shapiro_p']:.4f})")
+print(f"✓ Homoscedasticity: {'✓' if diagnostics['bp_p'] >= 0.05 else '✗'} (Breusch-Pagan p = {diagnostics['bp_p']:.4f})")
+print(f"✓ Independence: Check for patterns in residuals vs fitted")
+print(f"✓ No influential observations: {'✓' if np.sum(high_cook) == 0 else '✗'} ({np.sum(high_cook)} influential)")
 ```
 
 ## Multiple Linear Regression
