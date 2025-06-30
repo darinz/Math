@@ -12,6 +12,13 @@ This folder contains essential mathematical reference materials for learning and
 
 ### Linear Algebra
 - **`linear_algebra_for_dl.pdf`** (467KB) - Linear algebra fundamentals for deep learning applications
+- **`matrixcookbook.pdf`** (676KB) - Comprehensive matrix operations and formulas reference
+
+### Calculus & Derivatives
+- **`the_chain_rule.pdf`** (36KB) - Chain rule fundamentals and applications
+- **`the-chain-rule_lecture9.pdf`** (924KB) - Detailed lecture notes on the chain rule
+- **`derivatives_Section14_5.pdf`** (609KB) - Derivatives section from mathematical textbook
+- **`gradient_review.pdf`** (2.0MB) - Comprehensive gradient review and applications
 
 ### Numerical Methods
 - **`numerical_for_dl.pdf`** (561KB) - Numerical methods and computational techniques for deep learning
@@ -27,6 +34,15 @@ This folder contains essential mathematical reference materials for learning and
 1. Start with `calculation_ref.pdf` for basic mathematical operations
 2. Use `prob_reference.pdf` for probability concepts
 3. Reference `linear_algebra_for_dl.pdf` for linear algebra fundamentals
+
+### For Calculus and Derivatives
+1. **`the_chain_rule.pdf`** - Essential chain rule concepts
+2. **`the-chain-rule_lecture9.pdf`** - In-depth chain rule lecture materials
+3. **`derivatives_Section14_5.pdf`** - Comprehensive derivatives coverage
+4. **`gradient_review.pdf`** - Gradient concepts and applications
+
+### For Matrix Operations
+1. **`matrixcookbook.pdf`** - Complete reference for matrix formulas and operations
 
 ### For Deep Learning Applications
 1. **`prob_for_dl.pdf`** - Essential probability concepts for ML/DL
@@ -55,7 +71,7 @@ These reference materials complement the structured courses in the parent direct
 ## Recommended Learning Path
 
 1. **Beginner**: Start with calculation and probability references
-2. **Intermediate**: Study linear algebra and numerical methods
+2. **Intermediate**: Study linear algebra, derivatives, and numerical methods
 3. **Advanced**: Dive into comprehensive textbooks and MIT materials
 
 ---
