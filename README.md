@@ -46,6 +46,11 @@ Additional reference materials and supplementary content:
 - Linear algebra materials for deep learning
 - Numerical methods documentation
 - MIT course materials and additional learning resources
+- Chain rule and derivative references
+- Matrix cookbook and calculation references
+- Gradient review materials
+- Stanford Math 51 textbook
+- Probability for Computer Science materials
 
 ## Repository Structure
 
@@ -92,16 +97,21 @@ Math/
 │   ├── README.md                  # Learning guide
 │   └── SUMMARY.md                 # Complete summary
 ├── reference/           # Reference materials and supplementary content
-│   ├── calculation_ref.pdf        # Mathematical calculation reference
-│   ├── linear_algebra_for_dl.pdf  # Linear Algebra for Deep Learning
-│   ├── math-of-ml-book.pdf        # Mathematics of Machine Learning
-│   ├── math51book.pdf             # Stanford Math 51 textbook
-│   ├── MIT_ProbStats.zip          # MIT Probability & Statistics materials
-│   ├── numerical_for_dl.pdf       # Numerical for Deep Learning
-│   ├── prob_for_dl.pdf            # Probability for Deep Learning
-│   ├── prob_reference.pdf         # Probability reference guide
-│   └── ProbabilityForCS.pdf       # Probability for Computer Scientist
-└── README.md                      # This file
+│   ├── calculation_ref.pdf         # Mathematical calculation reference
+│   ├── derivatives_Section14_5.pdf # Derivatives reference (Section 14.5)
+│   ├── gradient_review.pdf         # Gradient review materials
+│   ├── linear_algebra_for_dl.pdf   # Linear Algebra for Deep Learning
+│   ├── math-of-ml-book.pdf         # Mathematics of Machine Learning
+│   ├── math51book.pdf              # Stanford Math 51 textbook
+│   ├── matrixcookbook.pdf          # Matrix cookbook reference
+│   ├── MIT_ProbStats.zip           # MIT Probability & Statistics materials
+│   ├── numerical_for_dl.pdf        # Numerical for Deep Learning
+│   ├── prob_for_dl.pdf             # Probability for Deep Learning
+│   ├── prob_reference.pdf          # Probability reference guide
+│   ├── ProbabilityForCS.pdf        # Probability for Computer Science
+│   ├── the_chain_rule.pdf          # Chain rule reference
+│   └── the-chain-rule_lecture9.pdf # Chain rule lecture materials
+└── README.md                       # This file
 ```
 
 Each discipline folder contains:
