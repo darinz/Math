@@ -45,77 +45,723 @@ np.random.seed(42)
 
 ## Time Series Components
 
-### Decomposing Time Series
+Time series data can be decomposed into several fundamental components that help us understand the underlying patterns and structure.
+
+### Mathematical Decomposition
+
+The **classical decomposition** model represents a time series as:
+
+$$Y_t = T_t + S_t + C_t + R_t$$
+
+Where:
+- $Y_t$ = Observed value at time t
+- $T_t$ = Trend component (long-term movement)
+- $S_t$ = Seasonal component (periodic patterns)
+- $C_t$ = Cyclical component (irregular cycles)
+- $R_t$ = Random/Residual component (unexplained variation)
+
+**Additive Model:**
+$$Y_t = T_t + S_t + C_t + R_t$$
+
+**Multiplicative Model:**
+$$Y_t = T_t \times S_t \times C_t \times R_t$$
+
+**Log-Additive Model:**
+$$\log(Y_t) = \log(T_t) + \log(S_t) + \log(C_t) + \log(R_t)$$
+
+### Trend Component (T_t)
+
+The trend represents the long-term systematic change in the series.
+
+**Mathematical Properties:**
+1. **Monotonicity**: Trend should be smooth and systematic
+2. **Persistence**: Changes should be gradual, not abrupt
+3. **Global Nature**: Trend affects the entire series
+
+**Common Trend Models:**
+
+**Linear Trend:**
+$$T_t = \beta_0 + \beta_1 t + \epsilon_t$$
+
+**Quadratic Trend:**
+$$T_t = \beta_0 + \beta_1 t + \beta_2 t^2 + \epsilon_t$$
+
+**Exponential Trend:**
+$$T_t = \beta_0 e^{\beta_1 t} + \epsilon_t$$
+
+**Logistic Trend:**
+$$T_t = \frac{L}{1 + e^{-k(t-t_0)}} + \epsilon_t$$
+
+Where:
+- $L$ = maximum level (carrying capacity)
+- $k$ = growth rate
+- $t_0$ = inflection point
+
+**Trend Estimation Methods:**
+
+**1. Moving Average:**
+$$\hat{T}_t = \frac{1}{2k+1} \sum_{i=-k}^{k} Y_{t+i}$$
+
+**2. Exponential Smoothing:**
+$$\hat{T}_t = \alpha Y_t + (1-\alpha) \hat{T}_{t-1}$$
+
+**3. Linear Regression:**
+$$\hat{T}_t = \hat{\beta}_0 + \hat{\beta}_1 t$$
+
+**4. Polynomial Regression:**
+$$\hat{T}_t = \hat{\beta}_0 + \hat{\beta}_1 t + \hat{\beta}_2 t^2 + \cdots + \hat{\beta}_p t^p$$
+
+### Seasonal Component (S_t)
+
+Seasonality represents regular, periodic patterns that repeat at fixed intervals.
+
+**Mathematical Properties:**
+1. **Periodicity**: $S_t = S_{t+s}$ where s is the seasonal period
+2. **Zero Sum**: $\sum_{i=1}^{s} S_i = 0$ (additive model)
+3. **Product Unity**: $\prod_{i=1}^{s} S_i = 1$ (multiplicative model)
+
+**Seasonal Models:**
+
+**Deterministic Seasonal:**
+$$S_t = \sum_{j=1}^{s} \alpha_j D_{j,t}$$
+
+Where $D_{j,t}$ are seasonal dummy variables.
+
+**Harmonic Seasonal:**
+$$S_t = \sum_{j=1}^{k} [A_j \cos(2\pi j t/s) + B_j \sin(2\pi j t/s)]$$
+
+**Seasonal Estimation:**
+
+**1. Seasonal Subseries Method:**
+$$\hat{S}_j = \frac{1}{n_j} \sum_{i=1}^{n_j} (Y_{i,j} - \bar{Y})$$
+
+**2. Seasonal Moving Average:**
+$$\hat{S}_t = \frac{1}{s} \sum_{i=0}^{s-1} Y_{t-i} - \hat{T}_t$$
+
+### Cyclical Component (C_t)
+
+Cycles represent irregular, non-seasonal patterns that occur over longer periods.
+
+**Mathematical Properties:**
+1. **Non-periodic**: Cycles don't repeat at fixed intervals
+2. **Variable Amplitude**: Cycle strength can vary over time
+3. **Economic Nature**: Often related to business cycles
+
+**Cyclical Models:**
+
+**ARMA Process:**
+$$C_t = \phi_1 C_{t-1} + \phi_2 C_{t-2} + \cdots + \phi_p C_{t-p} + \epsilon_t + \theta_1 \epsilon_{t-1} + \cdots + \theta_q \epsilon_{t-q}$$
+
+**Spectral Analysis:**
+$$C_t = \int_{-\pi}^{\pi} e^{i\omega t} dZ(\omega)$$
+
+Where $dZ(\omega)$ is the spectral measure.
+
+### Random Component (R_t)
+
+The residual component captures unexplained variation.
+
+**Mathematical Properties:**
+1. **Zero Mean**: $E[R_t] = 0$
+2. **Constant Variance**: $\text{Var}(R_t) = \sigma^2$
+3. **Uncorrelated**: $\text{Cov}(R_t, R_{t-k}) = 0$ for $k \neq 0$
+
+**Residual Analysis:**
+$$R_t = Y_t - \hat{T}_t - \hat{S}_t - \hat{C}_t$$
 
 ```python
-def generate_time_series_data(n=200):
-    """Generate synthetic time series with trend, seasonality, and noise"""
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+from scipy.signal import detrend
+from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa.stattools import adfuller
+import seaborn as sns
+
+def generate_trend_component(n, trend_type='linear', **params):
+    """
+    Generate trend component with different functional forms
+    
+    Mathematical implementation:
+    Linear: T_t = β₀ + β₁t
+    Quadratic: T_t = β₀ + β₁t + β₂t²
+    Exponential: T_t = β₀e^(β₁t)
+    Logistic: T_t = L/(1 + e^(-k(t-t₀)))
+    
+    Parameters:
+    n: int, number of observations
+    trend_type: str, type of trend
+    **params: trend parameters
+    
+    Returns:
+    array: trend component
+    """
     t = np.arange(n)
     
-    # Trend component (linear + quadratic)
-    trend = 0.1 * t + 0.001 * t**2
+    if trend_type == 'linear':
+        beta0 = params.get('beta0', 0)
+        beta1 = params.get('beta1', 0.1)
+        return beta0 + beta1 * t
     
-    # Seasonal component (annual seasonality)
-    seasonal_period = 12
-    seasonal = 5 * np.sin(2 * np.pi * t / seasonal_period) + 2 * np.cos(2 * np.pi * t / seasonal_period)
+    elif trend_type == 'quadratic':
+        beta0 = params.get('beta0', 0)
+        beta1 = params.get('beta1', 0.1)
+        beta2 = params.get('beta2', 0.001)
+        return beta0 + beta1 * t + beta2 * t**2
     
-    # Cyclical component (longer period)
-    cyclical_period = 50
-    cyclical = 3 * np.sin(2 * np.pi * t / cyclical_period)
+    elif trend_type == 'exponential':
+        beta0 = params.get('beta0', 1)
+        beta1 = params.get('beta1', 0.01)
+        return beta0 * np.exp(beta1 * t)
     
-    # Random component
-    random = np.random.normal(0, 1, n)
+    elif trend_type == 'logistic':
+        L = params.get('L', 100)
+        k = params.get('k', 0.1)
+        t0 = params.get('t0', n/2)
+        return L / (1 + np.exp(-k * (t - t0)))
     
-    # Combine components
-    time_series = trend + seasonal + cyclical + random
-    
-    # Create datetime index
-    dates = pd.date_range('2020-01-01', periods=n, freq='M')
-    
-    return pd.Series(time_series, index=dates), trend, seasonal, cyclical, random
+    else:
+        raise ValueError(f"Unknown trend type: {trend_type}")
 
-ts_data, trend, seasonal, cyclical, random = generate_time_series_data()
+def generate_seasonal_component(n, period, seasonal_type='harmonic', **params):
+    """
+    Generate seasonal component with different patterns
+    
+    Mathematical implementation:
+    Harmonic: S_t = Σ[A_j cos(2πjt/s) + B_j sin(2πjt/s)]
+    Deterministic: S_t = Σ α_j D_{j,t}
+    
+    Parameters:
+    n: int, number of observations
+    period: int, seasonal period
+    seasonal_type: str, type of seasonality
+    **params: seasonal parameters
+    
+    Returns:
+    array: seasonal component
+    """
+    t = np.arange(n)
+    
+    if seasonal_type == 'harmonic':
+        k = params.get('k', 2)  # number of harmonics
+        seasonal = np.zeros(n)
+        
+        for j in range(1, k + 1):
+            A_j = params.get(f'A_{j}', np.random.normal(0, 1))
+            B_j = params.get(f'B_{j}', np.random.normal(0, 1))
+            seasonal += A_j * np.cos(2 * np.pi * j * t / period) + \
+                       B_j * np.sin(2 * np.pi * j * t / period)
+        
+        return seasonal
+    
+    elif seasonal_type == 'deterministic':
+        # Create seasonal pattern with fixed amplitudes
+        amplitudes = params.get('amplitudes', [2, -1, 1, -2, 0.5, -0.5])
+        seasonal = np.zeros(n)
+        
+        for i in range(n):
+            season_idx = i % period
+            if season_idx < len(amplitudes):
+                seasonal[i] = amplitudes[season_idx]
+        
+        return seasonal
+    
+    else:
+        raise ValueError(f"Unknown seasonal type: {seasonal_type}")
 
-print("Time Series Components")
-print(f"Data shape: {ts_data.shape}")
-print(f"Date range: {ts_data.index[0]} to {ts_data.index[-1]}")
+def generate_cyclical_component(n, cycle_period=50, amplitude=1, **params):
+    """
+    Generate cyclical component using ARMA-like process
+    
+    Mathematical implementation:
+    C_t = φ₁C_{t-1} + φ₂C_{t-2} + ... + ε_t
+    
+    Parameters:
+    n: int, number of observations
+    cycle_period: int, approximate cycle length
+    amplitude: float, cycle amplitude
+    **params: cycle parameters
+    
+    Returns:
+    array: cyclical component
+    """
+    # Generate AR(2) process to create cycles
+    phi1 = params.get('phi1', 1.5)
+    phi2 = params.get('phi2', -0.7)
+    sigma = params.get('sigma', 0.1)
+    
+    cyclical = np.zeros(n)
+    epsilon = np.random.normal(0, sigma, n)
+    
+    # Initialize with random values
+    cyclical[0] = np.random.normal(0, 1)
+    cyclical[1] = np.random.normal(0, 1)
+    
+    # Generate AR(2) process
+    for t in range(2, n):
+        cyclical[t] = phi1 * cyclical[t-1] + phi2 * cyclical[t-2] + epsilon[t]
+    
+    # Scale to desired amplitude
+    cyclical = amplitude * cyclical / np.std(cyclical)
+    
+    return cyclical
 
-# Visualize components
-plt.figure(figsize=(15, 10))
+def generate_random_component(n, distribution='normal', **params):
+    """
+    Generate random component with different distributions
+    
+    Mathematical implementation:
+    Normal: R_t ~ N(0, σ²)
+    Student-t: R_t ~ t(ν)
+    GARCH-like: R_t ~ N(0, σ_t²) where σ_t² varies
+    
+    Parameters:
+    n: int, number of observations
+    distribution: str, distribution type
+    **params: distribution parameters
+    
+    Returns:
+    array: random component
+    """
+    if distribution == 'normal':
+        sigma = params.get('sigma', 1.0)
+        return np.random.normal(0, sigma, n)
+    
+    elif distribution == 'student_t':
+        df = params.get('df', 5)
+        return np.random.standard_t(df, n)
+    
+    elif distribution == 'garch_like':
+        # Simple GARCH-like process with time-varying volatility
+        sigma = params.get('sigma', 1.0)
+        alpha = params.get('alpha', 0.1)
+        beta = params.get('beta', 0.8)
+        
+        volatility = np.zeros(n)
+        returns = np.zeros(n)
+        
+        volatility[0] = sigma
+        returns[0] = np.random.normal(0, volatility[0])
+        
+        for t in range(1, n):
+            volatility[t] = np.sqrt(alpha + beta * volatility[t-1]**2)
+            returns[t] = np.random.normal(0, volatility[t])
+        
+        return returns
+    
+    else:
+        raise ValueError(f"Unknown distribution: {distribution}")
 
-# Original time series
-plt.subplot(4, 1, 1)
-plt.plot(ts_data.index, ts_data.values, 'b-', linewidth=1)
-plt.title('Original Time Series')
-plt.ylabel('Value')
+def decompose_time_series(y, period=None, model='additive'):
+    """
+    Decompose time series into components
+    
+    Mathematical implementation:
+    Additive: Y_t = T_t + S_t + C_t + R_t
+    Multiplicative: Y_t = T_t × S_t × C_t × R_t
+    
+    Parameters:
+    y: array, time series data
+    period: int, seasonal period
+    model: str, decomposition model
+    
+    Returns:
+    dict: decomposed components
+    """
+    n = len(y)
+    
+    # Estimate trend using moving average
+    if period and period > 1:
+        # Use seasonal moving average for trend
+        trend = np.convolve(y, np.ones(period)/period, mode='same')
+    else:
+        # Use simple moving average
+        trend = np.convolve(y, np.ones(5)/5, mode='same')
+    
+    # Remove trend to get detrended series
+    detrended = y - trend
+    
+    # Estimate seasonal component
+    if period and period > 1:
+        seasonal = np.zeros(n)
+        for i in range(period):
+            indices = np.arange(i, n, period)
+            seasonal[indices] = np.mean(detrended[indices])
+        
+        # Center seasonal component
+        seasonal = seasonal - np.mean(seasonal)
+    else:
+        seasonal = np.zeros(n)
+    
+    # Remove seasonal to get seasonal-adjusted series
+    seasonal_adjusted = detrended - seasonal
+    
+    # Estimate cyclical component (simplified)
+    # Use moving average of seasonal-adjusted series
+    cyclical = np.convolve(seasonal_adjusted, np.ones(7)/7, mode='same')
+    
+    # Residual component
+    residual = seasonal_adjusted - cyclical
+    
+    return {
+        'trend': trend,
+        'seasonal': seasonal,
+        'cyclical': cyclical,
+        'residual': residual,
+        'detrended': detrended,
+        'seasonal_adjusted': seasonal_adjusted
+    }
+
+def analyze_trend_properties(trend, t):
+    """
+    Analyze mathematical properties of trend component
+    
+    Parameters:
+    trend: array, trend component
+    t: array, time index
+    
+    Returns:
+    dict: trend analysis results
+    """
+    # Calculate trend characteristics
+    trend_slope = np.polyfit(t, trend, 1)[0]
+    trend_curvature = np.polyfit(t, trend, 2)[2]
+    
+    # Calculate trend persistence
+    trend_diff = np.diff(trend)
+    trend_persistence = np.corrcoef(trend[:-1], trend[1:])[0, 1]
+    
+    # Calculate trend strength
+    trend_variance = np.var(trend)
+    total_variance = np.var(trend + np.random.normal(0, 1, len(trend)))
+    trend_strength = trend_variance / total_variance
+    
+    return {
+        'slope': trend_slope,
+        'curvature': trend_curvature,
+        'persistence': trend_persistence,
+        'strength': trend_strength,
+        'variance': trend_variance
+    }
+
+def analyze_seasonal_properties(seasonal, period):
+    """
+    Analyze mathematical properties of seasonal component
+    
+    Parameters:
+    seasonal: array, seasonal component
+    period: int, seasonal period
+    
+    Returns:
+    dict: seasonal analysis results
+    """
+    # Check periodicity
+    seasonal_periods = []
+    for i in range(period):
+        seasonal_periods.append(seasonal[i::period])
+    
+    periodicity_check = all(np.allclose(seasonal_periods[0], seasonal_periods[j], atol=1e-6) 
+                           for j in range(1, period))
+    
+    # Calculate seasonal strength
+    seasonal_variance = np.var(seasonal)
+    total_variance = np.var(seasonal + np.random.normal(0, 1, len(seasonal)))
+    seasonal_strength = seasonal_variance / total_variance
+    
+    # Calculate seasonal pattern
+    seasonal_pattern = np.mean(seasonal_periods, axis=1)
+    
+    # Check zero-sum property (additive model)
+    zero_sum_check = abs(np.sum(seasonal_pattern)) < 1e-6
+    
+    return {
+        'periodicity': periodicity_check,
+        'strength': seasonal_strength,
+        'pattern': seasonal_pattern,
+        'zero_sum': zero_sum_check,
+        'variance': seasonal_variance
+    }
+
+def analyze_cyclical_properties(cyclical):
+    """
+    Analyze mathematical properties of cyclical component
+    
+    Parameters:
+    cyclical: array, cyclical component
+    
+    Returns:
+    dict: cyclical analysis results
+    """
+    # Calculate autocorrelation
+    autocorr = np.corrcoef(cyclical[:-1], cyclical[1:])[0, 1]
+    
+    # Calculate cycle length using autocorrelation
+    acf = np.correlate(cyclical, cyclical, mode='full')
+    acf = acf[len(cyclical)-1:]
+    
+    # Find first peak after lag 1
+    peaks = []
+    for i in range(2, len(acf)-1):
+        if acf[i] > acf[i-1] and acf[i] > acf[i+1]:
+            peaks.append(i)
+    
+    cycle_length = peaks[0] if peaks else None
+    
+    # Calculate cycle amplitude
+    cycle_amplitude = np.max(cyclical) - np.min(cyclical)
+    
+    # Calculate cycle variance
+    cycle_variance = np.var(cyclical)
+    
+    return {
+        'autocorrelation': autocorr,
+        'cycle_length': cycle_length,
+        'amplitude': cycle_amplitude,
+        'variance': cycle_variance
+    }
+
+def analyze_residual_properties(residual):
+    """
+    Analyze mathematical properties of residual component
+    
+    Parameters:
+    residual: array, residual component
+    
+    Returns:
+    dict: residual analysis results
+    """
+    # Check zero mean
+    mean_check = abs(np.mean(residual)) < 1e-6
+    
+    # Check constant variance (homoscedasticity)
+    # Split into segments and check variance
+    n_segments = 4
+    segment_size = len(residual) // n_segments
+    variances = []
+    
+    for i in range(n_segments):
+        start_idx = i * segment_size
+        end_idx = start_idx + segment_size
+        variances.append(np.var(residual[start_idx:end_idx]))
+    
+    variance_ratio = max(variances) / min(variances)
+    homoscedastic = variance_ratio < 2.0  # Simple threshold
+    
+    # Check uncorrelated (no autocorrelation)
+    autocorr_lag1 = np.corrcoef(residual[:-1], residual[1:])[0, 1]
+    uncorrelated = abs(autocorr_lag1) < 0.1  # Simple threshold
+    
+    # Normality test
+    _, normality_p = stats.normaltest(residual)
+    normal = normality_p > 0.05
+    
+    return {
+        'zero_mean': mean_check,
+        'homoscedastic': homoscedastic,
+        'uncorrelated': uncorrelated,
+        'normal': normal,
+        'variance': np.var(residual),
+        'autocorr_lag1': autocorr_lag1,
+        'normality_p': normality_p
+    }
+
+# Generate comprehensive time series example
+np.random.seed(42)
+n = 200
+t = np.arange(n)
+
+# Generate components
+trend = generate_trend_component(n, 'logistic', L=100, k=0.05, t0=100)
+seasonal = generate_seasonal_component(n, period=12, seasonal_type='harmonic', k=2)
+cyclical = generate_cyclical_component(n, cycle_period=40, amplitude=5)
+residual = generate_random_component(n, 'normal', sigma=2)
+
+# Combine into time series
+y_additive = trend + seasonal + cyclical + residual
+y_multiplicative = trend * (1 + 0.1*seasonal) * (1 + 0.05*cyclical) * (1 + 0.02*residual)
+
+print("Time Series Components Analysis")
+print("=" * 50)
+
+# Analyze additive decomposition
+decomposition = decompose_time_series(y_additive, period=12, model='additive')
+
+print(f"\nAdditive Decomposition: Y_t = T_t + S_t + C_t + R_t")
+print(f"Trend variance: {np.var(decomposition['trend']):.2f}")
+print(f"Seasonal variance: {np.var(decomposition['seasonal']):.2f}")
+print(f"Cyclical variance: {np.var(decomposition['cyclical']):.2f}")
+print(f"Residual variance: {np.var(decomposition['residual']):.2f}")
+
+# Analyze component properties
+trend_analysis = analyze_trend_properties(decomposition['trend'], t)
+seasonal_analysis = analyze_seasonal_properties(decomposition['seasonal'], 12)
+cyclical_analysis = analyze_cyclical_properties(decomposition['cyclical'])
+residual_analysis = analyze_residual_properties(decomposition['residual'])
+
+print(f"\nTrend Analysis:")
+print(f"  Slope: {trend_analysis['slope']:.4f}")
+print(f"  Curvature: {trend_analysis['curvature']:.6f}")
+print(f"  Persistence: {trend_analysis['persistence']:.4f}")
+print(f"  Strength: {trend_analysis['strength']:.4f}")
+
+print(f"\nSeasonal Analysis:")
+print(f"  Periodicity: {seasonal_analysis['periodicity']}")
+print(f"  Strength: {seasonal_analysis['strength']:.4f}")
+print(f"  Zero-sum property: {seasonal_analysis['zero_sum']}")
+
+print(f"\nCyclical Analysis:")
+print(f"  Autocorrelation: {cyclical_analysis['autocorrelation']:.4f}")
+print(f"  Cycle length: {cyclical_analysis['cycle_length']}")
+print(f"  Amplitude: {cyclical_analysis['amplitude']:.2f}")
+
+print(f"\nResidual Analysis:")
+print(f"  Zero mean: {residual_analysis['zero_mean']}")
+print(f"  Homoscedastic: {residual_analysis['homoscedastic']}")
+print(f"  Uncorrelated: {residual_analysis['uncorrelated']}")
+print(f"  Normal: {residual_analysis['normal']}")
+
+# Visualize decomposition
+plt.figure(figsize=(15, 12))
+
+# Original series
+plt.subplot(4, 2, 1)
+plt.plot(t, y_additive, 'b-', linewidth=1)
+plt.title('Original Time Series (Additive)')
+plt.ylabel('Y_t')
+plt.grid(True, alpha=0.3)
+
+# Components
+plt.subplot(4, 2, 2)
+plt.plot(t, trend, 'r-', linewidth=2, label='Trend')
+plt.plot(t, seasonal, 'g-', linewidth=1, label='Seasonal')
+plt.plot(t, cyclical, 'm-', linewidth=1, label='Cyclical')
+plt.plot(t, residual, 'k-', linewidth=0.5, label='Residual')
+plt.title('Individual Components')
+plt.legend()
+plt.grid(True, alpha=0.3)
 
 # Trend component
-plt.subplot(4, 1, 2)
-plt.plot(ts_data.index, trend, 'r-', linewidth=2)
+plt.subplot(4, 2, 3)
+plt.plot(t, decomposition['trend'], 'r-', linewidth=2)
 plt.title('Trend Component')
-plt.ylabel('Value')
+plt.ylabel('T_t')
+plt.grid(True, alpha=0.3)
 
 # Seasonal component
-plt.subplot(4, 1, 3)
-plt.plot(ts_data.index, seasonal, 'g-', linewidth=2)
+plt.subplot(4, 2, 4)
+plt.plot(t, decomposition['seasonal'], 'g-', linewidth=1)
 plt.title('Seasonal Component')
-plt.ylabel('Value')
+plt.ylabel('S_t')
+plt.grid(True, alpha=0.3)
 
 # Cyclical component
-plt.subplot(4, 1, 4)
-plt.plot(ts_data.index, cyclical, 'orange', linewidth=2)
+plt.subplot(4, 2, 5)
+plt.plot(t, decomposition['cyclical'], 'm-', linewidth=1)
 plt.title('Cyclical Component')
-plt.ylabel('Value')
+plt.ylabel('C_t')
+plt.grid(True, alpha=0.3)
+
+# Residual component
+plt.subplot(4, 2, 6)
+plt.plot(t, decomposition['residual'], 'k-', linewidth=0.5)
+plt.title('Residual Component')
+plt.ylabel('R_t')
+plt.grid(True, alpha=0.3)
+
+# Seasonal pattern
+plt.subplot(4, 2, 7)
+seasonal_pattern = seasonal_analysis['pattern']
+plt.bar(range(12), seasonal_pattern, alpha=0.7, color='green')
+plt.title('Seasonal Pattern (12-period)')
+plt.xlabel('Season')
+plt.ylabel('Amplitude')
+plt.grid(True, alpha=0.3)
+
+# Residual diagnostics
+plt.subplot(4, 2, 8)
+plt.hist(decomposition['residual'], bins=20, alpha=0.7, color='gray', edgecolor='black')
+plt.title('Residual Distribution')
+plt.xlabel('Residual Value')
+plt.ylabel('Frequency')
+plt.grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.show()
 
-# Summary statistics
-print(f"\nComponent Statistics:")
-print(f"Trend - Mean: {np.mean(trend):.3f}, Std: {np.std(trend):.3f}")
-print(f"Seasonal - Mean: {np.mean(seasonal):.3f}, Std: {np.std(seasonal):.3f}")
-print(f"Cyclical - Mean: {np.mean(cyclical):.3f}, Std: {np.std(cyclical):.3f}")
-print(f"Random - Mean: {np.mean(random):.3f}, Std: {np.std(random):.3f}")
+# Demonstrate mathematical relationships
+print(f"\nMathematical Relationships Verification:")
+print(f"1. Additive Decomposition: Y_t = T_t + S_t + C_t + R_t")
+reconstructed = (decomposition['trend'] + decomposition['seasonal'] + 
+                decomposition['cyclical'] + decomposition['residual'])
+reconstruction_error = np.mean((y_additive - reconstructed)**2)
+print(f"   Reconstruction MSE: {reconstruction_error:.6f}")
+
+print(f"\n2. Seasonal Periodicity: S_t = S_{t+s}")
+periodicity_check = np.allclose(decomposition['seasonal'][:12], 
+                               decomposition['seasonal'][12:24], atol=1e-6)
+print(f"   Periodicity holds: {periodicity_check}")
+
+print(f"\n3. Residual Properties:")
+print(f"   Mean ≈ 0: {abs(np.mean(decomposition['residual'])):.6f}")
+print(f"   Variance: {np.var(decomposition['residual']):.4f}")
+print(f"   Autocorrelation lag-1: {residual_analysis['autocorr_lag1']:.4f}")
+
+# Compare additive vs multiplicative
+plt.figure(figsize=(12, 8))
+
+plt.subplot(2, 2, 1)
+plt.plot(t, y_additive, 'b-', linewidth=1, label='Additive')
+plt.plot(t, y_multiplicative, 'r-', linewidth=1, label='Multiplicative')
+plt.title('Additive vs Multiplicative Models')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.subplot(2, 2, 2)
+# Show how multiplicative affects seasonality
+decomp_mult = decompose_time_series(y_multiplicative, period=12, model='multiplicative')
+plt.plot(t, decomposition['seasonal'], 'b-', label='Additive Seasonal')
+plt.plot(t, decomp_mult['seasonal'], 'r-', label='Multiplicative Seasonal')
+plt.title('Seasonal Components Comparison')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.subplot(2, 2, 3)
+# Variance decomposition
+variances = [np.var(decomposition['trend']), 
+            np.var(decomposition['seasonal']),
+            np.var(decomposition['cyclical']),
+            np.var(decomposition['residual'])]
+labels = ['Trend', 'Seasonal', 'Cyclical', 'Residual']
+plt.pie(variances, labels=labels, autopct='%1.1f%%')
+plt.title('Variance Decomposition')
+
+plt.subplot(2, 2, 4)
+# Autocorrelation function
+def autocorr(x, max_lag=20):
+    acf = []
+    for lag in range(max_lag + 1):
+        if lag == 0:
+            acf.append(1.0)
+        else:
+            correlation = np.corrcoef(x[:-lag], x[lag:])[0, 1]
+            acf.append(correlation)
+    return acf
+
+acf_original = autocorr(y_additive)
+acf_residual = autocorr(decomposition['residual'])
+
+plt.plot(range(len(acf_original)), acf_original, 'b-', label='Original Series')
+plt.plot(range(len(acf_residual)), acf_residual, 'r-', label='Residuals')
+plt.axhline(y=0, color='k', linestyle='--', alpha=0.5)
+plt.title('Autocorrelation Functions')
+plt.xlabel('Lag')
+plt.ylabel('Autocorrelation')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
 ```
 
 ## Stationarity
