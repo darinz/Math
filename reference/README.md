@@ -1,5 +1,13 @@
 # Reference Materials
 
+[![Mathematics](https://img.shields.io/badge/Mathematics-Reference%20Materials-blue.svg)](https://github.com/your-repo)
+[![PDF](https://img.shields.io/badge/Format-PDF-orange.svg)](https://github.com/your-repo)
+[![Probability](https://img.shields.io/badge/Topic-Probability-green.svg)](https://github.com/your-repo)
+[![Linear Algebra](https://img.shields.io/badge/Topic-Linear%20Algebra-purple.svg)](https://github.com/your-repo)
+[![Calculus](https://img.shields.io/badge/Topic-Calculus-red.svg)](https://github.com/your-repo)
+[![Machine Learning](https://img.shields.io/badge/Topic-Machine%20Learning-yellow.svg)](https://github.com/your-repo)
+[![MIT](https://img.shields.io/badge/Source-MIT%20Materials-lightgrey.svg)](https://github.com/your-repo)
+
 This folder contains essential mathematical reference materials for learning and research in mathematics, statistics, and machine learning.
 
 ## Available Resources
