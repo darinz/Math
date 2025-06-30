@@ -46,6 +46,17 @@ import seaborn as sns
 
 Each section can be read independently, but we recommend following the order for a complete understanding. Code examples are designed to be run in Jupyter notebooks or Python scripts.
 
+### Setup and Installation
+
+1. **Install dependencies** using the provided requirements file:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Interactive examples**: Use the `calculus_examples.ipynb` Jupyter notebook for hands-on practice with all concepts covered in this guide.
+
+3. **Progressive learning**: Follow the chapter order for a complete understanding of calculus fundamentals and applications.
+
 ## Applications in AI/ML
 
 - **Gradient Descent**: Understanding derivatives for optimization
