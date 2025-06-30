@@ -41,22 +41,79 @@ np.random.seed(42)
 
 ## Randomized Controlled Trials
 
+### Mathematical Foundation
+
+**Randomized Controlled Trials (RCTs)** are the gold standard for establishing causal relationships. The key principle is random assignment, which ensures that treatment and control groups are comparable on average across all observed and unobserved characteristics.
+
+**Causal Inference Framework:**
+- **Potential Outcomes**: For each subject i, we define:
+  - $Y_i(1)$: outcome if subject receives treatment
+  - $Y_i(0)$: outcome if subject receives control
+- **Individual Treatment Effect**: $\tau_i = Y_i(1) - Y_i(0)$
+- **Average Treatment Effect (ATE)**: $\tau = E[Y_i(1) - Y_i(0)] = E[Y_i(1)] - E[Y_i(0)]$
+
+**Randomization Properties:**
+1. **Unconfoundedness**: $(Y_i(1), Y_i(0)) \perp T_i$ where $T_i$ is treatment assignment
+2. **Overlap**: $0 < P(T_i = 1) < 1$ for all subjects
+3. **SUTVA**: Stable Unit Treatment Value Assumption (no interference between units)
+
+**Estimation of ATE:**
+$$\hat{\tau} = \bar{Y}_1 - \bar{Y}_0$$
+where $\bar{Y}_1$ and $\bar{Y}_0$ are sample means of treated and control groups.
+
+**Standard Error:**
+$$SE(\hat{\tau}) = \sqrt{\frac{s_1^2}{n_1} + \frac{s_0^2}{n_0}}$$
+where $s_1^2, s_0^2$ are sample variances and $n_1, n_0$ are sample sizes.
+
 ### Basic RCT Design
 
 ```python
 def simulate_rct(n_treatment=50, n_control=50, treatment_effect=5, noise=2):
-    """Simulate a randomized controlled trial"""
+    """
+    Simulate a randomized controlled trial
     
-    # Generate control group
-    control_outcomes = np.random.normal(100, noise, n_control)
+    Mathematical implementation:
+    1. Generate potential outcomes: Y(0) ~ N(μ₀, σ²), Y(1) = Y(0) + τ
+    2. Randomly assign treatment: T ~ Bernoulli(p) where p = n₁/(n₀ + n₁)
+    3. Observe outcomes: Y = T*Y(1) + (1-T)*Y(0)
+    4. Estimate ATE: τ̂ = Ȳ₁ - Ȳ₀
     
-    # Generate treatment group (with treatment effect)
-    treatment_outcomes = np.random.normal(100 + treatment_effect, noise, n_treatment)
+    Parameters:
+    n_treatment: int, size of treatment group
+    n_control: int, size of control group
+    treatment_effect: float, true treatment effect
+    noise: float, standard deviation of outcomes
+    
+    Returns:
+    tuple: (DataFrame, true_effect)
+    """
+    n_total = n_treatment + n_control
+    
+    # Step 1: Generate potential outcomes
+    # Control potential outcomes: Y(0) ~ N(100, noise²)
+    y0 = np.random.normal(100, noise, n_total)
+    
+    # Treatment potential outcomes: Y(1) = Y(0) + treatment_effect
+    y1 = y0 + treatment_effect
+    
+    # Step 2: Random treatment assignment
+    # Probability of treatment assignment
+    p_treatment = n_treatment / n_total
+    
+    # Random assignment
+    treatment_assignment = np.random.binomial(1, p_treatment, n_total)
+    
+    # Step 3: Observe outcomes (SUTVA assumption)
+    observed_outcomes = treatment_assignment * y1 + (1 - treatment_assignment) * y0
     
     # Create DataFrame
     df_rct = pd.DataFrame({
-        'group': ['control'] * n_control + ['treatment'] * n_treatment,
-        'outcome': np.concatenate([control_outcomes, treatment_outcomes])
+        'subject_id': range(n_total),
+        'treatment_assignment': treatment_assignment,
+        'y0_potential': y0,
+        'y1_potential': y1,
+        'observed_outcome': observed_outcomes,
+        'group': ['treatment' if t == 1 else 'control' for t in treatment_assignment]
     })
     
     return df_rct, treatment_effect
@@ -68,36 +125,76 @@ print(f"Control group size: {len(df_rct[df_rct['group'] == 'control'])}")
 print(f"Treatment group size: {len(df_rct[df_rct['group'] == 'treatment'])}")
 print(f"True treatment effect: {true_effect}")
 
+# Verify randomization balance
+print(f"\nRandomization Balance Check:")
+print(f"Treatment assignment probability: {df_rct['treatment_assignment'].mean():.3f}")
+print(f"Expected probability: {len(df_rct[df_rct['group'] == 'treatment']) / len(df_rct):.3f}")
+
 # Analyze RCT results
 def analyze_rct(data):
-    """Analyze RCT results"""
+    """
+    Analyze RCT results with detailed statistical calculations
     
-    control_data = data[data['group'] == 'control']['outcome']
-    treatment_data = data[data['group'] == 'treatment']['outcome']
+    Mathematical steps:
+    1. Calculate group means: Ȳ₁, Ȳ₀
+    2. Estimate ATE: τ̂ = Ȳ₁ - Ȳ₀
+    3. Calculate standard error: SE(τ̂) = √(s₁²/n₁ + s₀²/n₀)
+    4. Perform t-test: t = τ̂ / SE(τ̂)
+    5. Calculate confidence interval: τ̂ ± t_{α/2,df} × SE(τ̂)
     
-    # Descriptive statistics
+    Parameters:
+    data: DataFrame, RCT data
+    
+    Returns:
+    dict: analysis results
+    """
+    control_data = data[data['group'] == 'control']['observed_outcome']
+    treatment_data = data[data['group'] == 'treatment']['observed_outcome']
+    
+    n0, n1 = len(control_data), len(treatment_data)
+    
+    # Step 1: Calculate group means
     control_mean = control_data.mean()
     treatment_mean = treatment_data.mean()
+    
+    # Step 2: Estimate ATE
     estimated_effect = treatment_mean - control_mean
     
-    # Statistical test
-    t_stat, p_value = stats.ttest_ind(treatment_data, control_data)
+    # Step 3: Calculate standard error
+    # Pooled variance estimator (assuming equal variances)
+    pooled_var = ((n0 - 1) * control_data.var() + (n1 - 1) * treatment_data.var()) / (n0 + n1 - 2)
+    se_diff = np.sqrt(pooled_var * (1/n0 + 1/n1))
     
-    # Confidence interval
-    pooled_std = np.sqrt(((len(control_data) - 1) * control_data.var() + 
-                         (len(treatment_data) - 1) * treatment_data.var()) / 
-                        (len(control_data) + len(treatment_data) - 2))
-    se_diff = pooled_std * np.sqrt(1/len(control_data) + 1/len(treatment_data))
-    ci_lower = estimated_effect - 1.96 * se_diff
-    ci_upper = estimated_effect + 1.96 * se_diff
+    # Step 4: Perform t-test
+    t_stat = estimated_effect / se_diff
+    df = n0 + n1 - 2  # degrees of freedom
+    p_value = 2 * (1 - stats.t.cdf(abs(t_stat), df))
+    
+    # Step 5: Calculate confidence interval
+    t_critical = stats.t.ppf(0.975, df)  # 95% CI
+    ci_lower = estimated_effect - t_critical * se_diff
+    ci_upper = estimated_effect + t_critical * se_diff
+    
+    # Step 6: Calculate effect size (Cohen's d)
+    cohens_d = estimated_effect / np.sqrt(pooled_var)
+    
+    # Step 7: Calculate power (post-hoc)
+    # For a two-sample t-test with equal sample sizes
+    effect_size_for_power = abs(estimated_effect) / np.sqrt(pooled_var)
+    power_achieved = stats.t.cdf(stats.t.ppf(0.975, df) - effect_size_for_power * np.sqrt(n0/2), df)
     
     return {
         'control_mean': control_mean,
         'treatment_mean': treatment_mean,
         'estimated_effect': estimated_effect,
+        'standard_error': se_diff,
         't_statistic': t_stat,
+        'degrees_of_freedom': df,
         'p_value': p_value,
-        'confidence_interval': (ci_lower, ci_upper)
+        'confidence_interval': (ci_lower, ci_upper),
+        'cohens_d': cohens_d,
+        'power_achieved': power_achieved,
+        'pooled_variance': pooled_var
     }
 
 rct_results = analyze_rct(df_rct)
@@ -105,33 +202,43 @@ rct_results = analyze_rct(df_rct)
 print(f"\nRCT Analysis Results:")
 print(f"Control mean: {rct_results['control_mean']:.2f}")
 print(f"Treatment mean: {rct_results['treatment_mean']:.2f}")
-print(f"Estimated effect: {rct_results['estimated_effect']:.2f}")
+print(f"Estimated ATE: {rct_results['estimated_effect']:.2f}")
+print(f"Standard error: {rct_results['standard_error']:.3f}")
 print(f"t-statistic: {rct_results['t_statistic']:.3f}")
+print(f"Degrees of freedom: {rct_results['degrees_of_freedom']}")
 print(f"p-value: {rct_results['p_value']:.4f}")
 print(f"95% CI: [{rct_results['confidence_interval'][0]:.2f}, {rct_results['confidence_interval'][1]:.2f}]")
+print(f"Cohen's d: {rct_results['cohens_d']:.3f}")
+print(f"Power achieved: {rct_results['power_achieved']:.3f}")
+
+# Verify potential outcomes framework
+print(f"\nPotential Outcomes Verification:")
+print(f"True ATE: {true_effect}")
+print(f"Estimated ATE: {rct_results['estimated_effect']:.2f}")
+print(f"Bias: {rct_results['estimated_effect'] - true_effect:.3f}")
 
 # Visualize RCT results
 plt.figure(figsize=(15, 5))
 
 # Box plot
 plt.subplot(1, 3, 1)
-sns.boxplot(data=df_rct, x='group', y='outcome')
+sns.boxplot(data=df_rct, x='group', y='observed_outcome')
 plt.title('RCT Results - Box Plot')
-plt.ylabel('Outcome')
+plt.ylabel('Observed Outcome')
 
 # Histogram
 plt.subplot(1, 3, 2)
-control_data = df_rct[df_rct['group'] == 'control']['outcome']
-treatment_data = df_rct[df_rct['group'] == 'treatment']['outcome']
+control_data = df_rct[df_rct['group'] == 'control']['observed_outcome']
+treatment_data = df_rct[df_rct['group'] == 'treatment']['observed_outcome']
 
-plt.hist(control_data, alpha=0.7, label='Control', bins=15)
-plt.hist(treatment_data, alpha=0.7, label='Treatment', bins=15)
-plt.xlabel('Outcome')
-plt.ylabel('Frequency')
+plt.hist(control_data, alpha=0.7, label='Control', bins=15, density=True)
+plt.hist(treatment_data, alpha=0.7, label='Treatment', bins=15, density=True)
+plt.xlabel('Observed Outcome')
+plt.ylabel('Density')
 plt.title('RCT Results - Histogram')
 plt.legend()
 
-# Effect size
+# Effect size distribution
 plt.subplot(1, 3, 3)
 effect_sizes = []
 for _ in range(1000):
@@ -140,12 +247,12 @@ for _ in range(1000):
     treatment_boot = np.random.choice(treatment_data, size=len(treatment_data), replace=True)
     effect_sizes.append(treatment_boot.mean() - control_boot.mean())
 
-plt.hist(effect_sizes, bins=30, alpha=0.7, color='green', edgecolor='black')
+plt.hist(effect_sizes, bins=30, alpha=0.7, color='green', edgecolor='black', density=True)
 plt.axvline(true_effect, color='red', linestyle='--', linewidth=2, label=f'True effect: {true_effect}')
 plt.axvline(rct_results['estimated_effect'], color='blue', linestyle='--', linewidth=2, 
            label=f'Estimated effect: {rct_results["estimated_effect"]:.2f}')
 plt.xlabel('Treatment Effect')
-plt.ylabel('Frequency')
+plt.ylabel('Density')
 plt.title('Bootstrap Distribution of Treatment Effect')
 plt.legend()
 
@@ -155,36 +262,76 @@ plt.show()
 
 ### Stratified Randomization
 
+**Mathematical Concept:**
+Stratified randomization ensures balance across important covariates by performing separate randomizations within each stratum.
+
+**Stratified ATE Estimation:**
+$$\hat{\tau}_{stratified} = \sum_{s=1}^{S} w_s \hat{\tau}_s$$
+where $w_s$ is the weight for stratum s (usually proportional to stratum size) and $\hat{\tau}_s$ is the estimated treatment effect in stratum s.
+
+**Variance of Stratified Estimator:**
+$$Var(\hat{\tau}_{stratified}) = \sum_{s=1}^{S} w_s^2 Var(\hat{\tau}_s)$$
+
+**Benefits:**
+1. **Reduced Variance**: More precise estimates when strata are homogeneous
+2. **Guaranteed Balance**: Ensures treatment groups are balanced on stratifying variables
+3. **Subgroup Analysis**: Enables analysis of treatment effects within strata
+
 ```python
 def stratified_rct(n_per_stratum=25, n_strata=4):
-    """Simulate stratified randomized controlled trial"""
+    """
+    Simulate stratified randomized controlled trial
     
-    # Generate strata (e.g., age groups, severity levels)
+    Mathematical implementation:
+    1. Define strata (e.g., age groups, severity levels)
+    2. Within each stratum s:
+       - Generate potential outcomes: Yₛ(0) ~ N(μₛ, σ²), Yₛ(1) = Yₛ(0) + τₛ
+       - Randomly assign treatment: T ~ Bernoulli(0.5) within stratum
+    3. Estimate stratified ATE: τ̂ = Σ wₛ τ̂ₛ
+    
+    Parameters:
+    n_per_stratum: int, sample size per stratum per group
+    n_strata: int, number of strata
+    
+    Returns:
+    DataFrame: stratified RCT data
+    """
     strata = []
     outcomes = []
     groups = []
+    treatment_assignments = []
+    stratum_effects = []
     
     for stratum in range(n_strata):
         # Different baseline outcomes for each stratum
         baseline = 90 + stratum * 5
         
-        # Control group
-        control_outcomes = np.random.normal(baseline, 3, n_per_stratum)
-        strata.extend([stratum] * n_per_stratum)
-        outcomes.extend(control_outcomes)
-        groups.extend(['control'] * n_per_stratum)
+        # Different treatment effects for each stratum
+        treatment_effect = 3 + stratum * 2
         
-        # Treatment group (with stratum-specific effects)
-        treatment_effect = 3 + stratum * 2  # Different effects by stratum
-        treatment_outcomes = np.random.normal(baseline + treatment_effect, 3, n_per_stratum)
-        strata.extend([stratum] * n_per_stratum)
-        outcomes.extend(treatment_outcomes)
-        groups.extend(['treatment'] * n_per_stratum)
+        # Generate potential outcomes for this stratum
+        y0_stratum = np.random.normal(baseline, 3, n_per_stratum * 2)
+        y1_stratum = y0_stratum + treatment_effect
+        
+        # Random treatment assignment within stratum
+        treatment_assignment = np.random.binomial(1, 0.5, n_per_stratum * 2)
+        
+        # Observe outcomes
+        observed_outcomes = treatment_assignment * y1_stratum + (1 - treatment_assignment) * y0_stratum
+        
+        # Store data
+        strata.extend([stratum] * n_per_stratum * 2)
+        outcomes.extend(observed_outcomes)
+        groups.extend(['treatment' if t == 1 else 'control' for t in treatment_assignment])
+        treatment_assignments.extend(treatment_assignment)
+        stratum_effects.extend([treatment_effect] * n_per_stratum * 2)
     
     df_stratified = pd.DataFrame({
         'stratum': strata,
         'group': groups,
-        'outcome': outcomes
+        'outcome': outcomes,
+        'treatment_assignment': treatment_assignments,
+        'stratum_effect': stratum_effects
     })
     
     return df_stratified
@@ -198,64 +345,90 @@ print(f"Sample size per stratum: {len(df_stratified) // (df_stratified['stratum'
 
 # Analyze stratified RCT
 def analyze_stratified_rct(data):
-    """Analyze stratified RCT results"""
+    """
+    Analyze stratified RCT results
     
-    # Overall analysis
-    control_data = data[data['group'] == 'control']['outcome']
-    treatment_data = data[data['group'] == 'treatment']['outcome']
+    Mathematical steps:
+    1. Calculate stratum-specific treatment effects: τ̂ₛ = Ȳ₁ₛ - Ȳ₀ₛ
+    2. Calculate stratum weights: wₛ = nₛ / N
+    3. Estimate overall ATE: τ̂ = Σ wₛ τ̂ₛ
+    4. Calculate variance: Var(τ̂) = Σ wₛ² Var(τ̂ₛ)
     
-    overall_effect = treatment_data.mean() - control_data.mean()
-    t_stat, p_value = stats.ttest_ind(treatment_data, treatment_data)
+    Parameters:
+    data: DataFrame, stratified RCT data
     
-    # Stratum-specific analysis
+    Returns:
+    dict: analysis results
+    """
+    strata = data['stratum'].unique()
     stratum_effects = []
-    for stratum in data['stratum'].unique():
+    stratum_variances = []
+    stratum_weights = []
+    
+    for stratum in strata:
         stratum_data = data[data['stratum'] == stratum]
-        control_stratum = stratum_data[stratum_data['group'] == 'control']['outcome']
-        treatment_stratum = stratum_data[stratum_data['group'] == 'treatment']['outcome']
+        control_data = stratum_data[stratum_data['group'] == 'control']['outcome']
+        treatment_data = stratum_data[stratum_data['group'] == 'treatment']['outcome']
         
-        effect = treatment_stratum.mean() - control_stratum.mean()
-        stratum_effects.append(effect)
+        # Stratum-specific treatment effect
+        stratum_effect = treatment_data.mean() - control_data.mean()
+        stratum_effects.append(stratum_effect)
+        
+        # Stratum-specific variance
+        n0_s, n1_s = len(control_data), len(treatment_data)
+        pooled_var_s = ((n0_s - 1) * control_data.var() + (n1_s - 1) * treatment_data.var()) / (n0_s + n1_s - 2)
+        stratum_var = pooled_var_s * (1/n0_s + 1/n1_s)
+        stratum_variances.append(stratum_var)
+        
+        # Stratum weight
+        stratum_weight = len(stratum_data) / len(data)
+        stratum_weights.append(stratum_weight)
+    
+    # Overall stratified estimate
+    stratified_ate = np.sum(np.array(stratum_weights) * np.array(stratum_effects))
+    
+    # Overall variance
+    stratified_var = np.sum(np.array(stratum_weights)**2 * np.array(stratum_variances))
+    stratified_se = np.sqrt(stratified_var)
+    
+    # Statistical test
+    t_stat = stratified_ate / stratified_se
+    p_value = 2 * (1 - stats.t.cdf(abs(t_stat), len(data) - 2))
+    
+    # Confidence interval
+    t_critical = stats.t.ppf(0.975, len(data) - 2)
+    ci_lower = stratified_ate - t_critical * stratified_se
+    ci_upper = stratified_ate + t_critical * stratified_se
     
     return {
-        'overall_effect': overall_effect,
         'stratum_effects': stratum_effects,
-        'p_value': p_value
+        'stratum_weights': stratum_weights,
+        'stratified_ate': stratified_ate,
+        'stratified_se': stratified_se,
+        't_statistic': t_stat,
+        'p_value': p_value,
+        'confidence_interval': (ci_lower, ci_upper)
     }
 
 stratified_results = analyze_stratified_rct(df_stratified)
 
-print(f"\nStratified RCT Analysis:")
-print(f"Overall treatment effect: {stratified_results['overall_effect']:.2f}")
-print(f"Stratum-specific effects: {[f'{effect:.2f}' for effect in stratified_results['stratum_effects']]}")
+print(f"\nStratified RCT Analysis Results:")
+for i, (effect, weight) in enumerate(zip(stratified_results['stratum_effects'], stratified_results['stratum_weights'])):
+    print(f"Stratum {i}: Effect = {effect:.2f}, Weight = {weight:.3f}")
+print(f"Overall stratified ATE: {stratified_results['stratified_ate']:.2f}")
+print(f"Standard error: {stratified_results['stratified_se']:.3f}")
+print(f"t-statistic: {stratified_results['t_statistic']:.3f}")
+print(f"p-value: {stratified_results['p_value']:.4f}")
+print(f"95% CI: [{stratified_results['confidence_interval'][0]:.2f}, {stratified_results['confidence_interval'][1]:.2f}]")
 
-# Visualize stratified RCT
-plt.figure(figsize=(15, 5))
-
-# Overall comparison
-plt.subplot(1, 3, 1)
-sns.boxplot(data=df_stratified, x='group', y='outcome')
-plt.title('Overall RCT Results')
-
-# Stratum-specific results
-plt.subplot(1, 3, 2)
-sns.boxplot(data=df_stratified, x='stratum', y='outcome', hue='group')
-plt.title('Stratum-Specific Results')
-plt.xlabel('Stratum')
-
-# Treatment effects by stratum
-plt.subplot(1, 3, 3)
-strata = df_stratified['stratum'].unique()
-plt.bar(strata, stratified_results['stratum_effects'], alpha=0.7, color='orange')
-plt.xlabel('Stratum')
-plt.ylabel('Treatment Effect')
-plt.title('Treatment Effects by Stratum')
-plt.axhline(stratified_results['overall_effect'], color='red', linestyle='--', 
-           label=f'Overall: {stratified_results["overall_effect"]:.2f}')
-plt.legend()
-
-plt.tight_layout()
-plt.show()
+# Compare with unstratified analysis
+unstratified_results = analyze_rct(df_stratified)
+print(f"\nComparison:")
+print(f"Unstratified ATE: {unstratified_results['estimated_effect']:.2f}")
+print(f"Stratified ATE: {stratified_results['stratified_ate']:.2f}")
+print(f"Unstratified SE: {unstratified_results['standard_error']:.3f}")
+print(f"Stratified SE: {stratified_results['stratified_se']:.3f}")
+print(f"Efficiency gain: {(unstratified_results['standard_error'] / stratified_results['stratified_se'])**2:.2f}x")
 ```
 
 ## Factorial Designs
