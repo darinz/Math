@@ -93,14 +93,14 @@ Math/
 │   └── SUMMARY.md                 # Complete summary
 ├── resource/           # Reference materials and supplementary content
 │   ├── calculation_ref.pdf        # Mathematical calculation reference
-│   ├── linear_algebra_for_deep-Learning.pdf
+│   ├── linear_algebra_for_dl.pdf  # Linear Algebra for Deep Learning
 │   ├── math-of-ml-book.pdf        # Mathematics of Machine Learning
 │   ├── math51book.pdf             # Stanford Math 51 textbook
 │   ├── MIT_ProbStats.zip          # MIT Probability & Statistics materials
-│   ├── numerical_for_deep_learning.pdf
-│   ├── prob_for_deep_learning.pdf # Probability for Deep Learning
+│   ├── numerical_for_dl.pdf       # Numerical for Deep Learning
+│   ├── prob_for_dl.pdf            # Probability for Deep Learning
 │   ├── prob_reference.pdf         # Probability reference guide
-│   └── ProbabilityForComputerScientists.pdf
+│   └── ProbabilityForCS.pdf       # Probability for Computer Scientist
 └── README.md                      # This file
 ```
 
