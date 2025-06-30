@@ -73,7 +73,3 @@ These reference materials complement the structured courses in the parent direct
 1. **Beginner**: Start with calculation and probability references
 2. **Intermediate**: Study linear algebra, derivatives, and numerical methods
 3. **Advanced**: Dive into comprehensive textbooks and MIT materials
-
----
-
-*Last updated: $(date)* 
