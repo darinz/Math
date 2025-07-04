@@ -35,6 +35,11 @@ This folder contains essential mathematical reference materials for learning and
 - **`math-of-ml-book.pdf`** (17MB) - Mathematics of machine learning textbook
 - **`math51book.pdf`** (11MB) - Mathematics textbook (likely MIT 18.06 Linear Algebra)
 - **`calculation_ref.pdf`** (37KB) - Quick calculation reference guide
+- **`Greek_Alphabet.pdf`** (284KB) - Reference guide for Greek alphabet symbols used in mathematics
+
+### MIT Course Materials
+- **`ML-Math_18-657-fall-2015.zip`** (8.3MB) - MIT 18.657 Mathematics of Machine Learning course materials (Fall 2015)
+- **`ML-Matrix_18-065-spring-2018.zip`** (9.2MB) - MIT 18.065 Matrix Methods in Data Analysis, Signal Processing, and Machine Learning course materials (Spring 2018)
 
 ## How to Use These Resources
 
@@ -61,6 +66,11 @@ This folder contains essential mathematical reference materials for learning and
 1. **`math-of-ml-book.pdf`** - Complete mathematics foundation for machine learning
 2. **`ProbabilityForCS.pdf`** - In-depth probability theory
 3. **`MIT_ProbStats.zip`** - Complete course materials from MIT
+4. **`ML-Math_18-657-fall-2015.zip`** - MIT Mathematics of Machine Learning course
+5. **`ML-Matrix_18-065-spring-2018.zip`** - MIT Matrix Methods course for data analysis and ML
+
+### For Mathematical Notation
+1. **`Greek_Alphabet.pdf`** - Reference for Greek symbols commonly used in mathematical notation
 
 ## Related Course Materials
 
@@ -81,3 +91,7 @@ These reference materials complement the structured courses in the parent direct
 1. **Beginner**: Start with calculation and probability references
 2. **Intermediate**: Study linear algebra, derivatives, and numerical methods
 3. **Advanced**: Dive into comprehensive textbooks and MIT materials
+4. **Specialized**: Explore MIT course materials for specific applications:
+   - **`ML-Math_18-657-fall-2015.zip`** for mathematics of machine learning
+   - **`ML-Matrix_18-065-spring-2018.zip`** for matrix methods in data analysis
+5. **Reference**: Use **`Greek_Alphabet.pdf`** as needed for mathematical notation
