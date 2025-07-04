@@ -96,22 +96,25 @@ Math/
 │   ├── 10-advanced-topics.md
 │   ├── README.md                  # Learning guide
 │   └── SUMMARY.md                 # Complete summary
-├── reference/           # Reference materials and supplementary content
-│   ├── calculation_ref.pdf         # Mathematical calculation reference
-│   ├── derivatives_Section14_5.pdf # Derivatives reference (Section 14.5)
-│   ├── gradient_review.pdf         # Gradient review materials
-│   ├── linear_algebra_for_dl.pdf   # Linear Algebra for Deep Learning
-│   ├── math-of-ml-book.pdf         # Mathematics of Machine Learning
-│   ├── math51book.pdf              # Stanford Math 51 textbook
-│   ├── matrixcookbook.pdf          # Matrix cookbook reference
-│   ├── MIT_ProbStats.zip           # MIT Probability & Statistics materials
-│   ├── numerical_for_dl.pdf        # Numerical for Deep Learning
-│   ├── prob_for_dl.pdf             # Probability for Deep Learning
-│   ├── prob_reference.pdf          # Probability reference guide
-│   ├── ProbabilityForCS.pdf        # Probability for Computer Science
-│   ├── the_chain_rule.pdf          # Chain rule reference
-│   └── the-chain-rule_lecture9.pdf # Chain rule lecture materials
-└── README.md                       # This file
+├── reference/                           # Reference materials and supplementary content
+│   ├── calculation_ref.pdf              # Mathematical calculation reference
+│   ├── derivatives_Section14_5.pdf      # Derivatives reference (Section 14.5)
+│   ├── gradient_review.pdf              # Gradient review materials
+│   ├── Greek_Alphabet.pdf               # Greek alphabet reference
+│   ├── linear_algebra_for_dl.pdf        # Linear Algebra for Deep Learning
+│   ├── math-of-ml-book.pdf              # Mathematics of Machine Learning
+│   ├── math51book.pdf                   # Stanford Math 51 textbook
+│   ├── matrixcookbook.pdf               # Matrix cookbook reference
+│   ├── MIT_ProbStats.zip                # MIT Probability & Statistics materials
+│   ├── ML-Math_18-657-fall-2015.zip     # MIT Math for ML course (Fall 2015)
+│   ├── ML-Matrix_18-065-spring-2018.zip # MIT Matrix Methods course (Spring 2018)
+│   ├── numerical_for_dl.pdf             # Numerical for Deep Learning
+│   ├── prob_for_dl.pdf                  # Probability for Deep Learning
+│   ├── prob_reference.pdf               # Probability reference guide
+│   ├── ProbabilityForCS.pdf             # Probability for Computer Science
+│   ├── the_chain_rule.pdf               # Chain rule reference
+│   └── the-chain-rule_lecture9.pdf      # Chain rule lecture materials
+└── README.md                            # This file
 ```
 
 Each discipline folder contains:
