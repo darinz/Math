@@ -100,8 +100,8 @@ Where $`L`$ is the loss function and $`f`$ is our learned model.
 1. Partition data into K folds: $`D = D_1 \cup D_2 \cup ... \cup D_K`$
 2. For each fold k, train on $`D_{-k} = D \setminus D_k`$ and validate on $`D_k`$
 3. Estimate generalization error:
-   ```math
-   \hat{E}_{CV} = \frac{1}{K}\sum_{k=1}^{K} \frac{1}{|D_k|}\sum_{(x_i,y_i) \in D_k} L(y_i, f_{-k}(x_i))
+```math
+\hat{E}_{CV} = \frac{1}{K}\sum_{k=1}^{K} \frac{1}{|D_k|}\sum_{(x_i,y_i) \in D_k} L(y_i, f_{-k}(x_i))
    ```
    Where $`f_{-k}`$ is the model trained on $`D_{-k}`$
 
