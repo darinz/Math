@@ -221,7 +221,7 @@ Z = \frac{\bar{X} - \mu_0}{\sigma/\sqrt{n}}
 Where:
 - $`\bar{X}`$ is the sample mean
 - $`\mu_0`$ is the hypothesized population mean
-- $`\sigma`` is the population standard deviation
+- $`\sigma`$ is the population standard deviation
 - $`n`$ is the sample size
 
 #### Intuitive Understanding
