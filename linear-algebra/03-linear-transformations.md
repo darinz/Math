@@ -27,15 +27,20 @@ A function $`T: \mathbb{R}^n \rightarrow \mathbb{R}^m`$ is linear if it satisfie
 T(\vec{u} + \vec{v}) = T(\vec{u}) + T(\vec{v})
 ```
 
-      for all vectors $`\vec{u}, \vec{v} \in \mathbb{R}^n`$
+      for all vectors
+```math
+\vec{u}, \vec{v} \in \mathbb{R}^n
+```
 
 2. **Homogeneity**: 
 ```math
 T(c\vec{u}) = cT(\vec{u})
 ```
 
-      for all scalars $`c`$ and vectors $`\vec{u} \in \mathbb{R}^n`$
-
+      for all scalars
+```math
+c \text{ and vectors } \vec{u} \in \mathbb{R}^n
+```
 ### Mathematical Foundation
 
 These properties can be combined into a single condition:
