@@ -52,8 +52,14 @@ T(\vec{x}) = A\vec{x}
 ```
 **Proof Sketch**:
 1. Let $\{\vec{e}_1, \vec{e}_2, \ldots, \vec{e}_n\}$ be the standard basis for $\mathbb{R}^n$
-2. Define $A$ as the matrix whose columns are $T(\vec{e}_1), T(\vec{e}_2), \ldots, T(\vec{e}_n)$
-3. For any vector $\vec{x} = x_1\vec{e}_1 + x_2\vec{e}_2 + \cdots + x_n\vec{e}_n$:
+2. Define $A$ as the matrix whose columns are 
+```math
+T(\vec{e}_1), T(\vec{e}_2), \ldots, T(\vec{e}_n)
+```
+3. For any vector 
+```math
+\vec{x} = x_1\vec{e}_1 + x_2\vec{e}_2 + \cdots + x_n\vec{e}_n
+```
 
 ```math
 T(\vec{x}) = T(x_1\vec{e}_1 + x_2\vec{e}_2 + \cdots + x_n\vec{e}_n)
@@ -65,7 +71,10 @@ T(\vec{x}) = T(x_1\vec{e}_1 + x_2\vec{e}_2 + \cdots + x_n\vec{e}_n)
 
 Linear transformations have several important geometric properties:
 - **Preserve lines**: Lines remain lines (though they may be rotated, scaled, or sheared).
-- **Preserve origin**: $`T(\vec{0}) = \vec{0}`$.
+- **Preserve origin**: 
+```math
+T(\vec{0}) = \vec{0}.
+```
 - **Preserve parallelism**: Parallel lines remain parallel.
 - **Preserve linear combinations**: The image of a linear combination is the linear combination of the images.
 
@@ -95,7 +104,10 @@ S = \begin{bmatrix} k & 0 \\ 0 & k \end{bmatrix}
 R(\theta) = \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta \end{bmatrix}
 ```
 **Properties**:
-- Preserves lengths: $`|R(\theta)\vec{v}| = |\vec{v}|`$
+- Preserves lengths:
+```math
+|R(\theta)\vec{v}| = |\vec{v}|
+```
 - Preserves angles between vectors.
 - Determinant is 1: $`\det(R(\theta)) = 1`$
 - Inverse is transpose: $`R(\theta)^{-1} = R(\theta)^T = R(-\theta)`$
@@ -107,7 +119,7 @@ R(\theta) = \begin{bmatrix} \cos\theta & -\sin\theta \\ \sin\theta & \cos\theta 
 **Matrix Forms**:
 - Reflection across x-axis: $`R_x = \begin{bmatrix} 1 & 0 \\ 0 & -1 \end{bmatrix}`$
 - Reflection across y-axis: $`R_y = \begin{bmatrix} -1 & 0 \\ 0 & 1 \end{bmatrix}`$
-- Reflection across line $`y = x`$: $`R_{y=x} = \begin{bmatrix} 0 & 1 \\ 1 & 0 \end{bmatrix}`$
+- Reflection across line  $`y = x`$: $`R_{y=x} = \begin{bmatrix} 0 & 1 \\ 1 & 0 \end{bmatrix}`$
 
 **Properties**:
 - Determinant is -1: $`\det(R) = -1`$
