@@ -8,7 +8,36 @@
 [![SciPy](https://img.shields.io/badge/SciPy-1.7+-green.svg)](https://scipy.org/)
 [![Statsmodels](https://img.shields.io/badge/Statsmodels-0.13+-blue.svg)](https://www.statsmodels.org/)
 
+## Introduction
+
 Statistical inference allows us to draw conclusions about populations based on sample data. This chapter covers hypothesis testing, confidence intervals, and p-values - essential tools for making data-driven decisions in AI/ML.
+
+### Why Statistical Inference Matters
+
+Statistical inference is the bridge between sample data and population conclusions. In the real world, we rarely have access to entire populations, so we must rely on samples to make informed decisions. This process is fundamental to:
+
+1. **Scientific Research**: Testing theories and hypotheses
+2. **Business Decisions**: Evaluating marketing campaigns, product changes
+3. **Medical Studies**: Assessing treatment effectiveness
+4. **Quality Control**: Monitoring manufacturing processes
+5. **Machine Learning**: Validating model performance and feature importance
+
+### The Inference Process
+
+Statistical inference follows a systematic approach:
+
+1. **Data Collection**: Gather a representative sample from the population
+2. **Model Specification**: Choose appropriate statistical models and assumptions
+3. **Parameter Estimation**: Calculate point estimates and intervals
+4. **Hypothesis Testing**: Evaluate specific claims about population parameters
+5. **Interpretation**: Draw conclusions and assess practical significance
+
+### Types of Statistical Inference
+
+1. **Point Estimation**: Single best guess for a population parameter
+2. **Interval Estimation**: Range of plausible values (confidence intervals)
+3. **Hypothesis Testing**: Evaluating specific claims about parameters
+4. **Prediction**: Estimating future observations or outcomes
 
 ## Table of Contents
 - [Hypothesis Testing Fundamentals](#hypothesis-testing-fundamentals)
@@ -21,22 +50,27 @@ Statistical inference allows us to draw conclusions about populations based on s
 
 ## Setup
 
-```python
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy import stats
-from scipy.stats import ttest_1samp, ttest_ind, ttest_rel, chi2_contingency
-import warnings
-warnings.filterwarnings('ignore')
-
-plt.style.use('seaborn-v0_8')
-sns.set_palette("husl")
-np.random.seed(42)
-```
+The examples in this chapter use Python libraries for statistical analysis and inference. We'll work with both theoretical concepts and practical implementations to build intuition and computational skills.
 
 ## Hypothesis Testing Fundamentals
+
+Hypothesis testing is a formal procedure for making decisions about population parameters based on sample data. It provides a structured framework for evaluating claims and making data-driven decisions.
+
+### Understanding Hypothesis Testing
+
+Hypothesis testing is like a scientific trial where we:
+1. **State a claim** about a population parameter
+2. **Collect evidence** (sample data)
+3. **Evaluate the evidence** against the claim
+4. **Make a decision** based on the strength of evidence
+
+#### The Scientific Method Analogy
+
+Think of hypothesis testing as a courtroom trial:
+- **Null Hypothesis (H₀)**: The defendant is innocent (default assumption)
+- **Alternative Hypothesis (H₁)**: The defendant is guilty (what we want to prove)
+- **Evidence**: Sample data
+- **Verdict**: Reject or fail to reject H₀ based on evidence strength
 
 ### Mathematical Foundation
 
@@ -51,969 +85,764 @@ np.random.seed(42)
 3. **Decision Rule**: Based on the test statistic and significance level α, we either reject or fail to reject H₀
 
 **Mathematical Framework:**
-For a population parameter θ, we test:
-- H₀: θ = θ₀ (null hypothesis)
-- H₁: θ ≠ θ₀ (two-sided alternative) or θ > θ₀, θ < θ₀ (one-sided alternatives)
+For a population parameter $`\theta`$, we test:
+- $`H_0: \theta = \theta_0`$ (null hypothesis)
+- $`H_1: \theta \neq \theta_0`$ (two-sided alternative) or $`\theta > \theta_0`$, $`\theta < \theta_0`$ (one-sided alternatives)
 
-The test statistic T is calculated from sample data and compared to critical values or used to compute p-values.
+The test statistic $`T`$ is calculated from sample data and compared to critical values or used to compute p-values.
+
+#### Intuitive Understanding
+
+The key insight is that we assume the null hypothesis is true and ask: "How unusual would our sample data be if this assumption were correct?" If the data is very unusual under the null hypothesis, we have evidence against it.
+
+#### Example: Coin Toss
+
+Suppose we want to test if a coin is fair:
+- $`H_0: p = 0.5`$ (coin is fair)
+- $`H_1: p \neq 0.5`$ (coin is biased)
+- We flip the coin 100 times and get 65 heads
+- Test statistic: $`Z = \frac{65 - 50}{\sqrt{100 \times 0.5 \times 0.5}} = 3`$
+- This is very unusual if the coin is fair (p-value ≈ 0.003)
 
 ### Null and Alternative Hypotheses
 
-```python
-def hypothesis_testing_example():
-    """Example: Testing if a coin is fair"""
-    # Null hypothesis: p = 0.5 (fair coin)
-    # Alternative hypothesis: p ≠ 0.5 (biased coin)
-    
-    # Simulate coin flips
-    n_flips = 100
-    p_true = 0.6  # True probability (biased coin)
-    flips = np.random.binomial(1, p_true, n_flips)
-    
-    # Test statistic: number of heads
-    observed_heads = np.sum(flips)
-    observed_proportion = observed_heads / n_flips
-    
-    # Expected under null hypothesis
-    expected_heads = n_flips * 0.5
-    
-    # Z-test statistic
-    z_stat = (observed_heads - expected_heads) / np.sqrt(n_flips * 0.5 * 0.5)
-    
-    # P-value (two-tailed test)
-    p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
-    
-    return {
-        'observed_heads': observed_heads,
-        'observed_proportion': observed_proportion,
-        'expected_heads': expected_heads,
-        'z_statistic': z_stat,
-        'p_value': p_value
-    }
+The null hypothesis represents the "status quo" or default assumption, while the alternative hypothesis represents what we want to demonstrate.
 
-results = hypothesis_testing_example()
-print("Coin Fairness Test")
-for key, value in results.items():
-    print(f"{key}: {value:.4f}")
+#### Formulating Hypotheses
 
-# Visualize the test
-plt.figure(figsize=(12, 4))
+**Null Hypothesis (H₀):**
+- Represents the default or conservative position
+- Usually contains equality ($`=`, $`\leq`, $`\geq`$)
+- We assume it's true unless evidence suggests otherwise
 
-# Observed vs expected
-plt.subplot(1, 3, 1)
-categories = ['Heads', 'Tails']
-observed = [results['observed_heads'], 100 - results['observed_heads']]
-expected = [50, 50]
-x = np.arange(len(categories))
-width = 0.35
+**Alternative Hypothesis (H₁):**
+- Represents the research hypothesis or claim
+- Contains inequality ($`\neq`, $`>`, $`<`$)
+- What we want to demonstrate with evidence
 
-plt.bar(x - width/2, observed, width, label='Observed', alpha=0.7)
-plt.bar(x + width/2, expected, width, label='Expected', alpha=0.7)
-plt.xlabel('Outcome')
-plt.ylabel('Count')
-plt.title('Observed vs Expected')
-plt.xticks(x, categories)
-plt.legend()
+#### Types of Tests
 
-# Z-distribution
-plt.subplot(1, 3, 2)
-x = np.linspace(-4, 4, 1000)
-y = stats.norm.pdf(x, 0, 1)
-plt.plot(x, y, 'b-', linewidth=2)
-plt.fill_between(x, y, where=(x > abs(results['z_statistic'])) | (x < -abs(results['z_statistic'])), 
-                 alpha=0.3, color='red', label='Rejection region')
-plt.axvline(results['z_statistic'], color='red', linestyle='--', label=f'z = {results["z_statistic"]:.2f}')
-plt.axvline(-results['z_statistic'], color='red', linestyle='--')
-plt.title('Z-Distribution')
-plt.xlabel('Z-score')
-plt.ylabel('Density')
-plt.legend()
+1. **Two-Sided Test**: $`H_0: \theta = \theta_0`$ vs $`H_1: \theta \neq \theta_0`$
+   - Used when we want to detect any difference from the hypothesized value
+   - Most common in scientific research
 
-# P-value interpretation
-plt.subplot(1, 3, 3)
-alpha = 0.05
-decision = "Reject H₀" if results['p_value'] < alpha else "Fail to reject H₀"
-plt.text(0.5, 0.5, f"P-value: {results['p_value']:.4f}\nα = {alpha}\nDecision: {decision}", 
-         ha='center', va='center', transform=plt.gca().transAxes, fontsize=12,
-         bbox=dict(boxstyle="round,pad=0.3", facecolor="lightblue", alpha=0.7))
-plt.title('Test Decision')
-plt.axis('off')
+2. **One-Sided Test**: $`H_0: \theta \leq \theta_0`$ vs $`H_1: \theta > \theta_0`$ (or $`<`$)
+   - Used when we have a directional hypothesis
+   - More powerful for detecting effects in the specified direction
 
-plt.tight_layout()
-plt.show()
-```
+#### Example: Drug Effectiveness
+
+Testing a new drug for blood pressure reduction:
+- **Two-sided**: $`H_0: \mu = 0`$ vs $`H_1: \mu \neq 0`$ (any change in blood pressure)
+- **One-sided**: $`H_0: \mu \leq 0`$ vs $`H_1: \mu > 0`$ (only interested in reduction)
+
+#### Guidelines for Hypothesis Formulation
+
+1. **Be Specific**: Hypotheses should be precise and testable
+2. **Consider Direction**: Decide if you need one-sided or two-sided tests
+3. **Practical Significance**: Consider what magnitude of effect is meaningful
+4. **Prior Knowledge**: Use domain expertise to inform hypothesis choice
 
 ### Type I and Type II Errors
 
-**Mathematical Definition:**
-- **Type I Error (α)**: Rejecting H₀ when it's true
-- **Type II Error (β)**: Failing to reject H₀ when it's false
-- **Power (1-β)**: Probability of correctly rejecting H₀ when it's false
+Understanding the two types of errors is crucial for interpreting test results and making decisions.
 
-**Error Trade-off:**
-As α decreases, β increases, and vice versa. The relationship is:
-$$\beta = \Phi(z_{\alpha/2} - \frac{\delta}{\sigma/\sqrt{n}}) + \Phi(z_{\alpha/2} + \frac{\delta}{\sigma/\sqrt{n}})$$
+#### Mathematical Definition
 
-Where δ is the effect size, σ is the standard deviation, and n is the sample size.
+- **Type I Error ($`\alpha`$)**: Rejecting $`H_0`$ when it's true
+- **Type II Error ($`\beta`$)**: Failing to reject $`H_0`$ when it's false
+- **Power ($`1-\beta`$)**: Probability of correctly rejecting $`H_0`$ when it's false
 
-```python
-def error_types_demonstration():
-    """Demonstrate Type I and Type II errors"""
-    # Simulate multiple hypothesis tests
-    n_tests = 1000
-    alpha = 0.05  # Significance level
-    
-    # True null hypotheses (no effect)
-    true_null = 800
-    # True alternative hypotheses (effect exists)
-    true_alternative = 200
-    
-    # Type I errors (false positives)
-    type_i_errors = np.random.binomial(true_null, alpha)
-    
-    # Type II errors (false negatives) - assume 80% power
-    power = 0.8
-    type_ii_errors = np.random.binomial(true_alternative, 1 - power)
-    
-    # Calculate rates
-    type_i_rate = type_i_errors / true_null
-    type_ii_rate = type_ii_errors / true_alternative
-    
-    return {
-        'type_i_errors': type_i_errors,
-        'type_ii_errors': type_ii_errors,
-        'type_i_rate': type_i_rate,
-        'type_ii_rate': type_ii_rate,
-        'power': power
-    }
+#### Intuitive Understanding
 
-error_results = error_types_demonstration()
-print("Error Types Demonstration")
-for key, value in error_results.items():
-    print(f"{key}: {value:.4f}")
+Think of these errors in terms of a medical test:
+- **Type I Error**: False positive - test says you have a disease when you don't
+- **Type II Error**: False negative - test says you don't have a disease when you do
+- **Power**: Ability of the test to detect the disease when it's present
 
-# Visualize error matrix
-plt.figure(figsize=(10, 4))
+#### Error Trade-off
 
-# Error matrix
-plt.subplot(1, 2, 1)
-error_matrix = np.array([
-    [800 - error_results['type_i_errors'], error_results['type_i_errors']],
-    [error_results['type_ii_errors'], 200 - error_results['type_ii_errors']]
-])
+As $`\alpha`$ decreases, $`\beta`$ increases, and vice versa. The relationship is:
 
-sns.heatmap(error_matrix, annot=True, fmt='d', cmap='Blues', 
-            xticklabels=['Fail to Reject', 'Reject'],
-            yticklabels=['H₀ True', 'H₀ False'])
-plt.title('Error Matrix')
-plt.ylabel('Truth')
-plt.xlabel('Decision')
-
-# Error rates over different alpha levels
-plt.subplot(1, 2, 2)
-alpha_levels = np.linspace(0.01, 0.2, 20)
-type_i_rates = alpha_levels
-type_ii_rates = 1 - stats.norm.cdf(stats.norm.ppf(1 - alpha_levels) - 0.5)  # Simplified
-
-plt.plot(alpha_levels, type_i_rates, 'r-', label='Type I Error Rate', linewidth=2)
-plt.plot(alpha_levels, type_ii_rates, 'b-', label='Type II Error Rate', linewidth=2)
-plt.axvline(0.05, color='g', linestyle='--', label='α = 0.05')
-plt.xlabel('Significance Level (α)')
-plt.ylabel('Error Rate')
-plt.title('Error Rates vs Significance Level')
-plt.legend()
-plt.grid(True, alpha=0.3)
-
-plt.tight_layout()
-plt.show()
+```math
+\beta = \Phi(z_{\alpha/2} - \frac{\delta}{\sigma/\sqrt{n}}) + \Phi(z_{\alpha/2} + \frac{\delta}{\sigma/\sqrt{n}})
 ```
+
+Where $`\delta`$ is the effect size, $`\sigma`$ is the standard deviation, and $`n`$ is the sample size.
+
+#### Example: Medical Test
+
+Consider a medical test with:
+- $`\alpha = 0.05`$ (5% false positive rate)
+- $`\beta = 0.20`$ (20% false negative rate)
+- Power = $`1 - 0.20 = 0.80`$ (80% chance of detecting disease when present)
+
+#### Factors Affecting Error Rates
+
+1. **Sample Size**: Larger samples reduce both error rates
+2. **Effect Size**: Larger effects are easier to detect
+3. **Variability**: Less variable data improves power
+4. **Significance Level**: Lower $`\alpha`$ increases $`\beta`$
+
+#### Power Analysis
+
+Power analysis helps determine the sample size needed to detect a specified effect size with desired power:
+
+```math
+n = \frac{(z_{\alpha/2} + z_{\beta})^2 \sigma^2}{\delta^2}
+```
+
+Where $`z_{\alpha/2}`$ and $`z_{\beta}`$ are critical values from the standard normal distribution.
+
+#### Example: Sample Size Calculation
+
+To detect a difference of 5 units with 80% power and 5% significance level:
+- $`\alpha = 0.05`$, $`\beta = 0.20`$
+- $`z_{0.025} = 1.96`$, $`z_{0.20} = 0.84`$
+- $`\delta = 5`$, $`\sigma = 10`$
+- $`n = \frac{(1.96 + 0.84)^2 \times 100}{25} = 31.36`$ ≈ 32 subjects per group
 
 ## One-Sample Tests
 
+One-sample tests compare a sample statistic to a hypothesized population parameter. These are fundamental building blocks for more complex statistical analyses.
+
 ### Z-Test for Population Mean
 
-**Mathematical Foundation:**
-When we know the population standard deviation σ, we use the Z-test:
+The Z-test is used when we know the population standard deviation and want to test hypotheses about the population mean.
 
-$$Z = \frac{\bar{X} - \mu_0}{\sigma/\sqrt{n}}$$
+#### Mathematical Foundation
+
+When we know the population standard deviation $`\sigma`$, we use the Z-test:
+
+```math
+Z = \frac{\bar{X} - \mu_0}{\sigma/\sqrt{n}}
+```
 
 Where:
-- $\bar{X}$ is the sample mean
-- $\mu_0$ is the hypothesized population mean
-- $\sigma$ is the population standard deviation
-- $n$ is the sample size
+- $`\bar{X}`$ is the sample mean
+- $`\mu_0`$ is the hypothesized population mean
+- $`\sigma`` is the population standard deviation
+- $`n`$ is the sample size
 
-**Assumptions:**
-1. Data is normally distributed (or n > 30 by CLT)
-2. Population standard deviation is known
-3. Independent observations
+#### Intuitive Understanding
 
-```python
-def z_test_manual(data, mu0, sigma, alpha=0.05):
-    """
-    Manual implementation of Z-test for population mean
-    
-    Mathematical steps:
-    1. Calculate sample mean: x̄ = (1/n) * Σxᵢ
-    2. Calculate standard error: SE = σ/√n
-    3. Calculate Z-statistic: Z = (x̄ - μ₀) / SE
-    4. Calculate p-value: P(|Z| > |z_observed|)
-    5. Make decision based on α
-    
-    Parameters:
-    data: array-like, sample data
-    mu0: float, hypothesized population mean
-    sigma: float, known population standard deviation
-    alpha: float, significance level
-    
-    Returns:
-    dict: test results
-    """
-    n = len(data)
-    sample_mean = np.mean(data)
-    
-    # Step 1: Calculate standard error
-    standard_error = sigma / np.sqrt(n)
-    
-    # Step 2: Calculate Z-statistic
-    z_statistic = (sample_mean - mu0) / standard_error
-    
-    # Step 3: Calculate p-value (two-tailed)
-    p_value = 2 * (1 - stats.norm.cdf(abs(z_statistic)))
-    
-    # Step 4: Calculate critical values
-    z_critical = stats.norm.ppf(1 - alpha/2)
-    
-    # Step 5: Make decision
-    reject_null = abs(z_statistic) > z_critical
-    
-    # Step 6: Calculate confidence interval
-    margin_of_error = z_critical * standard_error
-    ci_lower = sample_mean - margin_of_error
-    ci_upper = sample_mean + margin_of_error
-    
-    return {
-        'sample_mean': sample_mean,
-        'hypothesized_mean': mu0,
-        'standard_error': standard_error,
-        'z_statistic': z_statistic,
-        'p_value': p_value,
-        'z_critical': z_critical,
-        'reject_null': reject_null,
-        'confidence_interval': (ci_lower, ci_upper),
-        'effect_size': abs(sample_mean - mu0) / sigma
-    }
+The Z-test standardizes the difference between the sample mean and hypothesized mean by the standard error of the mean. This tells us how many standard errors the sample mean is from the hypothesized value.
 
-# Example: Test if sample mean differs from hypothesized mean
-np.random.seed(42)
-sample_data = np.random.normal(105, 15, 50)  # True mean = 105, σ = 15
-mu0 = 100  # Hypothesized mean
-sigma = 15  # Known population standard deviation
+#### Assumptions
 
-z_results = z_test_manual(sample_data, mu0, sigma)
-print("Z-Test Results:")
-for key, value in z_results.items():
-    if isinstance(value, tuple):
-        print(f"{key}: {value[0]:.3f} to {value[1]:.3f}")
-    else:
-        print(f"{key}: {value:.3f}")
+1. **Normality**: Data is normally distributed (or $`n > 30`$ by CLT)
+2. **Known Variance**: Population standard deviation is known
+3. **Independence**: Observations are independent
+4. **Random Sampling**: Sample is representative of population
 
-# Visualize the test
-plt.figure(figsize=(12, 4))
+#### Example: IQ Testing
 
-# Sample distribution
-plt.subplot(1, 3, 1)
-plt.hist(sample_data, bins=15, alpha=0.7, density=True, color='skyblue', edgecolor='black')
-x = np.linspace(min(sample_data), max(sample_data), 100)
-plt.plot(x, stats.norm.pdf(x, np.mean(sample_data), np.std(sample_data, ddof=1)), 
-         'r-', linewidth=2, label='Sample distribution')
-plt.axvline(z_results['sample_mean'], color='red', linestyle='--', 
-            label=f'Sample mean: {z_results["sample_mean"]:.2f}')
-plt.axvline(mu0, color='green', linestyle='--', 
-            label=f'Hypothesized mean: {mu0}')
-plt.xlabel('Values')
-plt.ylabel('Density')
-plt.title('Sample Distribution')
-plt.legend()
+A psychologist wants to test if a group of students has above-average IQ (population mean = 100, SD = 15):
+- Sample: $`n = 25`$ students, $`\bar{x} = 108`$
+- $`H_0: \mu = 100`$ vs $`H_1: \mu > 100`$
+- $`Z = \frac{108 - 100}{15/\sqrt{25}} = \frac{8}{3} = 2.67`$
+- p-value = $`P(Z > 2.67) = 0.0038`$
+- Conclusion: Reject $`H_0`$ at $`\alpha = 0.05`$
 
-# Z-distribution
-plt.subplot(1, 3, 2)
-z_range = np.linspace(-4, 4, 1000)
-z_pdf = stats.norm.pdf(z_range, 0, 1)
-plt.plot(z_range, z_pdf, 'b-', linewidth=2)
-plt.fill_between(z_range, z_pdf, where=(z_range > z_results['z_critical']) | (z_range < -z_results['z_critical']), 
-                 alpha=0.3, color='red', label='Rejection region')
-plt.axvline(z_results['z_statistic'], color='red', linestyle='--', 
-            label=f'Z = {z_results["z_statistic"]:.2f}')
-plt.axvline(-z_results['z_statistic'], color='red', linestyle='--')
-plt.xlabel('Z-score')
-plt.ylabel('Density')
-plt.title('Z-Distribution')
-plt.legend()
+#### Critical Value Approach
 
-# Confidence interval
-plt.subplot(1, 3, 3)
-ci_lower, ci_upper = z_results['confidence_interval']
-plt.errorbar([1], [z_results['sample_mean']], 
-             yerr=[[z_results['sample_mean'] - ci_lower], [ci_upper - z_results['sample_mean']]], 
-             fmt='o', capsize=5, capthick=2, markersize=8, label='95% CI')
-plt.axhline(mu0, color='green', linestyle='--', label=f'H₀: μ = {mu0}')
-plt.xlim(0.5, 1.5)
-plt.ylabel('Mean')
-plt.title('Confidence Interval')
-plt.legend()
-plt.xticks([])
+For a given significance level $`\alpha`$:
+- **Two-sided**: Reject if $`|Z| > z_{\alpha/2}`$
+- **One-sided**: Reject if $`Z > z_{\alpha}`$ (or $`Z < -z_{\alpha}`$)
 
-plt.tight_layout()
-plt.show()
-```
+#### Example: Critical Values
+
+For $`\alpha = 0.05`$:
+- Two-sided: $`z_{0.025} = 1.96`$
+- One-sided: $`z_{0.05} = 1.645`$
 
 ### T-Test for Population Mean
 
-**Mathematical Foundation:**
+The t-test is used when the population standard deviation is unknown and must be estimated from the sample data.
+
+#### Mathematical Foundation
+
 When population standard deviation is unknown, we use the t-test:
 
-$$t = \frac{\bar{X} - \mu_0}{s/\sqrt{n}}$$
+```math
+t = \frac{\bar{X} - \mu_0}{s/\sqrt{n}}
+```
 
 Where:
-- $s$ is the sample standard deviation
-- Degrees of freedom = n - 1
+- $`s`$ is the sample standard deviation
+- Degrees of freedom = $`n - 1`$
 
-**Key Differences from Z-test:**
-1. Uses sample standard deviation instead of population standard deviation
-2. Follows t-distribution instead of normal distribution
-3. Degrees of freedom affect the shape of the distribution
+#### Key Differences from Z-test
 
-```python
-def t_test_manual(data, mu0, alpha=0.05):
-    """
-    Manual implementation of t-test for population mean
-    
-    Mathematical steps:
-    1. Calculate sample mean: x̄ = (1/n) * Σxᵢ
-    2. Calculate sample standard deviation: s = √[Σ(xᵢ - x̄)² / (n-1)]
-    3. Calculate standard error: SE = s/√n
-    4. Calculate t-statistic: t = (x̄ - μ₀) / SE
-    5. Calculate p-value using t-distribution with df = n-1
-    6. Make decision based on α
-    
-    Parameters:
-    data: array-like, sample data
-    mu0: float, hypothesized population mean
-    alpha: float, significance level
-    
-    Returns:
-    dict: test results
-    """
-    n = len(data)
-    df = n - 1  # degrees of freedom
-    
-    # Step 1: Calculate sample statistics
-    sample_mean = np.mean(data)
-    sample_std = np.std(data, ddof=1)  # ddof=1 for sample standard deviation
-    
-    # Step 2: Calculate standard error
-    standard_error = sample_std / np.sqrt(n)
-    
-    # Step 3: Calculate t-statistic
-    t_statistic = (sample_mean - mu0) / standard_error
-    
-    # Step 4: Calculate p-value (two-tailed)
-    p_value = 2 * (1 - stats.t.cdf(abs(t_statistic), df))
-    
-    # Step 5: Calculate critical values
-    t_critical = stats.t.ppf(1 - alpha/2, df)
-    
-    # Step 6: Make decision
-    reject_null = abs(t_statistic) > t_critical
-    
-    # Step 7: Calculate confidence interval
-    margin_of_error = t_critical * standard_error
-    ci_lower = sample_mean - margin_of_error
-    ci_upper = sample_mean + margin_of_error
-    
-    # Step 8: Calculate effect size (Cohen's d)
-    cohens_d = abs(sample_mean - mu0) / sample_std
-    
-    return {
-        'sample_mean': sample_mean,
-        'sample_std': sample_std,
-        'hypothesized_mean': mu0,
-        'standard_error': standard_error,
-        't_statistic': t_statistic,
-        'degrees_of_freedom': df,
-        'p_value': p_value,
-        't_critical': t_critical,
-        'reject_null': reject_null,
-        'confidence_interval': (ci_lower, ci_upper),
-        'cohens_d': cohens_d
-    }
+1. **Unknown Variance**: Uses sample standard deviation instead of population standard deviation
+2. **t-Distribution**: Follows t-distribution instead of normal distribution
+3. **Degrees of Freedom**: Shape depends on sample size
+4. **More Conservative**: t-distribution has heavier tails than normal distribution
 
-# Example: Test if sample mean differs from hypothesized mean
-np.random.seed(42)
-sample_data = np.random.normal(105, 15, 30)  # True mean = 105, unknown σ
-mu0 = 100  # Hypothesized mean
+#### Intuitive Understanding
 
-t_results = t_test_manual(sample_data, mu0)
-print("T-Test Results:")
-for key, value in t_results.items():
-    if isinstance(value, tuple):
-        print(f"{key}: {value[0]:.3f} to {value[1]:.3f}")
-    else:
-        print(f"{key}: {value:.3f}")
+The t-test accounts for the additional uncertainty introduced by estimating the population standard deviation from the sample. The t-distribution is more spread out than the normal distribution, making it harder to reject the null hypothesis.
 
-# Compare with scipy implementation
-scipy_t, scipy_p = ttest_1samp(sample_data, mu0)
-print(f"\nSciPy t-test: t = {scipy_t:.3f}, p = {scipy_p:.3f}")
+#### Example: Battery Life
 
-# Visualize t-distribution vs normal distribution
-plt.figure(figsize=(12, 4))
+Testing if a new battery lasts longer than 10 hours:
+- Sample: $`n = 16`$ batteries, $`\bar{x} = 11.2`$ hours, $`s = 1.5`$ hours
+- $`H_0: \mu = 10`$ vs $`H_1: \mu > 10`$
+- $`t = \frac{11.2 - 10}{1.5/\sqrt{16}} = \frac{1.2}{0.375} = 3.2`$
+- Degrees of freedom = $`16 - 1 = 15`$
+- p-value = $`P(t_{15} > 3.2) = 0.003`$
+- Conclusion: Reject $`H_0`$ at $`\alpha = 0.05`$
 
-# Sample distribution
-plt.subplot(1, 3, 1)
-plt.hist(sample_data, bins=10, alpha=0.7, density=True, color='skyblue', edgecolor='black')
-x = np.linspace(min(sample_data), max(sample_data), 100)
-plt.plot(x, stats.norm.pdf(x, np.mean(sample_data), np.std(sample_data, ddof=1)), 
-         'r-', linewidth=2, label='Sample distribution')
-plt.axvline(t_results['sample_mean'], color='red', linestyle='--', 
-            label=f'Sample mean: {t_results["sample_mean"]:.2f}')
-plt.axvline(mu0, color='green', linestyle='--', 
-            label=f'Hypothesized mean: {mu0}')
-plt.xlabel('Values')
-plt.ylabel('Density')
-plt.title('Sample Distribution')
-plt.legend()
+#### Degrees of Freedom
 
-# T-distribution vs Normal
-plt.subplot(1, 3, 2)
-x = np.linspace(-4, 4, 1000)
-t_pdf = stats.t.pdf(x, t_results['degrees_of_freedom'])
-normal_pdf = stats.norm.pdf(x, 0, 1)
-plt.plot(x, t_pdf, 'b-', linewidth=2, label=f't-distribution (df={t_results["degrees_of_freedom"]})')
-plt.plot(x, normal_pdf, 'r--', linewidth=2, label='Normal distribution')
-plt.fill_between(x, t_pdf, where=(x > t_results['t_critical']) | (x < -t_results['t_critical']), 
-                 alpha=0.3, color='red', label='Rejection region')
-plt.axvline(t_results['t_statistic'], color='red', linestyle='--', 
-            label=f't = {t_results["t_statistic"]:.2f}')
-plt.xlabel('t-score')
-plt.ylabel('Density')
-plt.title('T-Distribution vs Normal')
-plt.legend()
+The degrees of freedom represent the number of independent pieces of information available for estimating the parameter. For the t-test:
+- $`df = n - 1`$ (we lose one degree of freedom by estimating the mean)
 
-# Effect size interpretation
-plt.subplot(1, 3, 3)
-effect_sizes = [0.2, 0.5, 0.8, 1.2]
-interpretations = ['Small', 'Medium', 'Large', 'Very Large']
-colors = ['lightblue', 'skyblue', 'blue', 'darkblue']
+#### t-Distribution Properties
 
-for i, (effect, interpret, color) in enumerate(zip(effect_sizes, interpretations, colors)):
-    plt.bar(i, effect, color=color, alpha=0.7, label=interpret)
+1. **Symmetric**: Like the normal distribution
+2. **Heavier Tails**: More probability in the tails than normal
+3. **Convergence**: As $`df \rightarrow \infty`$, t-distribution approaches normal
+4. **Shape**: Depends on degrees of freedom
 
-plt.bar(4, t_results['cohens_d'], color='red', alpha=0.7, label='Observed')
-plt.axhline(0.2, color='gray', linestyle='--', alpha=0.5, label='Small threshold')
-plt.axhline(0.5, color='gray', linestyle='--', alpha=0.5, label='Medium threshold')
-plt.axhline(0.8, color='gray', linestyle='--', alpha=0.5, label='Large threshold')
+#### Example: Critical Values
 
-plt.xlabel('Effect Size Categories')
-plt.ylabel("Cohen's d")
-plt.title("Effect Size (Cohen's d)")
-plt.xticks(range(5), ['Small', 'Medium', 'Large', 'Very Large', 'Observed'])
-plt.legend()
+For $`\alpha = 0.05`$ and $`df = 15`$:
+- Two-sided: $`t_{0.025, 15} = 2.131`$
+- One-sided: $`t_{0.05, 15} = 1.753`$
 
-plt.tight_layout()
-plt.show()
+### Chi-Square Test for Variance
+
+The chi-square test is used to test hypotheses about population variance.
+
+#### Mathematical Foundation
+
+```math
+\chi^2 = \frac{(n-1)s^2}{\sigma_0^2}
 ```
+
+Where:
+- $`s^2`$ is the sample variance
+- $`\sigma_0^2`$ is the hypothesized population variance
+- Degrees of freedom = $`n - 1`$
+
+#### Example: Quality Control
+
+Testing if a manufacturing process has variance less than 4:
+- Sample: $`n = 20`$, $`s^2 = 2.5`$
+- $`H_0: \sigma^2 = 4`$ vs $`H_1: \sigma^2 < 4`$
+- $`\chi^2 = \frac{19 \times 2.5}{4} = 11.875`$
+- p-value = $`P(\chi^2_{19} < 11.875) = 0.15`$
+- Conclusion: Fail to reject $`H_0`$ at $`\alpha = 0.05`$
 
 ## Two-Sample Tests
 
+Two-sample tests compare parameters between two different populations or groups. These are essential for experimental designs and comparative studies.
+
 ### Independent t-Test
 
-```python
-def independent_t_test_example():
-    """Compare means of two independent groups"""
-    # Generate two groups
-    n1, n2 = 30, 25
-    mean1, mean2 = 100, 110
-    std1, std2 = 15, 18
-    
-    group1 = np.random.normal(mean1, std1, n1)
-    group2 = np.random.normal(mean2, std2, n2)
-    
-    # Perform independent t-test
-    t_stat, p_value = ttest_ind(group1, group2)
-    
-    # Calculate effect size (Cohen's d)
-    pooled_std = np.sqrt(((n1-1)*np.var(group1, ddof=1) + (n2-1)*np.var(group2, ddof=1)) / (n1+n2-2))
-    cohens_d = (np.mean(group1) - np.mean(group2)) / pooled_std
-    
-    return {
-        'group1_mean': np.mean(group1),
-        'group2_mean': np.mean(group2),
-        'group1_std': np.std(group1, ddof=1),
-        'group2_std': np.std(group2, ddof=1),
-        't_statistic': t_stat,
-        'p_value': p_value,
-        'cohens_d': cohens_d,
-        'group1': group1,
-        'group2': group2
-    }
+The independent t-test compares means between two independent groups.
 
-ind_t_results = independent_t_test_example()
-print("Independent t-Test")
-for key, value in ind_t_results.items():
-    if key not in ['group1', 'group2']:
-        print(f"{key}: {value:.4f}")
+#### Mathematical Foundation
 
-# Visualize
-plt.figure(figsize=(15, 5))
-
-# Box plots
-plt.subplot(1, 3, 1)
-plt.boxplot([ind_t_results['group1'], ind_t_results['group2']], labels=['Group 1', 'Group 2'])
-plt.ylabel('Value')
-plt.title('Group Comparison')
-
-# Histograms
-plt.subplot(1, 3, 2)
-plt.hist(ind_t_results['group1'], alpha=0.7, label='Group 1', bins=15)
-plt.hist(ind_t_results['group2'], alpha=0.7, label='Group 2', bins=15)
-plt.xlabel('Value')
-plt.ylabel('Frequency')
-plt.title('Group Distributions')
-plt.legend()
-
-# Effect size interpretation
-plt.subplot(1, 3, 3)
-effect_sizes = [0.2, 0.5, 0.8]
-interpretations = ['Small', 'Medium', 'Large']
-colors = ['lightblue', 'orange', 'red']
-
-for i, (size, interpretation, color) in enumerate(zip(effect_sizes, interpretations, colors)):
-    plt.axvline(size, color=color, linestyle='--', alpha=0.7, label=f'{interpretation} effect')
-    plt.axvline(-size, color=color, linestyle='--', alpha=0.7)
-
-plt.axvline(ind_t_results['cohens_d'], color='black', linewidth=2, label=f"Cohen's d = {ind_t_results['cohens_d']:.2f}")
-plt.xlabel("Cohen's d")
-plt.ylabel('Density')
-plt.title("Effect Size (Cohen's d)")
-plt.legend()
-plt.xlim(-2, 2)
-
-plt.tight_layout()
-plt.show()
+```math
+t = \frac{\bar{X}_1 - \bar{X}_2}{\sqrt{\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2}}}
 ```
+
+Where:
+- $`\bar{X}_1, \bar{X}_2`$ are sample means
+- $`s_1^2, s_2^2`$ are sample variances
+- $`n_1, n_2`$ are sample sizes
+
+#### Degrees of Freedom
+
+For unequal variances (Welch's t-test):
+```math
+df = \frac{(\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2})^2}{\frac{(s_1^2/n_1)^2}{n_1-1} + \frac{(s_2^2/n_2)^2}{n_2-1}}
+```
+
+For equal variances (pooled t-test):
+```math
+df = n_1 + n_2 - 2
+```
+
+#### Example: Drug Comparison
+
+Comparing effectiveness of two drugs:
+- Drug A: $`n_1 = 30`$, $`\bar{x}_1 = 85`$, $`s_1 = 12`$
+- Drug B: $`n_2 = 25``, $`\bar{x}_2 = 78`$, $`s_2 = 15`$
+- $`H_0: \mu_1 = \mu_2`$ vs $`H_1: \mu_1 \neq \mu_2`$
+- $`t = \frac{85 - 78}{\sqrt{\frac{144}{30} + \frac{225}{25}}} = \frac{7}{\sqrt{4.8 + 9}} = 1.85`$
+- p-value ≈ 0.07
+- Conclusion: Fail to reject $`H_0`$ at $`\alpha = 0.05`$
+
+#### Assumptions
+
+1. **Independence**: Groups are independent
+2. **Normality**: Data in each group is normally distributed
+3. **Equal Variances**: Population variances are equal (for pooled test)
+4. **Random Sampling**: Samples are representative
 
 ### Paired t-Test
 
-```python
-def paired_t_test_example():
-    """Test for difference in paired observations"""
-    # Simulate before/after measurements
-    n_pairs = 25
-    true_improvement = 5
-    measurement_error = 3
-    
-    # Generate paired data
-    before = np.random.normal(100, 15, n_pairs)
-    after = before + np.random.normal(true_improvement, measurement_error, n_pairs)
-    
-    # Calculate differences
-    differences = after - before
-    
-    # Perform paired t-test
-    t_stat, p_value = ttest_rel(before, after)
-    
-    # Alternative: test if differences are different from zero
-    t_stat_diff, p_value_diff = ttest_1samp(differences, 0)
-    
-    return {
-        'before_mean': np.mean(before),
-        'after_mean': np.mean(after),
-        'difference_mean': np.mean(differences),
-        't_statistic': t_stat,
-        'p_value': p_value,
-        't_statistic_diff': t_stat_diff,
-        'p_value_diff': p_value_diff,
-        'before': before,
-        'after': after,
-        'differences': differences
-    }
+The paired t-test compares means when observations are related (before/after, matched pairs).
 
-paired_results = paired_t_test_example()
-print("Paired t-Test")
-for key, value in paired_results.items():
-    if key not in ['before', 'after', 'differences']:
-        print(f"{key}: {value:.4f}")
+#### Mathematical Foundation
 
-# Visualize
-plt.figure(figsize=(15, 5))
-
-# Before vs After
-plt.subplot(1, 3, 1)
-plt.scatter(paired_results['before'], paired_results['after'], alpha=0.7)
-plt.plot([80, 120], [80, 120], 'r--', alpha=0.7, label='No change')
-plt.xlabel('Before')
-plt.ylabel('After')
-plt.title('Before vs After')
-plt.legend()
-
-# Differences distribution
-plt.subplot(1, 3, 2)
-plt.hist(paired_results['differences'], bins=15, alpha=0.7, color='lightgreen', edgecolor='black')
-plt.axvline(0, color='red', linestyle='--', linewidth=2, label='No difference')
-plt.axvline(np.mean(paired_results['differences']), color='blue', linestyle='--', linewidth=2, label='Mean difference')
-plt.xlabel('Difference (After - Before)')
-plt.ylabel('Frequency')
-plt.title('Distribution of Differences')
-plt.legend()
-
-# Individual changes
-plt.subplot(1, 3, 3)
-x = np.arange(len(paired_results['before']))
-plt.plot([x, x], [paired_results['before'], paired_results['after']], 'b-', alpha=0.5)
-plt.scatter(x, paired_results['before'], color='red', label='Before', alpha=0.7)
-plt.scatter(x, paired_results['after'], color='green', label='After', alpha=0.7)
-plt.xlabel('Subject')
-plt.ylabel('Value')
-plt.title('Individual Changes')
-plt.legend()
-
-plt.tight_layout()
-plt.show()
+```math
+t = \frac{\bar{d}}{s_d/\sqrt{n}}
 ```
+
+Where:
+- $`\bar{d}`$ is the mean of differences
+- $`s_d`$ is the standard deviation of differences
+- $`n`$ is the number of pairs
+
+#### Example: Before/After Study
+
+Testing weight loss program effectiveness:
+- Before: $`[180, 165, 200, 175, 190]`$
+- After: $`[175, 160, 195, 170, 185]`$
+- Differences: $`[-5, -5, -5, -5, -5]`$
+- $`\bar{d} = -5`$, $`s_d = 0`$
+- $`t = \frac{-5}{0/\sqrt{5}}`$ (undefined due to zero variance)
+- In practice, there would be some variation in differences
+
+#### Advantages of Paired Tests
+
+1. **Reduced Variability**: Controls for individual differences
+2. **Higher Power**: More sensitive to detect effects
+3. **Fewer Assumptions**: Doesn't require equal variances
+
+### F-Test for Equality of Variances
+
+The F-test compares variances between two groups.
+
+#### Mathematical Foundation
+
+```math
+F = \frac{s_1^2}{s_2^2}
+```
+
+Where $`s_1^2 \geq s_2^2`$ (larger variance in numerator).
+
+#### Example: Process Comparison
+
+Comparing variability of two manufacturing processes:
+- Process A: $`n_1 = 15``, $`s_1^2 = 4.2`$
+- Process B: $`n_2 = 12``, $`s_2^2 = 2.8`$
+- $`F = \frac{4.2}{2.8} = 1.5`$
+- Degrees of freedom: $`(14, 11)`$
+- p-value ≈ 0.25
+- Conclusion: Fail to reject equality of variances
 
 ## Confidence Intervals
 
+Confidence intervals provide a range of plausible values for population parameters, complementing hypothesis tests by quantifying uncertainty.
+
 ### Confidence Interval Construction
 
-```python
-def confidence_interval_demonstration():
-    """Demonstrate confidence interval construction"""
-    # Generate population
-    population = np.random.normal(100, 15, 10000)
-    true_mean = np.mean(population)
-    
-    # Take multiple samples
-    n_samples = 50
-    sample_size = 30
-    confidence_level = 0.95
-    
-    sample_means = []
-    confidence_intervals = []
-    
-    for _ in range(n_samples):
-        sample = np.random.choice(population, size=sample_size, replace=False)
-        sample_mean = np.mean(sample)
-        sample_std = np.std(sample, ddof=1)
-        
-        # Calculate confidence interval
-        t_value = stats.t.ppf((1 + confidence_level) / 2, df=sample_size - 1)
-        margin_of_error = t_value * sample_std / np.sqrt(sample_size)
-        
-        sample_means.append(sample_mean)
-        confidence_intervals.append((sample_mean - margin_of_error, sample_mean + margin_of_error))
-    
-    # Count intervals containing true mean
-    intervals_containing_true = sum(1 for ci in confidence_intervals 
-                                  if ci[0] <= true_mean <= ci[1])
-    
-    return sample_means, confidence_intervals, true_mean, intervals_containing_true
+Confidence intervals are constructed using the sampling distribution of the statistic.
 
-means, intervals, true_mean, count = confidence_interval_demonstration()
+#### General Formula
 
-print(f"Confidence Interval Demonstration")
-print(f"True population mean: {true_mean:.2f}")
-print(f"Intervals containing true mean: {count}/{len(intervals)} ({count/len(intervals)*100:.1f}%)")
-
-# Visualize confidence intervals
-plt.figure(figsize=(12, 8))
-x_positions = np.arange(len(intervals))
-
-# Plot confidence intervals
-for i, (lower, upper) in enumerate(intervals):
-    if lower <= true_mean <= upper:
-        plt.plot([i, i], [lower, upper], 'b-', alpha=0.7)
-    else:
-        plt.plot([i, i], [lower, upper], 'r-', alpha=0.7)
-
-plt.axhline(y=true_mean, color='g', linestyle='--', linewidth=2, label='True Mean')
-plt.xlabel('Sample Number')
-plt.ylabel('Value')
-plt.title('Confidence Intervals (95%)')
-plt.legend()
-plt.show()
+```math
+\text{Statistic} \pm \text{Critical Value} \times \text{Standard Error}
 ```
+
+#### Interpretation
+
+A $`100(1-\alpha)\%`$ confidence interval means that if we repeated the sampling process many times, $`100(1-\alpha)\%`$ of the intervals would contain the true parameter value.
+
+#### Example: Mean Estimation
+
+For a sample mean with known population standard deviation:
+```math
+\bar{X} \pm z_{\alpha/2} \frac{\sigma}{\sqrt{n}}
+```
+
+#### Example: t-Interval
+
+For a sample mean with unknown population standard deviation:
+```math
+\bar{X} \pm t_{\alpha/2, n-1} \frac{s}{\sqrt{n}}
+```
+
+#### Example: Proportion
+
+For a sample proportion:
+```math
+\hat{p} \pm z_{\alpha/2} \sqrt{\frac{\hat{p}(1-\hat{p})}{n}}
+```
+
+### One-Sample Confidence Intervals
+
+#### Mean with Known Variance
+
+```math
+\bar{X} \pm z_{\alpha/2} \frac{\sigma}{\sqrt{n}}
+```
+
+#### Mean with Unknown Variance
+
+```math
+\bar{X} \pm t_{\alpha/2, n-1} \frac{s}{\sqrt{n}}
+```
+
+#### Example: Battery Life
+
+From the previous example:
+- $`\bar{x} = 11.2`$ hours, $`s = 1.5`$ hours, $`n = 16`$
+- 95% CI: $`11.2 \pm 2.131 \times \frac{1.5}{\sqrt{16}} = 11.2 \pm 0.8 = [10.4, 12.0]`$
+- We are 95% confident that the true mean battery life is between 10.4 and 12.0 hours
+
+### Two-Sample Confidence Intervals
+
+#### Difference in Means (Independent)
+
+```math
+(\bar{X}_1 - \bar{X}_2) \pm t_{\alpha/2, df} \sqrt{\frac{s_1^2}{n_1} + \frac{s_2^2}{n_2}}
+```
+
+#### Difference in Means (Paired)
+
+```math
+\bar{d} \pm t_{\alpha/2, n-1} \frac{s_d}{\sqrt{n}}
+```
+
+#### Example: Drug Comparison
+
+From the previous example:
+- $`\bar{x}_1 - \bar{x}_2 = 7`$
+- 95% CI: $`7 \pm 2.01 \times \sqrt{4.8 + 9} = 7 \pm 7.4 = [-0.4, 14.4]`$
+- We are 95% confident that the true difference in means is between -0.4 and 14.4
+
+### Sample Size Determination
+
+To achieve a desired margin of error $`E`$:
+
+#### For Mean (Known Variance)
+
+```math
+n = \left(\frac{z_{\alpha/2} \sigma}{E}\right)^2
+```
+
+#### For Mean (Unknown Variance)
+
+Use pilot study to estimate $`\sigma`$, then use the formula above.
+
+#### Example: Sample Size
+
+To estimate mean with margin of error 2 and 95% confidence:
+- $`\sigma = 10`$, $`E = 2`$, $`z_{0.025} = 1.96`$
+- $`n = \left(\frac{1.96 \times 10}{2}\right)^2 = 96.04`$ ≈ 97
 
 ## P-Values and Significance
 
+P-values are the most commonly used measure of evidence against the null hypothesis, but they are often misunderstood.
+
 ### P-Value Interpretation
 
-```python
-def p_value_interpretation():
-    """Demonstrate p-value interpretation"""
-    # Simulate multiple hypothesis tests
-    n_tests = 1000
-    alpha = 0.05
-    
-    # Generate p-values under null hypothesis (uniform distribution)
-    p_values_null = np.random.uniform(0, 1, n_tests)
-    
-    # Generate p-values under alternative hypothesis
-    # (some will be small, some large)
-    p_values_alt = np.concatenate([
-        np.random.beta(0.5, 5, n_tests//2),  # Small p-values
-        np.random.uniform(0, 1, n_tests//2)   # Large p-values
-    ])
-    
-    # Mix null and alternative
-    p_values = np.concatenate([p_values_null[:800], p_values_alt[:200]])
-    
-    return p_values, alpha
+The p-value is the probability of observing a test statistic as extreme as or more extreme than the one observed, assuming the null hypothesis is true.
 
-p_vals, alpha = p_value_interpretation()
+#### Mathematical Definition
 
-# Visualize p-value distribution
-plt.figure(figsize=(15, 5))
+For a test statistic $`T`$ with observed value $`t_{obs}`$:
 
-# P-value histogram
-plt.subplot(1, 3, 1)
-plt.hist(p_vals, bins=50, alpha=0.7, color='skyblue', edgecolor='black')
-plt.axvline(alpha, color='red', linestyle='--', linewidth=2, label=f'α = {alpha}')
-plt.xlabel('P-value')
-plt.ylabel('Frequency')
-plt.title('P-Value Distribution')
-plt.legend()
+- **Two-sided test**: $`p = P(|T| \geq |t_{obs}| | H_0)`$
+- **One-sided test**: $`p = P(T \geq t_{obs} | H_0)`$ or $`P(T \leq t_{obs} | H_0)`$
 
-# P-value vs significance
-plt.subplot(1, 3, 2)
-significant = p_vals < alpha
-plt.scatter(range(len(p_vals)), p_vals, c=significant, cmap='RdYlBu', alpha=0.7)
-plt.axhline(alpha, color='red', linestyle='--', linewidth=2, label=f'α = {alpha}')
-plt.xlabel('Test Number')
-plt.ylabel('P-value')
-plt.title('P-Values vs Significance')
-plt.legend()
+#### Intuitive Understanding
 
-# Significance rate
-plt.subplot(1, 3, 3)
-significance_rate = np.mean(significant)
-plt.bar(['Significant', 'Not Significant'], 
-        [significance_rate, 1-significance_rate], 
-        color=['red', 'blue'], alpha=0.7)
-plt.ylabel('Proportion')
-plt.title(f'Significance Rate: {significance_rate:.3f}')
+The p-value answers: "If the null hypothesis were true, how likely would it be to see data as extreme as what we observed?" A small p-value suggests the data is unlikely under the null hypothesis.
 
-plt.tight_layout()
-plt.show()
+#### Example: Coin Toss
 
-print(f"P-Value Analysis:")
-print(f"Total tests: {len(p_vals)}")
-print(f"Significant tests: {np.sum(significant)}")
-print(f"Significance rate: {np.mean(significant):.3f}")
-print(f"Expected under null: {alpha:.3f}")
+From the earlier example:
+- Observed: 65 heads in 100 tosses
+- Expected under $`H_0`$: 50 heads
+- Test statistic: $`Z = 3`$
+- p-value = $`P(|Z| \geq 3) = 2 \times 0.0013 = 0.0026`$
+- Interpretation: If the coin were fair, there's only a 0.26% chance of seeing such extreme results
+
+#### Common Misinterpretations
+
+1. **p-value ≠ Probability of H₀ being true**
+2. **p-value ≠ Probability of making a Type I error**
+3. **p-value ≠ Strength of evidence for H₁**
+
+#### Guidelines for Interpretation
+
+- **p < 0.001**: Very strong evidence against H₀
+- **p < 0.01**: Strong evidence against H₀
+- **p < 0.05**: Moderate evidence against H₀
+- **p < 0.10**: Weak evidence against H₀
+- **p ≥ 0.10**: Little or no evidence against H₀
+
+### Significance Levels
+
+The significance level $`\alpha`$ is the threshold for rejecting the null hypothesis.
+
+#### Common Significance Levels
+
+- **α = 0.001**: Very strict (0.1% false positive rate)
+- **α = 0.01**: Strict (1% false positive rate)
+- **α = 0.05**: Standard (5% false positive rate)
+- **α = 0.10**: Liberal (10% false positive rate)
+
+#### Decision Rule
+
+- **Reject H₀** if p-value ≤ α
+- **Fail to reject H₀** if p-value > α
+
+#### Example: Multiple Significance Levels
+
+For a test with p-value = 0.03:
+- α = 0.01: Fail to reject (p > α)
+- α = 0.05: Reject (p ≤ α)
+- α = 0.10: Reject (p ≤ α)
+
+### Effect Size
+
+Effect size measures the practical significance of a result, complementing the statistical significance measured by p-values.
+
+#### Cohen's d (Standardized Mean Difference)
+
+```math
+d = \frac{\bar{X}_1 - \bar{X}_2}{s_{pooled}}
 ```
+
+Where $`s_{pooled}`$ is the pooled standard deviation.
+
+#### Interpretation Guidelines
+
+- **|d| < 0.2**: Small effect
+- **0.2 ≤ |d| < 0.5**: Medium effect
+- **|d| ≥ 0.5**: Large effect
+
+#### Example: Effect Size
+
+From the drug comparison example:
+- $`\bar{x}_1 - \bar{x}_2 = 7`$
+- $`s_{pooled} = 13.5`$
+- $`d = \frac{7}{13.5} = 0.52`$ (large effect)
 
 ## Multiple Testing
 
+When conducting multiple hypothesis tests, the probability of making at least one Type I error increases. Multiple testing corrections help control this inflation.
+
+### Multiple Testing Problem
+
+If we conduct $`m`$ independent tests at significance level $`\alpha`$, the probability of at least one Type I error is:
+
+```math
+P(\text{at least one Type I error}) = 1 - (1-\alpha)^m
+```
+
+#### Example: Multiple Tests
+
+For $`m = 10`$ tests at $`\alpha = 0.05`$:
+- $`P(\text{at least one Type I error}) = 1 - (0.95)^{10} = 0.401`$
+- There's a 40% chance of at least one false positive!
+
 ### Multiple Testing Correction
 
-```python
-def multiple_testing_correction():
-    """Demonstrate multiple testing corrections"""
-    # Simulate multiple hypothesis tests
-    n_tests = 1000
-    alpha = 0.05
-    
-    # Generate p-values (mostly null, some alternative)
-    p_values = np.concatenate([
-        np.random.uniform(0, 1, 900),  # Null hypotheses
-        np.random.beta(0.5, 5, 100)    # Alternative hypotheses
-    ])
-    
-    # No correction
-    significant_uncorrected = p_values < alpha
-    
-    # Bonferroni correction
-    alpha_bonferroni = alpha / n_tests
-    significant_bonferroni = p_values < alpha_bonferroni
-    
-    # Benjamini-Hochberg (FDR) correction
-    sorted_indices = np.argsort(p_values)
-    sorted_p_values = p_values[sorted_indices]
-    
-    # Calculate critical values
-    critical_values = alpha * np.arange(1, n_tests + 1) / n_tests
-    
-    # Find largest k where p_k <= critical_k
-    bh_significant = np.zeros(n_tests, dtype=bool)
-    for i in range(n_tests):
-        if sorted_p_values[i] <= critical_values[i]:
-            bh_significant[sorted_indices[i]] = True
-    
-    return {
-        'p_values': p_values,
-        'significant_uncorrected': significant_uncorrected,
-        'significant_bonferroni': significant_bonferroni,
-        'significant_bh': bh_significant,
-        'alpha': alpha,
-        'alpha_bonferroni': alpha_bonferroni
-    }
+#### Bonferroni Correction
 
-mt_results = multiple_testing_correction()
+The simplest correction adjusts the significance level:
 
-print("Multiple Testing Correction")
-print(f"Uncorrected significant: {np.sum(mt_results['significant_uncorrected'])}")
-print(f"Bonferroni significant: {np.sum(mt_results['significant_bonferroni'])}")
-print(f"Benjamini-Hochberg significant: {np.sum(mt_results['significant_bh'])}")
-
-# Visualize
-plt.figure(figsize=(15, 5))
-
-# P-value distribution
-plt.subplot(1, 3, 1)
-plt.hist(mt_results['p_values'], bins=50, alpha=0.7, color='skyblue', edgecolor='black')
-plt.axvline(mt_results['alpha'], color='red', linestyle='--', label=f'α = {mt_results["alpha"]}')
-plt.axvline(mt_results['alpha_bonferroni'], color='orange', linestyle='--', label=f'Bonferroni α = {mt_results["alpha_bonferroni"]:.6f}')
-plt.xlabel('P-value')
-plt.ylabel('Frequency')
-plt.title('P-Value Distribution')
-plt.legend()
-
-# Comparison of methods
-plt.subplot(1, 3, 2)
-methods = ['Uncorrected', 'Bonferroni', 'BH']
-counts = [np.sum(mt_results['significant_uncorrected']),
-          np.sum(mt_results['significant_bonferroni']),
-          np.sum(mt_results['significant_bh'])]
-colors = ['red', 'orange', 'green']
-
-plt.bar(methods, counts, color=colors, alpha=0.7)
-plt.ylabel('Number of Significant Tests')
-plt.title('Significant Tests by Method')
-
-# P-value vs rank plot (for BH)
-plt.subplot(1, 3, 3)
-sorted_p = np.sort(mt_results['p_values'])
-ranks = np.arange(1, len(sorted_p) + 1)
-critical_line = mt_results['alpha'] * ranks / len(sorted_p)
-
-plt.plot(ranks, sorted_p, 'b.', alpha=0.7, label='P-values')
-plt.plot(ranks, critical_line, 'r-', linewidth=2, label='Critical line')
-plt.xlabel('Rank')
-plt.ylabel('P-value')
-plt.title('Benjamini-Hochberg Procedure')
-plt.legend()
-
-plt.tight_layout()
-plt.show()
+```math
+\alpha_{adjusted} = \frac{\alpha}{m}
 ```
+
+#### Example: Bonferroni Correction
+
+For $`m = 10`$ tests and $`\alpha = 0.05`$:
+- $`\alpha_{adjusted} = \frac{0.05}{10} = 0.005`$
+- Each test must have p-value ≤ 0.005 to be significant
+
+#### False Discovery Rate (FDR)
+
+FDR controls the expected proportion of false positives among rejected hypotheses:
+
+```math
+\text{FDR} = E\left[\frac{\text{False Positives}}{\text{Rejected Hypotheses}}\right]
+```
+
+#### Benjamini-Hochberg Procedure
+
+1. Order p-values: $`p_{(1)} \leq p_{(2)} \leq \cdots \leq p_{(m)}`$
+2. Find largest $`k`$ such that $`p_{(k)} \leq \frac{k}{m}\alpha`$
+3. Reject hypotheses 1 through $`k`$
+
+#### Example: FDR Control
+
+For $`m = 10`$ tests with p-values: $`[0.001, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35]`$ and $`\alpha = 0.05`$:
+
+- $`\frac{1}{10} \times 0.05 = 0.005`$: $`p_{(1)} = 0.001 \leq 0.005`$ ✓
+- $`\frac{2}{10} \times 0.05 = 0.01`$: $`p_{(2)} = 0.01 \leq 0.01`$ ✓
+- $`\frac{3}{10} \times 0.05 = 0.015`$: $`p_{(3)} = 0.02 > 0.015`$ ✗
+
+Reject first 2 hypotheses.
+
+### Comparison of Methods
+
+| Method | Controls | Power | Complexity |
+|--------|----------|-------|------------|
+| **Bonferroni** | Family-wise error rate | Low | Simple |
+| **FDR** | False discovery rate | Higher | Moderate |
+| **Holm** | Family-wise error rate | Higher | Moderate |
 
 ## Practical Applications
 
+Statistical inference finds applications across numerous fields and industries.
+
 ### A/B Testing Example
 
-```python
-def ab_testing_example():
-    """Simulate A/B testing scenario"""
-    # Simulate conversion rates
-    n_a, n_b = 1000, 1000
-    true_rate_a = 0.10  # 10% conversion rate
-    true_rate_b = 0.12  # 12% conversion rate (improvement)
-    
-    # Generate data
-    conversions_a = np.random.binomial(n_a, true_rate_a)
-    conversions_b = np.random.binomial(n_b, true_rate_b)
-    
-    # Calculate conversion rates
-    rate_a = conversions_a / n_a
-    rate_b = conversions_b / n_b
-    
-    # Perform z-test for proportions
-    pooled_rate = (conversions_a + conversions_b) / (n_a + n_b)
-    se = np.sqrt(pooled_rate * (1 - pooled_rate) * (1/n_a + 1/n_b))
-    z_stat = (rate_a - rate_b) / se
-    p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
-    
-    # Calculate confidence interval for difference
-    se_diff = np.sqrt(rate_a * (1 - rate_a) / n_a + rate_b * (1 - rate_b) / n_b)
-    z_critical = stats.norm.ppf(0.975)
-    margin_of_error = z_critical * se_diff
-    ci_lower = (rate_a - rate_b) - margin_of_error
-    ci_upper = (rate_a - rate_b) + margin_of_error
-    
-    return {
-        'rate_a': rate_a,
-        'rate_b': rate_b,
-        'difference': rate_b - rate_a,
-        'z_statistic': z_stat,
-        'p_value': p_value,
-        'confidence_interval': (ci_lower, ci_upper),
-        'conversions_a': conversions_a,
-        'conversions_b': conversions_b
-    }
+A/B testing is a common application of statistical inference in business and marketing.
 
-ab_results = ab_testing_example()
-print("A/B Testing Results")
-for key, value in ab_results.items():
-    if key not in ['conversions_a', 'conversions_b']:
-        print(f"{key}: {value:.4f}")
+#### Example: Website Conversion Rate
 
-# Visualize A/B test
-plt.figure(figsize=(15, 5))
+Testing two website designs:
+- **Design A**: $`n_1 = 1000`$ visitors, $`x_1 = 50`$ conversions
+- **Design B**: $`n_2 = 1000`$ visitors, $`x_2 = 65`$ conversions
 
-# Conversion rates
-plt.subplot(1, 3, 1)
-rates = [ab_results['rate_a'], ab_results['rate_b']]
-plt.bar(['Version A', 'Version B'], rates, color=['red', 'blue'], alpha=0.7)
-plt.ylabel('Conversion Rate')
-plt.title('Conversion Rates')
-for i, rate in enumerate(rates):
-    plt.text(i, rate + 0.001, f'{rate:.3f}', ha='center', va='bottom')
+**Hypothesis Test:**
+- $`H_0: p_1 = p_2`$ vs $`H_1: p_1 \neq p_2`$
+- $`\hat{p}_1 = 0.05`$, $`\hat{p}_2 = 0.065`$
+- Test statistic: $`Z = \frac{0.065 - 0.05}{\sqrt{0.0575(1-0.0575)(\frac{1}{1000} + \frac{1}{1000})}} = 2.15`$
+- p-value = $`2 \times P(Z > 2.15) = 0.032`$
+- Conclusion: Reject $`H_0`$ at $`\alpha = 0.05`$
 
-# Confidence interval for difference
-plt.subplot(1, 3, 2)
-ci_lower, ci_upper = ab_results['confidence_interval']
-plt.errorbar([1], [ab_results['difference']], 
-             yerr=[[ab_results['difference'] - ci_lower], [ci_upper - ab_results['difference']]], 
-             fmt='o', capsize=5, capthick=2, linewidth=2)
-plt.axhline(0, color='red', linestyle='--', alpha=0.7)
-plt.ylabel('Difference (B - A)')
-plt.title('Confidence Interval for Difference')
-plt.xticks([])
+**Confidence Interval:**
+- 95% CI for difference: $`(0.065 - 0.05) \pm 1.96 \times 0.007 = 0.015 \pm 0.014 = [0.001, 0.029]`$
+- We are 95% confident that Design B increases conversion rate by 0.1% to 2.9%
 
-# P-value interpretation
-plt.subplot(1, 3, 3)
-alpha = 0.05
-decision = "Reject H₀" if ab_results['p_value'] < alpha else "Fail to reject H₀"
-plt.text(0.5, 0.5, f"P-value: {ab_results['p_value']:.4f}\nα = {alpha}\nDecision: {decision}", 
-         ha='center', va='center', transform=plt.gca().transAxes, fontsize=12,
-         bbox=dict(boxstyle="round,pad=0.3", facecolor="lightblue", alpha=0.7))
-plt.title('Test Decision')
-plt.axis('off')
+### Medical Research Example
 
-plt.tight_layout()
-plt.show()
-```
+Testing a new drug for blood pressure reduction:
+- **Placebo**: $`n_1 = 50`$, $`\bar{x}_1 = 140`$ mmHg, $`s_1 = 15`$
+- **Drug**: $`n_2 = 50``, $`\bar{x}_2 = 130`$ mmHg, $`s_2 = 12``
+
+**Hypothesis Test:**
+- $`H_0: \mu_1 = \mu_2`$ vs $`H_1: \mu_1 > \mu_2`$
+- $`t = \frac{140 - 130}{\sqrt{\frac{225}{50} + \frac{144}{50}}} = \frac{10}{\sqrt{7.38}} = 3.68`$
+- p-value ≈ 0.0002
+- Conclusion: Reject $`H_0`$ at $`\alpha = 0.05`$
+
+**Effect Size:**
+- $`s_{pooled} = \sqrt{\frac{49 \times 225 + 49 \times 144}{98}} = 13.6`$
+- $`d = \frac{10}{13.6} = 0.74`$ (large effect)
+
+### Quality Control Example
+
+Monitoring manufacturing process:
+- **Target**: Mean weight = 100g, SD = 5g
+- **Sample**: $`n = 25``, $`\bar{x} = 102g`$, $`s = 4.5g``
+
+**Hypothesis Test:**
+- $`H_0: \mu = 100`$ vs $`H_1: \mu \neq 100``
+- $`t = \frac{102 - 100}{4.5/\sqrt{25}} = 2.22``
+- p-value ≈ 0.036
+- Conclusion: Reject $`H_0`$ at $`\alpha = 0.05``
+
+**Confidence Interval:**
+- 95% CI: $`102 \pm 2.064 \times \frac{4.5}{\sqrt{25}} = 102 \pm 1.86 = [100.14, 103.86]`$
+- Process mean is significantly different from target
 
 ## Practice Problems
 
-1. **Hypothesis Testing**: Create a function that performs various hypothesis tests and reports results in a standardized format.
+### Problem 1: Hypothesis Testing Implementation
 
-2. **Power Analysis**: Implement power analysis to determine required sample sizes for different effect sizes.
+**Objective**: Create comprehensive functions for hypothesis testing with proper reporting.
 
-3. **Multiple Testing**: Build a function that applies different multiple testing corrections and compares their results.
+**Tasks**:
+1. Implement one-sample t-test with effect size calculation
+2. Implement two-sample t-test (independent and paired)
+3. Add confidence interval calculation
+4. Create standardized output format with all relevant statistics
+5. Include power analysis capabilities
 
-4. **Effect Size**: Calculate and interpret different effect size measures (Cohen's d, eta-squared, etc.).
+**Example Implementation**:
+```python
+def one_sample_ttest(data, mu0, alpha=0.05, alternative='two-sided'):
+    """
+    Perform one-sample t-test with comprehensive output.
+    
+    Returns: test_statistic, p_value, effect_size, confidence_interval, decision
+    """
+    # Implementation here
+```
+
+### Problem 2: Power Analysis
+
+**Objective**: Implement power analysis for various test types.
+
+**Tasks**:
+1. Calculate power for given sample size and effect size
+2. Determine required sample size for desired power
+3. Create power curves for different effect sizes
+4. Implement power analysis for t-tests, proportions, and correlations
+5. Add visualization of power curves
+
+### Problem 3: Multiple Testing Correction
+
+**Objective**: Implement and compare multiple testing correction methods.
+
+**Tasks**:
+1. Implement Bonferroni correction
+2. Implement Benjamini-Hochberg FDR control
+3. Implement Holm's step-down procedure
+4. Compare methods on simulated data
+5. Create visualization of correction effects
+
+### Problem 4: Effect Size Analysis
+
+**Objective**: Calculate and interpret various effect size measures.
+
+**Tasks**:
+1. Implement Cohen's d for different scenarios
+2. Calculate eta-squared for ANOVA
+3. Compute correlation-based effect sizes
+4. Create effect size interpretation guidelines
+5. Add confidence intervals for effect sizes
+
+### Problem 5: Real-World Data Analysis
+
+**Objective**: Apply statistical inference to real datasets.
+
+**Tasks**:
+1. Choose a dataset (medical, business, social science)
+2. Formulate relevant hypotheses
+3. Conduct appropriate statistical tests
+4. Calculate effect sizes and confidence intervals
+5. Write comprehensive analysis report
 
 ## Further Reading
 
-- "Statistical Inference" by George Casella and Roger L. Berger
-- "The Practice of Statistics" by David S. Moore
-- "Statistics in Plain English" by Timothy C. Urdan
-- "Multiple Testing Procedures" by Jason Hsu
+### Books
+- **"Statistical Inference"** by George Casella and Roger L. Berger
+- **"The Practice of Statistics"** by David S. Moore
+- **"Statistics in Plain English"** by Timothy C. Urdan
+- **"Multiple Testing Procedures"** by Jason Hsu
+- **"Applied Linear Statistical Models"** by Kutner et al.
+
+### Online Resources
+- **StatQuest**: YouTube channel with clear statistical explanations
+- **Khan Academy**: Statistics and probability courses
+- **Coursera**: Statistics with R Specialization
+- **edX**: Statistical Learning
+
+### Advanced Topics
+- **Bayesian Hypothesis Testing**: Alternative to frequentist methods
+- **Nonparametric Tests**: When assumptions are violated
+- **Bootstrap Methods**: Resampling-based inference
+- **Sequential Testing**: Adaptive experimental designs
+- **Meta-Analysis**: Combining results from multiple studies
 
 ## Key Takeaways
 
+### Fundamental Concepts
 - **Hypothesis testing** provides a framework for making decisions about population parameters
 - **P-values** measure evidence against the null hypothesis, not probability of hypothesis being true
 - **Confidence intervals** provide a range of plausible values for population parameters
@@ -1021,4 +850,33 @@ plt.show()
 - **Effect sizes** complement p-values by measuring practical significance
 - **Type I and Type II errors** are fundamental concepts in statistical decision making
 
-In the next chapter, we'll explore regression analysis, including linear and multiple regression techniques. 
+### Mathematical Tools
+- **Test statistics** follow known distributions under null hypothesis
+- **Sampling distributions** provide the foundation for inference
+- **Standard errors** quantify uncertainty in estimates
+- **Critical values** determine rejection regions
+- **Power analysis** helps design studies with adequate sensitivity
+
+### Applications
+- **A/B testing** uses hypothesis testing to evaluate interventions
+- **Medical research** relies on statistical inference for treatment evaluation
+- **Quality control** uses statistical methods to monitor processes
+- **Machine learning** uses statistical inference for model validation
+- **Business analytics** applies inference for data-driven decisions
+
+### Best Practices
+- **Always report effect sizes** along with p-values
+- **Use confidence intervals** to quantify uncertainty
+- **Consider multiple testing** when conducting multiple comparisons
+- **Check assumptions** before applying tests
+- **Interpret results** in context of practical significance
+
+### Next Steps
+In the following chapters, we'll build on these inferential foundations to explore:
+- **Regression Analysis**: Modeling relationships between variables
+- **Analysis of Variance**: Comparing means across multiple groups
+- **Nonparametric Methods**: When assumptions are violated
+- **Time Series Analysis**: Modeling temporal dependencies
+- **Advanced Topics**: Specialized methods for complex data structures
+
+Remember that statistical inference is not just about calculating p-values—it's about making informed decisions in the face of uncertainty. The methods and concepts covered in this chapter provide the foundation for rigorous data analysis and evidence-based decision making. 
