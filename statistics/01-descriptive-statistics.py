@@ -1,0 +1,1017 @@
+"""
+Descriptive Statistics
+=====================
+
+This module covers fundamental descriptive statistics concepts with applications
+to AI/ML and data science. Descriptive statistics provide a way to summarize
+and describe the main features of a dataset, which is the first crucial step
+before building any models.
+
+Key Topics:
+- Measures of central tendency (mean, median, mode, geometric mean, harmonic mean)
+- Measures of dispersion (variance, standard deviation, range, IQR, CV, MAD)
+- Data visualization (histograms, box plots, density plots)
+- Data distribution analysis (skewness, kurtosis)
+- Correlation analysis
+- Data quality assessment and outlier detection
+- Practical applications in data science
+"""
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+from scipy.stats import mode
+from collections import Counter
+from scipy.signal import find_peaks
+import warnings
+warnings.filterwarnings('ignore')
+
+# =============================================================================
+# 1. SETUP AND DATA GENERATION
+# =============================================================================
+
+def setup_data():
+    """
+    Set up sample datasets for demonstration.
+    
+    Creates various types of data distributions to demonstrate
+    different statistical concepts and properties.
+    """
+    # Set style for better plots
+    plt.style.use('seaborn-v0_8')
+    sns.set_palette("husl")
+    
+    # Set random seed for reproducibility
+    np.random.seed(42)
+    
+    # Normal distribution
+    normal_data = np.random.normal(100, 15, 1000)
+    
+    # Skewed distribution
+    skewed_data = np.random.exponential(2, 1000)
+    
+    # Multiple variables for correlation
+    x = np.random.normal(0, 1, 1000)
+    y = 0.7 * x + np.random.normal(0, 0.5, 1000)
+    z = -0.3 * x + 0.4 * y + np.random.normal(0, 0.3, 1000)
+    
+    # Create DataFrame
+    df = pd.DataFrame({
+        'normal': normal_data,
+        'skewed': skewed_data,
+        'x': x,
+        'y': y,
+        'z': z
+    })
+    
+    return normal_data, skewed_data, x, y, z, df
+
+# =============================================================================
+# 2. MEASURES OF CENTRAL TENDENCY
+# =============================================================================
+
+def calculate_mean(data):
+    """
+    Calculate arithmetic mean of a dataset.
+    
+    Mathematical implementation:
+    mean = (sum of all values) / (number of values)
+    
+    Mathematical Definition:
+    For a dataset with n observations: x₁, x₂, ..., xₙ
+    x̄ = (1/n) * Σᵢ₌₁ⁿ xᵢ = (x₁ + x₂ + ... + xₙ) / n
+    
+    Properties:
+    1. Linearity: If we multiply each value by a constant c and add a constant a,
+       the new mean becomes: x̄_new = c*x̄ + a
+    2. Minimizes Sum of Squared Deviations: The mean minimizes Σᵢ₌₁ⁿ (xᵢ - x̄)²
+    3. Sensitivity to Outliers: The mean is heavily influenced by extreme values
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: arithmetic mean
+    """
+    if len(data) == 0:
+        raise ValueError("Cannot calculate mean of empty dataset")
+    
+    return np.sum(data) / len(data)
+
+def demonstrate_mean_properties(normal_data, skewed_data, df):
+    """
+    Demonstrate mean calculations and properties.
+    """
+    print("=== Mean (Arithmetic Average) ===")
+    
+    # Example calculations with detailed explanation
+    mean_normal = calculate_mean(normal_data)
+    mean_skewed = calculate_mean(skewed_data)
+    
+    print(f"Mean of normal distribution: {mean_normal:.2f}")
+    print(f"Mean of skewed distribution: {mean_skewed:.2f}")
+    
+    # Mathematical verification
+    print(f"Sum of normal data: {np.sum(normal_data):.2f}")
+    print(f"Count of normal data: {len(normal_data)}")
+    print(f"Calculated mean: {np.sum(normal_data) / len(normal_data):.2f}")
+    
+    # Using NumPy (vectorized computation)
+    print(f"NumPy mean - normal: {np.mean(normal_data):.2f}")
+    print(f"NumPy mean - skewed: {np.mean(skewed_data):.2f}")
+    
+    # Pandas DataFrame (handles missing values automatically)
+    print(f"DataFrame mean:\n{df.mean()}")
+    
+    # Demonstrate linearity property
+    c, a = 2, 10
+    transformed_data = c * normal_data + a
+    print(f"Original mean: {np.mean(normal_data):.2f}")
+    print(f"Transformed mean: {np.mean(transformed_data):.2f}")
+    print(f"Expected: {c * np.mean(normal_data) + a:.2f}")
+
+def calculate_median(data):
+    """
+    Calculate median of a dataset.
+    
+    Mathematical implementation:
+    - Sort the data
+    - If n is odd: median = middle value
+    - If n is even: median = average of two middle values
+    
+    Mathematical Definition:
+    For ordered data: x₁ ≤ x₂ ≤ ... ≤ xₙ
+    
+    Median = {
+        x_{(n+1)/2}     if n is odd
+        (x_{n/2} + x_{n/2+1}) / 2  if n is even
+    }
+    
+    Properties:
+    1. Robustness: Unaffected by extreme values (outliers)
+    2. Order Preservation: If all values are multiplied by a positive constant,
+       the median is multiplied by the same constant
+    3. Minimizes Sum of Absolute Deviations: The median minimizes Σᵢ₌₁ⁿ |xᵢ - median|
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: median value
+    """
+    sorted_data = np.sort(data)
+    n = len(sorted_data)
+    
+    if n == 0:
+        raise ValueError("Cannot calculate median of empty dataset")
+    
+    if n % 2 == 0:
+        # Even number of elements: average of two middle values
+        mid1 = sorted_data[n//2 - 1]
+        mid2 = sorted_data[n//2]
+        return (mid1 + mid2) / 2
+    else:
+        # Odd number of elements: middle value
+        return sorted_data[n//2]
+
+def demonstrate_median_properties(normal_data, skewed_data):
+    """
+    Demonstrate median calculations and properties.
+    """
+    print("\n=== Median ===")
+    
+    # Example with outliers to demonstrate robustness
+    data_with_outliers = np.append(normal_data, [1000, 2000])
+    print(f"Mean with outliers: {np.mean(data_with_outliers):.2f}")
+    print(f"Median with outliers: {np.median(data_with_outliers):.2f}")
+    
+    # Compare mean vs median for skewed data
+    print(f"Skewed data - Mean: {np.mean(skewed_data):.2f}, Median: {np.median(skewed_data):.2f}")
+    
+    # Demonstrate order preservation property
+    c = 2
+    transformed_data = c * normal_data
+    print(f"Original median: {np.median(normal_data):.2f}")
+    print(f"Transformed median: {np.median(transformed_data):.2f}")
+    print(f"Expected: {c * np.median(normal_data):.2f}")
+    
+    # Mathematical verification of median calculation
+    sorted_normal = np.sort(normal_data)
+    n = len(sorted_normal)
+    if n % 2 == 0:
+        median_calc = (sorted_normal[n//2 - 1] + sorted_normal[n//2]) / 2
+    else:
+        median_calc = sorted_normal[n//2]
+    print(f"Manual median calculation: {median_calc:.2f}")
+    print(f"NumPy median: {np.median(normal_data):.2f}")
+
+def calculate_mode(data):
+    """
+    Calculate mode of a dataset.
+    
+    Mathematical implementation:
+    - Count frequency of each unique value
+    - Return value(s) with highest frequency
+    
+    Mathematical Definition:
+    For discrete data, the mode is the value x that maximizes the frequency function f(x):
+    Mode = argmax_x f(x)
+    
+    Properties:
+    1. Not Unique: A dataset can have multiple modes
+    2. Categorical Data: Works well with nominal and ordinal data
+    3. Peak of Distribution: Represents the most common value
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    tuple: (mode_value, count)
+    """
+    return mode(data, keepdims=True)
+
+def demonstrate_mode_properties():
+    """
+    Demonstrate mode calculations and properties.
+    """
+    print("\n=== Mode ===")
+    
+    # Example with categorical data
+    categorical_data = ['A', 'B', 'A', 'C', 'B', 'A', 'D']
+    mode_result = calculate_mode(categorical_data)
+    print(f"Mode: {mode_result.mode[0]} (appears {mode_result.count[0]} times)")
+    
+    # Manual calculation for categorical data
+    counter = Counter(categorical_data)
+    most_common = counter.most_common(1)[0]
+    print(f"Manual calculation - Mode: {most_common[0]} (appears {most_common[1]} times)")
+    
+    # For continuous data, we can use histogram bins to approximate mode
+    normal_data, _, _, _, _, _ = setup_data()
+    hist, bins = np.histogram(normal_data, bins=20)
+    mode_bin_index = np.argmax(hist)
+    mode_bin_center = (bins[mode_bin_index] + bins[mode_bin_index + 1]) / 2
+    print(f"Mode bin center: {mode_bin_center:.2f}")
+    
+    # Demonstrate multimodal data
+    multimodal_data = np.concatenate([
+        np.random.normal(0, 1, 200),
+        np.random.normal(5, 1, 200),
+        np.random.normal(10, 1, 200)
+    ])
+    
+    # Find multiple modes using histogram
+    hist_multi, bins_multi = np.histogram(multimodal_data, bins=30)
+    # Find local maxima
+    peaks, _ = find_peaks(hist_multi, height=np.max(hist_multi)*0.5)
+    mode_centers = [(bins_multi[i] + bins_multi[i+1])/2 for i in peaks]
+    print(f"Multiple modes detected at: {[f'{x:.2f}' for x in mode_centers]}")
+
+def geometric_mean(data):
+    """
+    Calculate geometric mean of a dataset.
+    
+    Mathematical implementation:
+    GM = (product of all values)^(1/n)
+    
+    Mathematical Definition:
+    Geometric Mean = ⁿ√(x₁ × x₂ × ... × xₙ) = (∏ᵢ₌₁ⁿ xᵢ)^(1/n)
+    
+    Properties:
+    1. Logarithmic Relationship: log(GM) = (1/n) * Σᵢ₌₁ⁿ log(xᵢ)
+    2. Multiplicative Data: Appropriate for growth rates, ratios, and percentages
+    3. Always ≤ Arithmetic Mean: By the arithmetic mean-geometric mean inequality
+    
+    Parameters:
+    data: array-like, positive values
+    
+    Returns:
+    float: geometric mean
+    """
+    if np.any(data <= 0):
+        raise ValueError("Geometric mean requires all positive values")
+    
+    return np.exp(np.mean(np.log(data)))
+
+def harmonic_mean(data):
+    """
+    Calculate harmonic mean of a dataset.
+    
+    Mathematical implementation:
+    HM = n / (sum of reciprocals)
+    
+    Mathematical Definition:
+    Harmonic Mean = n / (Σᵢ₌₁ⁿ (1/xᵢ))
+    
+    Properties:
+    1. Reciprocal Relationship: Appropriate for rates and speeds
+    2. Always ≤ Geometric Mean ≤ Arithmetic Mean: For positive data
+    3. Weighted Version: HM = (Σ wᵢ) / (Σ (wᵢ/xᵢ))
+    
+    Parameters:
+    data: array-like, non-zero values
+    
+    Returns:
+    float: harmonic mean
+    """
+    if np.any(data == 0):
+        raise ValueError("Harmonic mean requires all non-zero values")
+    
+    return len(data) / np.sum(1 / data)
+
+def demonstrate_special_means():
+    """
+    Demonstrate geometric and harmonic means.
+    """
+    print("\n=== Special Means ===")
+    
+    # Example with growth rates
+    growth_rates = [1.05, 1.12, 0.98, 1.08, 1.15]  # 5% growth, 12% growth, etc.
+    gm = geometric_mean(growth_rates)
+    am = np.mean(growth_rates)
+    
+    print(f"Growth rates: {growth_rates}")
+    print(f"Geometric mean: {gm:.4f}")
+    print(f"Arithmetic mean: {am:.4f}")
+    print(f"GM ≤ AM: {gm <= am}")
+    
+    # Demonstrate logarithmic relationship
+    log_gm = np.mean(np.log(growth_rates))
+    print(f"Log of geometric mean: {log_gm:.4f}")
+    print(f"Exp of log mean: {np.exp(log_gm):.4f}")
+    
+    # Example with speeds
+    speeds = [60, 40, 80]  # km/h for different segments
+    hm = harmonic_mean(speeds)
+    am = np.mean(speeds)
+    
+    print(f"\nSpeeds: {speeds} km/h")
+    print(f"Harmonic mean: {hm:.2f} km/h")
+    print(f"Arithmetic mean: {am:.2f} km/h")
+    
+    # Demonstrate the relationship: HM ≤ GM ≤ AM
+    gm_speeds = geometric_mean(speeds)
+    print(f"Geometric mean: {gm_speeds:.2f} km/h")
+    print(f"HM ≤ GM ≤ AM: {hm <= gm_speeds <= am}")
+
+# =============================================================================
+# 3. MEASURES OF DISPERSION
+# =============================================================================
+
+def calculate_variance(data, sample=True):
+    """
+    Calculate variance of a dataset.
+    
+    Mathematical implementation:
+    - Calculate mean
+    - Calculate squared deviations from mean
+    - Average the squared deviations
+    - Use n-1 for sample variance (Bessel's correction)
+    
+    Mathematical Definition:
+    
+    Population Variance:
+    σ² = (1/N) * Σᵢ₌₁ᴺ (xᵢ - μ)²
+    
+    Sample Variance (Bessel's correction):
+    s² = (1/(n-1)) * Σᵢ₌₁ⁿ (xᵢ - x̄)²
+    
+    Why n-1 for Sample Variance?
+    The n-1 correction (Bessel's correction) makes the sample variance an unbiased
+    estimator of the population variance. This is because:
+    1. We estimate the population mean μ with the sample mean x̄
+    2. This estimation reduces the degrees of freedom by 1
+    3. Using n-1 compensates for this reduction
+    
+    Properties:
+    1. Non-negative: Variance is always ≥ 0
+    2. Scale Dependent: If we multiply data by c, variance becomes c² times original
+    3. Translation Invariant: Adding a constant doesn't change variance
+    4. Additive for Independent Variables: Var(X+Y) = Var(X) + Var(Y) if X,Y independent
+    
+    Parameters:
+    data: array-like, input data
+    sample: bool, if True use n-1 (sample variance), if False use n (population variance)
+    
+    Returns:
+    float: variance
+    """
+    mean_val = np.mean(data)
+    n = len(data)
+    
+    if n == 0:
+        raise ValueError("Cannot calculate variance of empty dataset")
+    
+    squared_deviations = (data - mean_val)**2
+    
+    if sample and n > 1:
+        # Sample variance: use n-1 (Bessel's correction)
+        return np.sum(squared_deviations) / (n - 1)
+    else:
+        # Population variance: use n
+        return np.sum(squared_deviations) / n
+
+def calculate_std(data, sample=True):
+    """
+    Calculate standard deviation of a dataset.
+    
+    Mathematical implementation:
+    std = sqrt(variance)
+    
+    Mathematical Definition:
+    Standard Deviation = √(variance)
+    σ = √(σ²) or s = √(s²)
+    
+    Parameters:
+    data: array-like, input data
+    sample: bool, if True use n-1 (sample std), if False use n (population std)
+    
+    Returns:
+    float: standard deviation
+    """
+    return np.sqrt(calculate_variance(data, sample))
+
+def demonstrate_variance_properties(normal_data):
+    """
+    Demonstrate variance and standard deviation calculations and properties.
+    """
+    print("\n=== Variance and Standard Deviation ===")
+    
+    # Example calculations with detailed explanation
+    variance_normal = calculate_variance(normal_data)
+    std_normal = calculate_std(normal_data)
+    
+    print(f"Variance: {variance_normal:.2f}")
+    print(f"Standard Deviation: {std_normal:.2f}")
+    print(f"NumPy std: {np.std(normal_data, ddof=1):.2f}")
+    
+    # Demonstrate Bessel's correction
+    print(f"Sample variance (n-1): {np.var(normal_data, ddof=1):.2f}")
+    print(f"Population variance (n): {np.var(normal_data, ddof=0):.2f}")
+    print(f"Difference: {np.var(normal_data, ddof=1) - np.var(normal_data, ddof=0):.2f}")
+    
+    # Mathematical verification
+    mean_val = np.mean(normal_data)
+    squared_deviations = (normal_data - mean_val)**2
+    manual_variance = np.sum(squared_deviations) / (len(normal_data) - 1)
+    print(f"Manual calculation: {manual_variance:.2f}")
+    
+    # Demonstrate scale property
+    c = 2
+    scaled_data = c * normal_data
+    print(f"Original std: {np.std(normal_data):.2f}")
+    print(f"Scaled std: {np.std(scaled_data):.2f}")
+    print(f"Expected: {c * np.std(normal_data):.2f}")
+    
+    # Demonstrate translation invariance
+    a = 10
+    translated_data = normal_data + a
+    print(f"Original std: {np.std(normal_data):.2f}")
+    print(f"Translated std: {np.std(translated_data):.2f}")
+
+def calculate_range(data):
+    """
+    Calculate range of a dataset.
+    
+    Mathematical implementation:
+    range = max - min
+    
+    Mathematical Definition:
+    Range = x_max - x_min
+    
+    Properties:
+    1. Simple but sensitive to outliers
+    2. Easy to understand and calculate
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: range
+    """
+    return np.max(data) - np.min(data)
+
+def calculate_iqr(data):
+    """
+    Calculate interquartile range.
+    
+    Mathematical implementation:
+    IQR = Q3 - Q1
+    where Q1 = 25th percentile, Q3 = 75th percentile
+    
+    Mathematical Definition:
+    IQR = Q₃ - Q₁
+    
+    Where Q₁ (25th percentile) and Q₃ (75th percentile) are defined as:
+    - Q₁: Value below which 25% of data falls
+    - Q₃: Value below which 75% of data falls
+    
+    Properties:
+    1. Robust measure of spread, not affected by outliers
+    2. Used in box plots and outlier detection
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: interquartile range
+    """
+    q1 = np.percentile(data, 25)
+    q3 = np.percentile(data, 75)
+    return q3 - q1
+
+def five_number_summary(data):
+    """
+    Calculate five-number summary.
+    
+    Mathematical implementation:
+    - Minimum: smallest value
+    - Q1: 25th percentile
+    - Median: 50th percentile
+    - Q3: 75th percentile
+    - Maximum: largest value
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    dict: five-number summary
+    """
+    return {
+        'min': np.min(data),
+        'q1': np.percentile(data, 25),
+        'median': np.median(data),
+        'q3': np.percentile(data, 75),
+        'max': np.max(data)
+    }
+
+def demonstrate_dispersion_measures(normal_data):
+    """
+    Demonstrate range, IQR, and five-number summary.
+    """
+    print("\n=== Range and Interquartile Range (IQR) ===")
+    
+    # Example
+    print(f"Range: {calculate_range(normal_data):.2f}")
+    print(f"IQR: {calculate_iqr(normal_data):.2f}")
+    
+    # Five-number summary
+    summary = five_number_summary(normal_data)
+    for key, value in summary.items():
+        print(f"{key.upper()}: {value:.2f}")
+    
+    # Demonstrate robustness of IQR vs Range with outliers
+    data_with_outliers = np.append(normal_data, [1000, 2000])
+    print(f"Original range: {calculate_range(normal_data):.2f}")
+    print(f"Range with outliers: {calculate_range(data_with_outliers):.2f}")
+    print(f"Original IQR: {calculate_iqr(normal_data):.2f}")
+    print(f"IQR with outliers: {calculate_iqr(data_with_outliers):.2f}")
+    
+    # Mathematical verification of percentiles
+    sorted_data = np.sort(normal_data)
+    n = len(sorted_data)
+    
+    # Q1 (25th percentile)
+    q1_index = 0.25 * (n - 1)
+    q1_lower = int(q1_index)
+    q1_upper = q1_lower + 1
+    q1_weight = q1_index - q1_lower
+    q1_manual = (1 - q1_weight) * sorted_data[q1_lower] + q1_weight * sorted_data[q1_upper]
+    print(f"Manual Q1: {q1_manual:.2f}")
+    print(f"NumPy Q1: {np.percentile(normal_data, 25):.2f}")
+
+def coefficient_of_variation(data):
+    """
+    Calculate coefficient of variation.
+    
+    Mathematical implementation:
+    CV = (std / mean) * 100%
+    
+    Mathematical Definition:
+    CV = (s / x̄) × 100%
+    
+    Properties:
+    1. Dimensionless: Allows comparison across different scales
+    2. Relative Measure: Shows dispersion relative to the mean
+    3. Useful for: Comparing variability across different datasets
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: coefficient of variation as percentage
+    """
+    mean_val = np.mean(data)
+    if mean_val == 0:
+        raise ValueError("Cannot calculate CV when mean is zero")
+    
+    std_val = np.std(data, ddof=1)
+    return (std_val / mean_val) * 100
+
+def mean_absolute_deviation(data):
+    """
+    Calculate mean absolute deviation.
+    
+    Mathematical implementation:
+    MAD = mean of absolute deviations from mean
+    
+    Mathematical Definition:
+    MAD = (1/n) * Σᵢ₌₁ⁿ |xᵢ - x̄|
+    
+    Properties:
+    1. Robust: Less sensitive to outliers than variance
+    2. Interpretable: Same units as original data
+    3. Computationally Simple: No squaring required
+    
+    Parameters:
+    data: array-like, input data
+    
+    Returns:
+    float: mean absolute deviation
+    """
+    mean_val = np.mean(data)
+    return np.mean(np.abs(data - mean_val))
+
+def demonstrate_additional_dispersion_measures(normal_data, skewed_data):
+    """
+    Demonstrate coefficient of variation and mean absolute deviation.
+    """
+    print("\n=== Additional Dispersion Measures ===")
+    
+    # Coefficient of variation
+    cv_normal = coefficient_of_variation(normal_data)
+    cv_skewed = coefficient_of_variation(skewed_data)
+    
+    print(f"CV of normal data: {cv_normal:.2f}%")
+    print(f"CV of skewed data: {cv_skewed:.2f}%")
+    
+    # Compare variability across different scales
+    small_data = np.random.normal(10, 2, 1000)  # mean=10, std=2
+    large_data = np.random.normal(1000, 200, 1000)  # mean=1000, std=200
+    
+    cv_small = coefficient_of_variation(small_data)
+    cv_large = coefficient_of_variation(large_data)
+    
+    print(f"Small scale data CV: {cv_small:.2f}%")
+    print(f"Large scale data CV: {cv_large:.2f}%")
+    print(f"Same relative variability: {abs(cv_small - cv_large) < 0.1}")
+    
+    # Mean absolute deviation
+    mad_normal = mean_absolute_deviation(normal_data)
+    std_normal = np.std(normal_data, ddof=1)
+    
+    print(f"\nMAD: {mad_normal:.2f}")
+    print(f"Standard deviation: {std_normal:.2f}")
+    
+    # Relationship between MAD and standard deviation for normal distribution
+    # For normal distribution: MAD ≈ 0.7979 × σ
+    expected_mad = 0.7979 * std_normal
+    print(f"Expected MAD for normal distribution: {expected_mad:.2f}")
+    print(f"Actual MAD: {mad_normal:.2f}")
+    print(f"Ratio MAD/σ: {mad_normal/std_normal:.4f}")
+
+# =============================================================================
+# 4. DATA VISUALIZATION
+# =============================================================================
+
+def create_visualizations(normal_data, skewed_data):
+    """
+    Create comprehensive data visualizations.
+    """
+    print("\n=== Data Visualization ===")
+    
+    # Create subplots for comparison
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    
+    # Histogram
+    axes[0, 0].hist(normal_data, bins=30, alpha=0.7, color='skyblue', edgecolor='black')
+    axes[0, 0].set_title('Histogram - Normal Distribution')
+    axes[0, 0].set_xlabel('Value')
+    axes[0, 0].set_ylabel('Frequency')
+    
+    # Density plot
+    axes[0, 1].hist(normal_data, bins=30, density=True, alpha=0.7, color='lightgreen', edgecolor='black')
+    axes[0, 1].set_title('Density Plot - Normal Distribution')
+    axes[0, 1].set_xlabel('Value')
+    axes[0, 1].set_ylabel('Density')
+    
+    # Skewed distribution
+    axes[1, 0].hist(skewed_data, bins=30, alpha=0.7, color='salmon', edgecolor='black')
+    axes[1, 0].set_title('Histogram - Skewed Distribution')
+    axes[1, 0].set_xlabel('Value')
+    axes[1, 0].set_ylabel('Frequency')
+    
+    # Box plot
+    axes[1, 1].boxplot([normal_data, skewed_data], labels=['Normal', 'Skewed'])
+    axes[1, 1].set_title('Box Plot Comparison')
+    axes[1, 1].set_ylabel('Value')
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # Box plots and violin plots
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+    
+    # Box plot
+    axes[0].boxplot([normal_data, skewed_data], labels=['Normal', 'Skewed'])
+    axes[0].set_title('Box Plot')
+    axes[0].set_ylabel('Value')
+    
+    # Violin plot
+    axes[1].violinplot([normal_data, skewed_data], labels=['Normal', 'Skewed'])
+    axes[1].set_title('Violin Plot')
+    axes[1].set_ylabel('Value')
+    
+    plt.tight_layout()
+    plt.show()
+
+# =============================================================================
+# 5. DATA DISTRIBUTION ANALYSIS
+# =============================================================================
+
+def calculate_skewness(data):
+    """
+    Calculate skewness of a dataset.
+    
+    Mathematical Definition:
+    Skewness measures the asymmetry of the distribution.
+    For a normal distribution, skewness = 0.
+    Positive skewness indicates a long right tail.
+    Negative skewness indicates a long left tail.
+    """
+    mean_val = np.mean(data)
+    std_val = np.std(data, ddof=1)
+    n = len(data)
+    skewness = (n / ((n-1) * (n-2))) * np.sum(((data - mean_val) / std_val)**3)
+    return skewness
+
+def calculate_kurtosis(data):
+    """
+    Calculate kurtosis of a dataset.
+    
+    Mathematical Definition:
+    Kurtosis measures the "tailedness" of the distribution.
+    For a normal distribution, kurtosis = 0 (excess kurtosis).
+    Positive kurtosis indicates heavy tails.
+    Negative kurtosis indicates light tails.
+    """
+    mean_val = np.mean(data)
+    std_val = np.std(data, ddof=1)
+    n = len(data)
+    kurtosis = (n * (n+1) / ((n-1) * (n-2) * (n-3))) * np.sum(((data - mean_val) / std_val)**4) - (3 * (n-1)**2 / ((n-2) * (n-3)))
+    return kurtosis
+
+def demonstrate_distribution_analysis(normal_data, skewed_data):
+    """
+    Demonstrate skewness and kurtosis analysis.
+    """
+    print("\n=== Data Distribution Analysis ===")
+    
+    # Calculate for our datasets
+    print(f"Normal distribution - Skewness: {calculate_skewness(normal_data):.3f}")
+    print(f"Normal distribution - Kurtosis: {calculate_kurtosis(normal_data):.3f}")
+    print(f"Skewed distribution - Skewness: {calculate_skewness(skewed_data):.3f}")
+    print(f"Skewed distribution - Kurtosis: {calculate_kurtosis(skewed_data):.3f}")
+    
+    # Using SciPy
+    print(f"SciPy skewness - Normal: {stats.skew(normal_data):.3f}")
+    print(f"SciPy kurtosis - Normal: {stats.kurtosis(normal_data):.3f}")
+    
+    # Distribution fitting
+    mu, sigma = stats.norm.fit(normal_data)
+    print(f"Fitted normal distribution - μ: {mu:.2f}, σ: {sigma:.2f}")
+    
+    # Generate fitted curve
+    x = np.linspace(normal_data.min(), normal_data.max(), 100)
+    y_fitted = stats.norm.pdf(x, mu, sigma)
+    
+    # Plot fitted distribution
+    plt.figure(figsize=(10, 6))
+    plt.hist(normal_data, bins=30, density=True, alpha=0.7, color='skyblue', edgecolor='black', label='Data')
+    plt.plot(x, y_fitted, 'r-', linewidth=2, label='Fitted Normal Distribution')
+    plt.title('Normal Distribution Fitting')
+    plt.xlabel('Value')
+    plt.ylabel('Density')
+    plt.legend()
+    plt.show()
+
+# =============================================================================
+# 6. CORRELATION ANALYSIS
+# =============================================================================
+
+def calculate_pearson_correlation(x, y):
+    """
+    Calculate Pearson correlation coefficient.
+    
+    Mathematical Definition:
+    r = Σ((x - x̄)(y - ȳ)) / √(Σ(x - x̄)² * Σ(y - ȳ)²)
+    
+    Properties:
+    - Range: [-1, 1]
+    - r = 1: Perfect positive correlation
+    - r = -1: Perfect negative correlation
+    - r = 0: No linear correlation
+    """
+    n = len(x)
+    mean_x, mean_y = np.mean(x), np.mean(y)
+    
+    numerator = np.sum((x - mean_x) * (y - mean_y))
+    denominator = np.sqrt(np.sum((x - mean_x)**2) * np.sum((y - mean_y)**2))
+    
+    return numerator / denominator
+
+def demonstrate_correlation_analysis(x, y, z, df):
+    """
+    Demonstrate correlation analysis.
+    """
+    print("\n=== Correlation Analysis ===")
+    
+    # Calculate correlations
+    corr_xy = calculate_pearson_correlation(x, y)
+    corr_xz = calculate_pearson_correlation(x, z)
+    corr_yz = calculate_pearson_correlation(y, z)
+    
+    print(f"Correlation X-Y: {corr_xy:.3f}")
+    print(f"Correlation X-Z: {corr_xz:.3f}")
+    print(f"Correlation Y-Z: {corr_yz:.3f}")
+    
+    # Using NumPy
+    print(f"NumPy correlation X-Y: {np.corrcoef(x, y)[0, 1]:.3f}")
+    
+    # Calculate correlation matrix
+    correlation_matrix = df[['x', 'y', 'z']].corr()
+    
+    # Create heatmap
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0, 
+                square=True, linewidths=0.5)
+    plt.title('Correlation Matrix Heatmap')
+    plt.show()
+    
+    # Scatter plot matrix
+    sns.pairplot(df[['x', 'y', 'z']], diag_kind='kde')
+    plt.show()
+
+# =============================================================================
+# 7. PRACTICAL APPLICATIONS
+# =============================================================================
+
+def data_quality_report(df):
+    """
+    Generate comprehensive data quality report.
+    
+    This function analyzes each column in the dataset and provides
+    comprehensive statistics including missing values, central tendency,
+    dispersion, and distribution shape measures.
+    """
+    report = {}
+    
+    for column in df.columns:
+        data = df[column].dropna()
+        
+        report[column] = {
+            'count': len(data),
+            'missing': len(df[column]) - len(data),
+            'missing_pct': (len(df[column]) - len(data)) / len(df[column]) * 100,
+            'mean': np.mean(data),
+            'median': np.median(data),
+            'std': np.std(data, ddof=1),
+            'min': np.min(data),
+            'max': np.max(data),
+            'skewness': stats.skew(data),
+            'kurtosis': stats.kurtosis(data)
+        }
+    
+    return pd.DataFrame(report).T
+
+def detect_outliers_iqr(data, factor=1.5):
+    """
+    Detect outliers using IQR method.
+    
+    Mathematical Definition:
+    Lower bound = Q₁ - factor × IQR
+    Upper bound = Q₃ + factor × IQR
+    
+    Outliers are values outside these bounds.
+    """
+    q1 = np.percentile(data, 25)
+    q3 = np.percentile(data, 75)
+    iqr = q3 - q1
+    
+    lower_bound = q1 - factor * iqr
+    upper_bound = q3 + factor * iqr
+    
+    outliers = data[(data < lower_bound) | (data > upper_bound)]
+    return outliers, lower_bound, upper_bound
+
+def detect_outliers_zscore(data, threshold=3):
+    """
+    Detect outliers using Z-score method.
+    
+    Mathematical Definition:
+    Z-score = (x - μ) / σ
+    
+    Outliers are values with |Z-score| > threshold.
+    """
+    z_scores = np.abs(stats.zscore(data))
+    outliers = data[z_scores > threshold]
+    return outliers
+
+def demonstrate_practical_applications(normal_data, df):
+    """
+    Demonstrate practical applications of descriptive statistics.
+    """
+    print("\n=== Practical Applications ===")
+    
+    # Data quality assessment
+    quality_report = data_quality_report(df)
+    print("Data Quality Report:")
+    print(quality_report.round(3))
+    
+    # Outlier detection
+    outliers_iqr, lb, ub = detect_outliers_iqr(normal_data)
+    outliers_zscore = detect_outliers_zscore(normal_data)
+    
+    print(f"\nIQR outliers: {len(outliers_iqr)} ({len(outliers_iqr)/len(normal_data)*100:.1f}%)")
+    print(f"Z-score outliers: {len(outliers_zscore)} ({len(outliers_zscore)/len(normal_data)*100:.1f}%)")
+    
+    # Visualize outliers
+    plt.figure(figsize=(12, 4))
+    
+    plt.subplot(1, 2, 1)
+    plt.boxplot(normal_data)
+    plt.title('Box Plot with Outliers')
+    plt.ylabel('Value')
+    
+    plt.subplot(1, 2, 2)
+    z_scores = np.abs(stats.zscore(normal_data))
+    plt.scatter(range(len(normal_data)), z_scores, alpha=0.6)
+    plt.axhline(y=3, color='r', linestyle='--', label='Threshold (3)')
+    plt.title('Z-Score Outlier Detection')
+    plt.xlabel('Data Point')
+    plt.ylabel('Absolute Z-Score')
+    plt.legend()
+    
+    plt.tight_layout()
+    plt.show()
+    
+    # Summary statistics with Pandas
+    print("\nComprehensive Summary Statistics:")
+    print(df.describe())
+    
+    # Additional statistics
+    print("\nAdditional Statistics:")
+    print(f"Skewness:\n{df.skew()}")
+    print(f"Kurtosis:\n{df.kurtosis()}")
+    
+    # Group by statistics (if categorical data available)
+    # Example with simulated categories
+    df['category'] = np.random.choice(['A', 'B', 'C'], size=len(df))
+    print(f"\nGroup by Statistics:")
+    print(df.groupby('category')['normal'].describe())
+
+# =============================================================================
+# MAIN EXECUTION
+# =============================================================================
+
+def main():
+    """
+    Main function to demonstrate all descriptive statistics concepts and operations.
+    """
+    print("DESCRIPTIVE STATISTICS")
+    print("=" * 50)
+    
+    # Setup data
+    normal_data, skewed_data, x, y, z, df = setup_data()
+    
+    # 1. Measures of Central Tendency
+    demonstrate_mean_properties(normal_data, skewed_data, df)
+    demonstrate_median_properties(normal_data, skewed_data)
+    demonstrate_mode_properties()
+    demonstrate_special_means()
+    
+    # 2. Measures of Dispersion
+    demonstrate_variance_properties(normal_data)
+    demonstrate_dispersion_measures(normal_data)
+    demonstrate_additional_dispersion_measures(normal_data, skewed_data)
+    
+    # 3. Data Visualization
+    create_visualizations(normal_data, skewed_data)
+    
+    # 4. Data Distribution Analysis
+    demonstrate_distribution_analysis(normal_data, skewed_data)
+    
+    # 5. Correlation Analysis
+    demonstrate_correlation_analysis(x, y, z, df)
+    
+    # 6. Practical Applications
+    demonstrate_practical_applications(normal_data, df)
+    
+    print("\n" + "=" * 50)
+    print("DESCRIPTIVE STATISTICS COMPLETE")
+    print("=" * 50)
+
+if __name__ == "__main__":
+    main() 
