@@ -149,9 +149,9 @@ The Kruskal-Wallis test generalizes the Mann-Whitney U test to more than two gro
 1. **Combine and rank**: Pool all data and assign ranks
 2. **Sum ranks**: Calculate sum of ranks $`R_j`$ for each group $`j`$
 3. **Compute H statistic**:
-   ```math
-   H = \frac{12}{N(N+1)} \sum_{j=1}^k \frac{R_j^2}{n_j} - 3(N+1)
-   ```
+```math
+H = \frac{12}{N(N+1)} \sum_{j=1}^k \frac{R_j^2}{n_j} - 3(N+1)
+```
    Where $`N`$ is the total number of observations, $`n_j`$ is the size of group $`j`$.
 
 4. **Distribution**: Under H₀, $`H`$ follows a chi-square distribution with $`k-1`$ degrees of freedom
