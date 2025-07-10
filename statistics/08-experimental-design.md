@@ -9,7 +9,38 @@
 [![Statsmodels](https://img.shields.io/badge/Statsmodels-0.13+-blue.svg)](https://www.statsmodels.org/)
 [![Scikit-learn](https://img.shields.io/badge/Scikit--learn-1.0+-orange.svg)](https://scikit-learn.org/)
 
+## Introduction
+
 Experimental design is crucial for establishing causal relationships and making valid inferences. This chapter covers randomized controlled trials, factorial designs, blocking, and their applications in AI/ML.
+
+### Why Experimental Design Matters
+
+Experimental design provides the foundation for causal inference, allowing us to:
+
+1. **Establish Causality**: Distinguish correlation from causation
+2. **Control Confounding**: Eliminate bias from extraneous variables
+3. **Maximize Power**: Detect effects with minimal sample size
+4. **Ensure Validity**: Internal and external validity of results
+5. **Optimize Resources**: Efficient use of time, money, and participants
+
+### The Challenge of Causality
+
+Establishing causality is one of the most difficult problems in science. Correlation does not imply causation, and many factors can confound our understanding of relationships.
+
+#### Intuitive Example: Ice Cream and Crime
+
+Consider the correlation between ice cream sales and crime rates:
+- **Observation**: Both increase in summer months
+- **Confounder**: Temperature (causes both ice cream sales and outdoor activity)
+- **Solution**: Controlled experiment with random assignment
+
+### Types of Experimental Designs
+
+1. **Randomized Controlled Trials**: Gold standard for causal inference
+2. **Factorial Designs**: Test multiple factors simultaneously
+3. **Blocking Designs**: Control for known sources of variation
+4. **Crossover Designs**: Subjects receive multiple treatments
+5. **Sequential Designs**: Adaptive experimentation
 
 ## Table of Contents
 - [Randomized Controlled Trials](#randomized-controlled-trials)
@@ -21,1152 +52,858 @@ Experimental design is crucial for establishing causal relationships and making 
 
 ## Setup
 
-```python
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy import stats
-from scipy.stats import power
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
-import warnings
-warnings.filterwarnings('ignore')
-
-plt.style.use('seaborn-v0_8')
-sns.set_palette("husl")
-np.random.seed(42)
-```
+The examples in this chapter use Python libraries for experimental design and analysis, including statistical tests, power analysis, and visualization tools.
 
 ## Randomized Controlled Trials
 
+Randomized Controlled Trials (RCTs) are the gold standard for establishing causal relationships. The key principle is random assignment, which ensures that treatment and control groups are comparable on average across all observed and unobserved characteristics.
+
+### Understanding RCTs
+
+Think of RCTs as the "scientific method" for establishing causality. By randomly assigning subjects to treatment and control groups, we create a fair comparison that allows us to isolate the effect of the treatment.
+
+#### Intuitive Example: Drug Efficacy Study
+
+Consider testing a new drug for blood pressure:
+- **Treatment Group**: Receives the new drug
+- **Control Group**: Receives placebo
+- **Randomization**: Ensures groups are comparable in age, health, etc.
+- **Outcome**: Blood pressure reduction
+- **Causal Inference**: Difference in outcomes attributed to drug
+
 ### Mathematical Foundation
 
-**Randomized Controlled Trials (RCTs)** are the gold standard for establishing causal relationships. The key principle is random assignment, which ensures that treatment and control groups are comparable on average across all observed and unobserved characteristics.
+#### Potential Outcomes Framework
 
-**Causal Inference Framework:**
-- **Potential Outcomes**: For each subject i, we define:
-  - $Y_i(1)$: outcome if subject receives treatment
-  - $Y_i(0)$: outcome if subject receives control
-- **Individual Treatment Effect**: $\tau_i = Y_i(1) - Y_i(0)$
-- **Average Treatment Effect (ATE)**: $\tau = E[Y_i(1) - Y_i(0)] = E[Y_i(1)] - E[Y_i(0)]$
+For each subject i, we define:
+- $`Y_i(1)`$: outcome if subject receives treatment
+- $`Y_i(0)`$: outcome if subject receives control
 
-**Randomization Properties:**
-1. **Unconfoundedness**: $(Y_i(1), Y_i(0)) \perp T_i$ where $T_i$ is treatment assignment
-2. **Overlap**: $0 < P(T_i = 1) < 1$ for all subjects
-3. **SUTVA**: Stable Unit Treatment Value Assumption (no interference between units)
+**Individual Treatment Effect**:
+```math
+\tau_i = Y_i(1) - Y_i(0)
+```
 
-**Estimation of ATE:**
-$$\hat{\tau} = \bar{Y}_1 - \bar{Y}_0$$
-where $\bar{Y}_1$ and $\bar{Y}_0$ are sample means of treated and control groups.
+**Average Treatment Effect (ATE)**:
+```math
+\tau = E[Y_i(1) - Y_i(0)] = E[Y_i(1)] - E[Y_i(0)]
+```
 
-**Standard Error:**
-$$SE(\hat{\tau}) = \sqrt{\frac{s_1^2}{n_1} + \frac{s_0^2}{n_0}}$$
-where $s_1^2, s_0^2$ are sample variances and $n_1, n_0$ are sample sizes.
+#### Randomization Properties
+
+**1. Unconfoundedness**:
+```math
+(Y_i(1), Y_i(0)) \perp T_i
+```
+
+Where $`T_i`$ is treatment assignment. This means treatment assignment is independent of potential outcomes.
+
+**2. Overlap**:
+```math
+0 < P(T_i = 1) < 1
+```
+
+For all subjects, ensuring both treatment and control groups exist.
+
+**3. SUTVA**: Stable Unit Treatment Value Assumption
+- No interference between units
+- No different versions of treatment
+
+#### Estimation of ATE
+
+**Simple Difference-in-Means Estimator**:
+```math
+\hat{\tau} = \bar{Y}_1 - \bar{Y}_0
+```
+
+Where $`\bar{Y}_1`$ and $`\bar{Y}_0`$ are sample means of treated and control groups.
+
+**Standard Error**:
+```math
+SE(\hat{\tau}) = \sqrt{\frac{s_1^2}{n_1} + \frac{s_0^2}{n_0}}
+```
+
+Where $`s_1^2, s_0^2`$ are sample variances and $`n_1, n_0`$ are sample sizes.
+
+**Confidence Interval**:
+```math
+\hat{\tau} \pm t_{\alpha/2, df} \cdot SE(\hat{\tau})
+```
+
+#### Example: Educational Intervention
+
+**Study**: Testing new teaching method
+**Sample**: 100 students randomly assigned
+**Treatment**: New method (n₁ = 50)
+**Control**: Standard method (n₀ = 50)
+**Outcome**: Test scores
+
+**Results**:
+- $`\bar{Y}_1 = 85.2`$ (treatment mean)
+- $`\bar{Y}_0 = 78.4`$ (control mean)
+- $`s_1^2 = 64`$, $`s_0^2 = 72`$
+
+**ATE Estimate**:
+```math
+\hat{\tau} = 85.2 - 78.4 = 6.8
+```
+
+**Standard Error**:
+```math
+SE(\hat{\tau}) = \sqrt{\frac{64}{50} + \frac{72}{50}} = \sqrt{2.72} = 1.65
+```
+
+**95% Confidence Interval**:
+```math
+6.8 \pm 1.96 \cdot 1.65 = [3.57, 10.03]
+```
 
 ### Basic RCT Design
 
-```python
-def simulate_rct(n_treatment=50, n_control=50, treatment_effect=5, noise=2):
-    """
-    Simulate a randomized controlled trial
-    
-    Mathematical implementation:
-    1. Generate potential outcomes: Y(0) ~ N(μ₀, σ²), Y(1) = Y(0) + τ
-    2. Randomly assign treatment: T ~ Bernoulli(p) where p = n₁/(n₀ + n₁)
-    3. Observe outcomes: Y = T*Y(1) + (1-T)*Y(0)
-    4. Estimate ATE: τ̂ = Ȳ₁ - Ȳ₀
-    
-    Parameters:
-    n_treatment: int, size of treatment group
-    n_control: int, size of control group
-    treatment_effect: float, true treatment effect
-    noise: float, standard deviation of outcomes
-    
-    Returns:
-    tuple: (DataFrame, true_effect)
-    """
-    n_total = n_treatment + n_control
-    
-    # Step 1: Generate potential outcomes
-    # Control potential outcomes: Y(0) ~ N(100, noise²)
-    y0 = np.random.normal(100, noise, n_total)
-    
-    # Treatment potential outcomes: Y(1) = Y(0) + treatment_effect
-    y1 = y0 + treatment_effect
-    
-    # Step 2: Random treatment assignment
-    # Probability of treatment assignment
-    p_treatment = n_treatment / n_total
-    
-    # Random assignment
-    treatment_assignment = np.random.binomial(1, p_treatment, n_total)
-    
-    # Step 3: Observe outcomes (SUTVA assumption)
-    observed_outcomes = treatment_assignment * y1 + (1 - treatment_assignment) * y0
-    
-    # Create DataFrame
-    df_rct = pd.DataFrame({
-        'subject_id': range(n_total),
-        'treatment_assignment': treatment_assignment,
-        'y0_potential': y0,
-        'y1_potential': y1,
-        'observed_outcome': observed_outcomes,
-        'group': ['treatment' if t == 1 else 'control' for t in treatment_assignment]
-    })
-    
-    return df_rct, treatment_effect
+#### Design Principles
 
-df_rct, true_effect = simulate_rct()
+**1. Randomization**: Ensures comparability of groups
+**2. Blinding**: Reduces bias from expectations
+**3. Control**: Provides baseline for comparison
+**4. Replication**: Increases reliability of results
 
-print("Randomized Controlled Trial Simulation")
-print(f"Control group size: {len(df_rct[df_rct['group'] == 'control'])}")
-print(f"Treatment group size: {len(df_rct[df_rct['group'] == 'treatment'])}")
-print(f"True treatment effect: {true_effect}")
+#### Implementation Steps
 
-# Verify randomization balance
-print(f"\nRandomization Balance Check:")
-print(f"Treatment assignment probability: {df_rct['treatment_assignment'].mean():.3f}")
-print(f"Expected probability: {len(df_rct[df_rct['group'] == 'treatment']) / len(df_rct):.3f}")
+1. **Define Population**: Clear inclusion/exclusion criteria
+2. **Random Assignment**: Use random number generator
+3. **Implement Treatment**: Ensure fidelity to protocol
+4. **Measure Outcomes**: Standardized measurement
+5. **Analyze Results**: Appropriate statistical tests
 
-# Analyze RCT results
-def analyze_rct(data):
-    """
-    Analyze RCT results with detailed statistical calculations
-    
-    Mathematical steps:
-    1. Calculate group means: Ȳ₁, Ȳ₀
-    2. Estimate ATE: τ̂ = Ȳ₁ - Ȳ₀
-    3. Calculate standard error: SE(τ̂) = √(s₁²/n₁ + s₀²/n₀)
-    4. Perform t-test: t = τ̂ / SE(τ̂)
-    5. Calculate confidence interval: τ̂ ± t_{α/2,df} × SE(τ̂)
-    
-    Parameters:
-    data: DataFrame, RCT data
-    
-    Returns:
-    dict: analysis results
-    """
-    control_data = data[data['group'] == 'control']['observed_outcome']
-    treatment_data = data[data['group'] == 'treatment']['observed_outcome']
-    
-    n0, n1 = len(control_data), len(treatment_data)
-    
-    # Step 1: Calculate group means
-    control_mean = control_data.mean()
-    treatment_mean = treatment_data.mean()
-    
-    # Step 2: Estimate ATE
-    estimated_effect = treatment_mean - control_mean
-    
-    # Step 3: Calculate standard error
-    # Pooled variance estimator (assuming equal variances)
-    pooled_var = ((n0 - 1) * control_data.var() + (n1 - 1) * treatment_data.var()) / (n0 + n1 - 2)
-    se_diff = np.sqrt(pooled_var * (1/n0 + 1/n1))
-    
-    # Step 4: Perform t-test
-    t_stat = estimated_effect / se_diff
-    df = n0 + n1 - 2  # degrees of freedom
-    p_value = 2 * (1 - stats.t.cdf(abs(t_stat), df))
-    
-    # Step 5: Calculate confidence interval
-    t_critical = stats.t.ppf(0.975, df)  # 95% CI
-    ci_lower = estimated_effect - t_critical * se_diff
-    ci_upper = estimated_effect + t_critical * se_diff
-    
-    # Step 6: Calculate effect size (Cohen's d)
-    cohens_d = estimated_effect / np.sqrt(pooled_var)
-    
-    # Step 7: Calculate power (post-hoc)
-    # For a two-sample t-test with equal sample sizes
-    effect_size_for_power = abs(estimated_effect) / np.sqrt(pooled_var)
-    power_achieved = stats.t.cdf(stats.t.ppf(0.975, df) - effect_size_for_power * np.sqrt(n0/2), df)
-    
-    return {
-        'control_mean': control_mean,
-        'treatment_mean': treatment_mean,
-        'estimated_effect': estimated_effect,
-        'standard_error': se_diff,
-        't_statistic': t_stat,
-        'degrees_of_freedom': df,
-        'p_value': p_value,
-        'confidence_interval': (ci_lower, ci_upper),
-        'cohens_d': cohens_d,
-        'power_achieved': power_achieved,
-        'pooled_variance': pooled_var
-    }
+#### Example: Weight Loss Study
 
-rct_results = analyze_rct(df_rct)
+**Population**: Adults aged 25-65 with BMI > 30
+**Treatment**: New diet program
+**Control**: Standard diet advice
+**Outcome**: Weight loss (kg) after 12 weeks
+**Sample Size**: 200 participants (100 per group)
 
-print(f"\nRCT Analysis Results:")
-print(f"Control mean: {rct_results['control_mean']:.2f}")
-print(f"Treatment mean: {rct_results['treatment_mean']:.2f}")
-print(f"Estimated ATE: {rct_results['estimated_effect']:.2f}")
-print(f"Standard error: {rct_results['standard_error']:.3f}")
-print(f"t-statistic: {rct_results['t_statistic']:.3f}")
-print(f"Degrees of freedom: {rct_results['degrees_of_freedom']}")
-print(f"p-value: {rct_results['p_value']:.4f}")
-print(f"95% CI: [{rct_results['confidence_interval'][0]:.2f}, {rct_results['confidence_interval'][1]:.2f}]")
-print(f"Cohen's d: {rct_results['cohens_d']:.3f}")
-print(f"Power achieved: {rct_results['power_achieved']:.3f}")
-
-# Verify potential outcomes framework
-print(f"\nPotential Outcomes Verification:")
-print(f"True ATE: {true_effect}")
-print(f"Estimated ATE: {rct_results['estimated_effect']:.2f}")
-print(f"Bias: {rct_results['estimated_effect'] - true_effect:.3f}")
-
-# Visualize RCT results
-plt.figure(figsize=(15, 5))
-
-# Box plot
-plt.subplot(1, 3, 1)
-sns.boxplot(data=df_rct, x='group', y='observed_outcome')
-plt.title('RCT Results - Box Plot')
-plt.ylabel('Observed Outcome')
-
-# Histogram
-plt.subplot(1, 3, 2)
-control_data = df_rct[df_rct['group'] == 'control']['observed_outcome']
-treatment_data = df_rct[df_rct['group'] == 'treatment']['observed_outcome']
-
-plt.hist(control_data, alpha=0.7, label='Control', bins=15, density=True)
-plt.hist(treatment_data, alpha=0.7, label='Treatment', bins=15, density=True)
-plt.xlabel('Observed Outcome')
-plt.ylabel('Density')
-plt.title('RCT Results - Histogram')
-plt.legend()
-
-# Effect size distribution
-plt.subplot(1, 3, 3)
-effect_sizes = []
-for _ in range(1000):
-    # Bootstrap resampling
-    control_boot = np.random.choice(control_data, size=len(control_data), replace=True)
-    treatment_boot = np.random.choice(treatment_data, size=len(treatment_data), replace=True)
-    effect_sizes.append(treatment_boot.mean() - control_boot.mean())
-
-plt.hist(effect_sizes, bins=30, alpha=0.7, color='green', edgecolor='black', density=True)
-plt.axvline(true_effect, color='red', linestyle='--', linewidth=2, label=f'True effect: {true_effect}')
-plt.axvline(rct_results['estimated_effect'], color='blue', linestyle='--', linewidth=2, 
-           label=f'Estimated effect: {rct_results["estimated_effect"]:.2f}')
-plt.xlabel('Treatment Effect')
-plt.ylabel('Density')
-plt.title('Bootstrap Distribution of Treatment Effect')
-plt.legend()
-
-plt.tight_layout()
-plt.show()
-```
+**Randomization**: Computer-generated random numbers
+**Blinding**: Outcome assessors blinded to group assignment
+**Analysis**: t-test for difference in means
 
 ### Stratified Randomization
 
-**Mathematical Concept:**
 Stratified randomization ensures balance across important covariates by performing separate randomizations within each stratum.
 
-**Stratified ATE Estimation:**
-$$\hat{\tau}_{stratified} = \sum_{s=1}^{S} w_s \hat{\tau}_s$$
-where $w_s$ is the weight for stratum s (usually proportional to stratum size) and $\hat{\tau}_s$ is the estimated treatment effect in stratum s.
+#### Mathematical Concept
 
-**Variance of Stratified Estimator:**
-$$Var(\hat{\tau}_{stratified}) = \sum_{s=1}^{S} w_s^2 Var(\hat{\tau}_s)$$
+**Stratified ATE Estimation**:
+```math
+\hat{\tau}_{stratified} = \sum_{s=1}^{S} w_s \hat{\tau}_s
+```
 
-**Benefits:**
+Where:
+- $`w_s`$ is the weight for stratum s (usually proportional to stratum size)
+- $`\hat{\tau}_s`$ is the estimated treatment effect in stratum s
+
+**Variance of Stratified Estimator**:
+```math
+Var(\hat{\tau}_{stratified}) = \sum_{s=1}^{S} w_s^2 Var(\hat{\tau}_s)
+```
+
+#### Example: Clinical Trial by Age Group
+
+**Strata**: Age groups (18-30, 31-50, 51-70)
+**Weights**: $`w_1 = 0.3`$, $`w_2 = 0.4`$, $`w_3 = 0.3`$
+**Treatment Effects**: $`\hat{\tau}_1 = 5.2`$, $`\hat{\tau}_2 = 4.8`$, $`\hat{\tau}_3 = 3.1`$
+
+**Stratified ATE**:
+```math
+\hat{\tau}_{stratified} = 0.3(5.2) + 0.4(4.8) + 0.3(3.1) = 4.41
+```
+
+#### Benefits
+
 1. **Reduced Variance**: More precise estimates when strata are homogeneous
 2. **Guaranteed Balance**: Ensures treatment groups are balanced on stratifying variables
 3. **Subgroup Analysis**: Enables analysis of treatment effects within strata
 
-```python
-def stratified_rct(n_per_stratum=25, n_strata=4):
-    """
-    Simulate stratified randomized controlled trial
-    
-    Mathematical implementation:
-    1. Define strata (e.g., age groups, severity levels)
-    2. Within each stratum s:
-       - Generate potential outcomes: Yₛ(0) ~ N(μₛ, σ²), Yₛ(1) = Yₛ(0) + τₛ
-       - Randomly assign treatment: T ~ Bernoulli(0.5) within stratum
-    3. Estimate stratified ATE: τ̂ = Σ wₛ τ̂ₛ
-    
-    Parameters:
-    n_per_stratum: int, sample size per stratum per group
-    n_strata: int, number of strata
-    
-    Returns:
-    DataFrame: stratified RCT data
-    """
-    strata = []
-    outcomes = []
-    groups = []
-    treatment_assignments = []
-    stratum_effects = []
-    
-    for stratum in range(n_strata):
-        # Different baseline outcomes for each stratum
-        baseline = 90 + stratum * 5
-        
-        # Different treatment effects for each stratum
-        treatment_effect = 3 + stratum * 2
-        
-        # Generate potential outcomes for this stratum
-        y0_stratum = np.random.normal(baseline, 3, n_per_stratum * 2)
-        y1_stratum = y0_stratum + treatment_effect
-        
-        # Random treatment assignment within stratum
-        treatment_assignment = np.random.binomial(1, 0.5, n_per_stratum * 2)
-        
-        # Observe outcomes
-        observed_outcomes = treatment_assignment * y1_stratum + (1 - treatment_assignment) * y0_stratum
-        
-        # Store data
-        strata.extend([stratum] * n_per_stratum * 2)
-        outcomes.extend(observed_outcomes)
-        groups.extend(['treatment' if t == 1 else 'control' for t in treatment_assignment])
-        treatment_assignments.extend(treatment_assignment)
-        stratum_effects.extend([treatment_effect] * n_per_stratum * 2)
-    
-    df_stratified = pd.DataFrame({
-        'stratum': strata,
-        'group': groups,
-        'outcome': outcomes,
-        'treatment_assignment': treatment_assignments,
-        'stratum_effect': stratum_effects
-    })
-    
-    return df_stratified
+#### Implementation
 
-df_stratified = stratified_rct()
+1. **Identify Strata**: Choose variables that predict outcome
+2. **Allocate Sample**: Determine sample size per stratum
+3. **Randomize Within**: Perform separate randomization in each stratum
+4. **Analyze**: Use stratified estimator
 
-print("Stratified RCT Simulation")
-print(f"Total sample size: {len(df_stratified)}")
-print(f"Number of strata: {df_stratified['stratum'].nunique()}")
-print(f"Sample size per stratum: {len(df_stratified) // (df_stratified['stratum'].nunique() * 2)}")
+### Cluster Randomization
 
-# Analyze stratified RCT
-def analyze_stratified_rct(data):
-    """
-    Analyze stratified RCT results
-    
-    Mathematical steps:
-    1. Calculate stratum-specific treatment effects: τ̂ₛ = Ȳ₁ₛ - Ȳ₀ₛ
-    2. Calculate stratum weights: wₛ = nₛ / N
-    3. Estimate overall ATE: τ̂ = Σ wₛ τ̂ₛ
-    4. Calculate variance: Var(τ̂) = Σ wₛ² Var(τ̂ₛ)
-    
-    Parameters:
-    data: DataFrame, stratified RCT data
-    
-    Returns:
-    dict: analysis results
-    """
-    strata = data['stratum'].unique()
-    stratum_effects = []
-    stratum_variances = []
-    stratum_weights = []
-    
-    for stratum in strata:
-        stratum_data = data[data['stratum'] == stratum]
-        control_data = stratum_data[stratum_data['group'] == 'control']['outcome']
-        treatment_data = stratum_data[stratum_data['group'] == 'treatment']['outcome']
-        
-        # Stratum-specific treatment effect
-        stratum_effect = treatment_data.mean() - control_data.mean()
-        stratum_effects.append(stratum_effect)
-        
-        # Stratum-specific variance
-        n0_s, n1_s = len(control_data), len(treatment_data)
-        pooled_var_s = ((n0_s - 1) * control_data.var() + (n1_s - 1) * treatment_data.var()) / (n0_s + n1_s - 2)
-        stratum_var = pooled_var_s * (1/n0_s + 1/n1_s)
-        stratum_variances.append(stratum_var)
-        
-        # Stratum weight
-        stratum_weight = len(stratum_data) / len(data)
-        stratum_weights.append(stratum_weight)
-    
-    # Overall stratified estimate
-    stratified_ate = np.sum(np.array(stratum_weights) * np.array(stratum_effects))
-    
-    # Overall variance
-    stratified_var = np.sum(np.array(stratum_weights)**2 * np.array(stratum_variances))
-    stratified_se = np.sqrt(stratified_var)
-    
-    # Statistical test
-    t_stat = stratified_ate / stratified_se
-    p_value = 2 * (1 - stats.t.cdf(abs(t_stat), len(data) - 2))
-    
-    # Confidence interval
-    t_critical = stats.t.ppf(0.975, len(data) - 2)
-    ci_lower = stratified_ate - t_critical * stratified_se
-    ci_upper = stratified_ate + t_critical * stratified_se
-    
-    return {
-        'stratum_effects': stratum_effects,
-        'stratum_weights': stratum_weights,
-        'stratified_ate': stratified_ate,
-        'stratified_se': stratified_se,
-        't_statistic': t_stat,
-        'p_value': p_value,
-        'confidence_interval': (ci_lower, ci_upper)
-    }
+When individual randomization is not feasible, we randomize groups (clusters) instead of individuals.
 
-stratified_results = analyze_stratified_rct(df_stratified)
+#### Mathematical Framework
 
-print(f"\nStratified RCT Analysis Results:")
-for i, (effect, weight) in enumerate(zip(stratified_results['stratum_effects'], stratified_results['stratum_weights'])):
-    print(f"Stratum {i}: Effect = {effect:.2f}, Weight = {weight:.3f}")
-print(f"Overall stratified ATE: {stratified_results['stratified_ate']:.2f}")
-print(f"Standard error: {stratified_results['stratified_se']:.3f}")
-print(f"t-statistic: {stratified_results['t_statistic']:.3f}")
-print(f"p-value: {stratified_results['p_value']:.4f}")
-print(f"95% CI: [{stratified_results['confidence_interval'][0]:.2f}, {stratified_results['confidence_interval'][1]:.2f}]")
-
-# Compare with unstratified analysis
-unstratified_results = analyze_rct(df_stratified)
-print(f"\nComparison:")
-print(f"Unstratified ATE: {unstratified_results['estimated_effect']:.2f}")
-print(f"Stratified ATE: {stratified_results['stratified_ate']:.2f}")
-print(f"Unstratified SE: {unstratified_results['standard_error']:.3f}")
-print(f"Stratified SE: {stratified_results['stratified_se']:.3f}")
-print(f"Efficiency gain: {(unstratified_results['standard_error'] / stratified_results['stratified_se'])**2:.2f}x")
+**Cluster-Level Analysis**:
+```math
+\hat{\tau} = \bar{Y}_{1,cluster} - \bar{Y}_{0,cluster}
 ```
+
+Where $`\bar{Y}_{1,cluster}`$ and $`\bar{Y}_{0,cluster}`$ are cluster-level means.
+
+**Intraclass Correlation Coefficient (ICC)**:
+```math
+ICC = \frac{\sigma_b^2}{\sigma_b^2 + \sigma_w^2}
+```
+
+Where $`\sigma_b^2`$ is between-cluster variance and $`\sigma_w^2`$ is within-cluster variance.
+
+#### Example: School-Based Intervention
+
+**Clusters**: Schools (20 treatment, 20 control)
+**Individuals**: Students within schools
+**Outcome**: Academic performance
+**ICC**: 0.1 (moderate clustering)
+
+**Design Effect**:
+```math
+DE = 1 + (m-1)ICC = 1 + (25-1)(0.1) = 3.4
+```
+
+Where m is average cluster size.
 
 ## Factorial Designs
 
+Factorial designs efficiently test multiple factors and their interactions simultaneously.
+
+### Understanding Factorial Designs
+
+Factorial designs allow us to study the effects of multiple factors and their interactions in a single experiment, making efficient use of resources.
+
+#### Intuitive Example: Website Optimization
+
+Consider optimizing a website:
+- **Factor A**: Button color (red vs. blue)
+- **Factor B**: Button size (small vs. large)
+- **Combinations**: 4 treatment combinations
+- **Efficiency**: Test both factors simultaneously
+
 ### 2x2 Factorial Design
 
-```python
-def factorial_2x2_design(n_per_cell=30):
-    """Simulate 2x2 factorial design"""
-    
-    # Factors: A (drug) and B (dose)
-    factor_a = ['low', 'high']  # Drug levels
-    factor_b = ['low', 'high']  # Dose levels
-    
-    # True effects
-    baseline = 100
-    effect_a = 5    # Main effect of drug
-    effect_b = 3    # Main effect of dose
-    effect_ab = 2   # Interaction effect
-    
-    data = []
-    
-    for i, a in enumerate(factor_a):
-        for j, b in enumerate(factor_b):
-            # Calculate cell mean
-            cell_mean = baseline
-            if a == 'high':
-                cell_mean += effect_a
-            if b == 'high':
-                cell_mean += effect_b
-            if a == 'high' and b == 'high':
-                cell_mean += effect_ab
-            
-            # Generate outcomes
-            outcomes = np.random.normal(cell_mean, 2, n_per_cell)
-            
-            for outcome in outcomes:
-                data.append({
-                    'factor_a': a,
-                    'factor_b': b,
-                    'outcome': outcome
-                })
-    
-    return pd.DataFrame(data)
+#### Mathematical Framework
 
-df_factorial = factorial_2x2_design()
-
-print("2x2 Factorial Design Simulation")
-print(f"Total sample size: {len(df_factorial)}")
-print(f"Sample size per cell: {len(df_factorial) // 4}")
-
-# Analyze factorial design
-def analyze_factorial_design(data):
-    """Analyze factorial design using ANOVA"""
-    
-    from scipy.stats import f_oneway
-    from itertools import combinations
-    
-    # Cell means
-    cell_means = data.groupby(['factor_a', 'factor_b'])['outcome'].mean()
-    
-    # Main effects
-    main_effect_a = (cell_means.loc[('high', 'low')] + cell_means.loc[('high', 'high')]) / 2 - \
-                   (cell_means.loc[('low', 'low')] + cell_means.loc[('low', 'high')]) / 2
-    
-    main_effect_b = (cell_means.loc[('low', 'high')] + cell_means.loc[('high', 'high')]) / 2 - \
-                   (cell_means.loc[('low', 'low')] + cell_means.loc[('high', 'low')]) / 2
-    
-    # Interaction effect
-    interaction = (cell_means.loc[('high', 'high')] - cell_means.loc[('high', 'low')]) - \
-                 (cell_means.loc[('low', 'high')] - cell_means.loc[('low', 'low')])
-    
-    # ANOVA
-    groups = [group['outcome'].values for name, group in data.groupby(['factor_a', 'factor_b'])]
-    f_stat, p_value = f_oneway(*groups)
-    
-    return {
-        'cell_means': cell_means,
-        'main_effect_a': main_effect_a,
-        'main_effect_b': main_effect_b,
-        'interaction': interaction,
-        'f_statistic': f_stat,
-        'p_value': p_value
-    }
-
-factorial_results = analyze_factorial_design(df_factorial)
-
-print(f"\nFactorial Design Analysis:")
-print(f"Main effect A (drug): {factorial_results['main_effect_a']:.2f}")
-print(f"Main effect B (dose): {factorial_results['main_effect_b']:.2f}")
-print(f"Interaction effect: {factorial_results['interaction']:.2f}")
-print(f"F-statistic: {factorial_results['f_statistic']:.3f}")
-print(f"p-value: {factorial_results['p_value']:.4f}")
-
-# Visualize factorial design
-plt.figure(figsize=(15, 5))
-
-# Interaction plot
-plt.subplot(1, 3, 1)
-for factor_b in ['low', 'high']:
-    subset = df_factorial[df_factorial['factor_b'] == factor_b]
-    means = subset.groupby('factor_a')['outcome'].mean()
-    plt.plot(['low', 'high'], means, 'o-', label=f'Dose {factor_b}', linewidth=2, markersize=8)
-
-plt.xlabel('Drug Level')
-plt.ylabel('Outcome')
-plt.title('Interaction Plot')
-plt.legend()
-
-# Cell means heatmap
-plt.subplot(1, 3, 2)
-pivot_table = df_factorial.pivot_table(values='outcome', index='factor_a', columns='factor_b', aggfunc='mean')
-sns.heatmap(pivot_table, annot=True, cmap='coolwarm', center=pivot_table.values.mean(), 
-            square=True, linewidths=0.5, fmt='.1f')
-plt.title('Cell Means')
-
-# Main effects
-plt.subplot(1, 3, 3)
-effects = ['Main Effect A', 'Main Effect B', 'Interaction']
-effect_values = [factorial_results['main_effect_a'], 
-                factorial_results['main_effect_b'], 
-                factorial_results['interaction']]
-
-colors = ['red' if abs(effect) > 1 else 'blue' for effect in effect_values]
-plt.bar(effects, effect_values, color=colors, alpha=0.7)
-plt.axhline(0, color='black', linestyle='-', alpha=0.7)
-plt.ylabel('Effect Size')
-plt.title('Main Effects and Interaction')
-plt.xticks(rotation=45)
-
-plt.tight_layout()
-plt.show()
+**Model**:
+```math
+Y_{ijk} = \mu + \alpha_i + \beta_j + (\alpha\beta)_{ij} + \epsilon_{ijk}
 ```
+
+Where:
+- $`\mu`$ = overall mean
+- $`\alpha_i`$ = effect of factor A at level i
+- $`\beta_j`$ = effect of factor B at level j
+- $`(\alpha\beta)_{ij}`$ = interaction effect
+- $`\epsilon_{ijk}`$ = random error
+
+#### Main Effects
+
+**Factor A Main Effect**:
+```math
+\alpha_1 = \frac{Y_{1..} - Y_{2..}}{2}
+```
+
+**Factor B Main Effect**:
+```math
+\beta_1 = \frac{Y_{.1.} - Y_{.2.}}{2}
+```
+
+#### Interaction Effect
+
+**AB Interaction**:
+```math
+(\alpha\beta)_{11} = \frac{Y_{11.} - Y_{12.} - Y_{21.} + Y_{22.}}{4}
+```
+
+#### Example: Drug Efficacy Study
+
+**Factor A**: Drug dose (low vs. high)
+**Factor B**: Administration time (morning vs. evening)
+**Outcome**: Blood pressure reduction
+
+**Results**:
+- $`Y_{11} = 8`$ (low dose, morning)
+- $`Y_{12} = 6`$ (low dose, evening)
+- $`Y_{21} = 12`$ (high dose, morning)
+- $`Y_{22} = 10`$ (high dose, evening)
+
+**Main Effects**:
+- **Dose**: $`\alpha_1 = \frac{(8+6)-(12+10)}{2} = -4`$ (high dose better)
+- **Time**: $`\beta_1 = \frac{(8+12)-(6+10)}{2} = 2`$ (morning better)
+
+**Interaction**: $`(\alpha\beta)_{11} = \frac{8-6-12+10}{4} = 0`$ (no interaction)
+
+### Higher-Order Factorial Designs
+
+#### 2³ Factorial Design
+
+**Three factors**: A, B, C each at 2 levels
+**Treatment combinations**: 8 total
+**Effects**: 3 main effects, 3 two-way interactions, 1 three-way interaction
+
+**Model**:
+```math
+Y_{ijkl} = \mu + \alpha_i + \beta_j + \gamma_k + (\alpha\beta)_{ij} + (\alpha\gamma)_{ik} + (\beta\gamma)_{jk} + (\alpha\beta\gamma)_{ijk} + \epsilon_{ijkl}
+```
+
+#### Fractional Factorial Designs
+
+When full factorial designs are too expensive, we use fractional designs.
+
+**2^(k-p) Design**: k factors, p generators
+**Resolution**: Minimum number of factors in defining relation
+
+**Example**: 2^(5-2) design
+- **Factors**: A, B, C, D, E
+- **Generators**: D = AB, E = AC
+- **Defining relation**: I = ABD = ACE = BCDE
+- **Resolution**: III (some main effects confounded with two-way interactions)
+
+### Analysis of Factorial Designs
+
+#### ANOVA Table
+
+**Source** | **SS** | **df** | **MS** | **F**
+--- | --- | --- | --- | ---
+Factor A | $`SS_A`$ | $`a-1`$ | $`MS_A`$ | $`MS_A/MS_E`$
+Factor B | $`SS_B`$ | $`b-1`$ | $`MS_B`$ | $`MS_B/MS_E`$
+AB Interaction | $`SS_{AB}`$ | $`(a-1)(b-1)`$ | $`MS_{AB}`$ | $`MS_{AB}/MS_E`$
+Error | $`SS_E`$ | $`ab(n-1)`$ | $`MS_E`$ |
+Total | $`SS_T`$ | $`abn-1`$ |
+
+#### Example: 2x2 ANOVA
+
+**Data**: 4 observations per cell
+**F-test**: Compare mean squares to error mean square
+**p-values**: Determine statistical significance
 
 ## Blocking and Randomization
 
+Blocking reduces variability and increases statistical power by controlling for known sources of variation.
+
+### Understanding Blocking
+
+Blocking is like "controlling what you can, randomizing what you can't." We group similar experimental units together to reduce within-block variability.
+
+#### Intuitive Example: Agricultural Experiment
+
+Consider testing fertilizer effectiveness:
+- **Blocks**: Different fields (soil quality varies)
+- **Treatments**: Different fertilizers
+- **Analysis**: Compare fertilizers within each field
+- **Benefit**: Controls for soil quality differences
+
 ### Randomized Block Design
 
-```python
-def randomized_block_design(n_blocks=6, n_treatments=3):
-    """Simulate randomized block design"""
-    
-    # Generate blocks (e.g., different centers, time periods)
-    blocks = []
-    treatments = []
-    outcomes = []
-    
-    for block in range(n_blocks):
-        # Block-specific baseline
-        baseline = 100 + block * 2
-        
-        # Randomize treatments within each block
-        block_treatments = np.random.permutation(n_treatments)
-        
-        for treatment in range(n_treatments):
-            # Treatment effects
-            treatment_effect = treatment * 3
-            
-            # Generate outcome
-            outcome = baseline + treatment_effect + np.random.normal(0, 2)
-            
-            blocks.append(block)
-            treatments.append(treatment)
-            outcomes.append(outcome)
-    
-    df_block = pd.DataFrame({
-        'block': blocks,
-        'treatment': treatments,
-        'outcome': outcomes
-    })
-    
-    return df_block
+#### Mathematical Framework
 
-df_block = randomized_block_design()
-
-print("Randomized Block Design Simulation")
-print(f"Number of blocks: {df_block['block'].nunique()}")
-print(f"Number of treatments: {df_block['treatment'].nunique()}")
-print(f"Total sample size: {len(df_block)}")
-
-# Analyze block design
-def analyze_block_design(data):
-    """Analyze randomized block design"""
-    
-    # Calculate means
-    overall_mean = data['outcome'].mean()
-    block_means = data.groupby('block')['outcome'].mean()
-    treatment_means = data.groupby('treatment')['outcome'].mean()
-    
-    # Calculate effects
-    block_effects = block_means - overall_mean
-    treatment_effects = treatment_means - overall_mean
-    
-    # Two-way ANOVA (treatments and blocks)
-    from scipy.stats import f_oneway
-    
-    # Treatment groups
-    treatment_groups = [group['outcome'].values for name, group in data.groupby('treatment')]
-    f_treatment, p_treatment = f_oneway(*treatment_groups)
-    
-    # Block groups
-    block_groups = [group['outcome'].values for name, group in data.groupby('block')]
-    f_block, p_block = f_oneway(*block_groups)
-    
-    return {
-        'overall_mean': overall_mean,
-        'block_effects': block_effects,
-        'treatment_effects': treatment_effects,
-        'f_treatment': f_treatment,
-        'p_treatment': p_treatment,
-        'f_block': f_block,
-        'p_block': p_block
-    }
-
-block_results = analyze_block_design(df_block)
-
-print(f"\nBlock Design Analysis:")
-print(f"Overall mean: {block_results['overall_mean']:.2f}")
-print(f"Treatment F-statistic: {block_results['f_treatment']:.3f}")
-print(f"Treatment p-value: {block_results['p_treatment']:.4f}")
-print(f"Block F-statistic: {block_results['f_block']:.3f}")
-print(f"Block p-value: {block_results['p_block']:.4f}")
-
-# Visualize block design
-plt.figure(figsize=(15, 5))
-
-# Treatment means
-plt.subplot(1, 3, 1)
-treatment_means = df_block.groupby('treatment')['outcome'].mean()
-plt.bar(treatment_means.index, treatment_means.values, alpha=0.7, color='skyblue')
-plt.xlabel('Treatment')
-plt.ylabel('Mean Outcome')
-plt.title('Treatment Means')
-
-# Block means
-plt.subplot(1, 3, 2)
-block_means = df_block.groupby('block')['outcome'].mean()
-plt.bar(block_means.index, block_means.values, alpha=0.7, color='lightgreen')
-plt.xlabel('Block')
-plt.ylabel('Mean Outcome')
-plt.title('Block Means')
-
-# Interaction plot
-plt.subplot(1, 3, 3)
-for treatment in df_block['treatment'].unique():
-    subset = df_block[df_block['treatment'] == treatment]
-    means = subset.groupby('block')['outcome'].mean()
-    plt.plot(means.index, means.values, 'o-', label=f'Treatment {treatment}', linewidth=2, markersize=6)
-
-plt.xlabel('Block')
-plt.ylabel('Outcome')
-plt.title('Treatment Effects Across Blocks')
-plt.legend()
-
-plt.tight_layout()
-plt.show()
+**Model**:
+```math
+Y_{ij} = \mu + \tau_i + \beta_j + \epsilon_{ij}
 ```
+
+Where:
+- $`\mu`$ = overall mean
+- $`\tau_i`$ = treatment effect i
+- $`\beta_j`$ = block effect j
+- $`\epsilon_{ij}`$ = random error
+
+#### Treatment Effect Estimation
+
+**Adjusted Treatment Means**:
+```math
+\bar{Y}_{i.} = \frac{1}{b}\sum_{j=1}^{b} Y_{ij}
+```
+
+**Treatment Effect**:
+```math
+\hat{\tau}_i = \bar{Y}_{i.} - \bar{Y}_{..}
+```
+
+Where $`\bar{Y}_{..}`$ is the grand mean.
+
+#### Example: Drug Trial by Hospital
+
+**Blocks**: 5 hospitals
+**Treatments**: 3 drugs (A, B, C)
+**Outcome**: Patient recovery time
+
+**Data**:
+```
+Hospital | Drug A | Drug B | Drug C
+1        | 15     | 12     | 18
+2        | 14     | 13     | 17
+3        | 16     | 11     | 19
+4        | 15     | 12     | 18
+5        | 14     | 13     | 17
+```
+
+**Analysis**: Remove block effects to isolate treatment effects
+
+### Latin Square Design
+
+Latin square designs control for two sources of variation simultaneously.
+
+#### Structure
+
+**3x3 Latin Square**:
+```
+A B C
+B C A
+C A B
+```
+
+**Properties**:
+- Each treatment appears once in each row
+- Each treatment appears once in each column
+- Orthogonal blocking
+
+#### Mathematical Model
+
+**Model**:
+```math
+Y_{ijk} = \mu + \tau_i + \rho_j + \gamma_k + \epsilon_{ijk}
+```
+
+Where:
+- $`\tau_i`$ = treatment effect
+- $`\rho_j`$ = row effect
+- $`\gamma_k`$ = column effect
+
+#### Example: Car Testing
+
+**Rows**: Drivers
+**Columns**: Days
+**Treatments**: Car models (A, B, C)
+**Outcome**: Fuel efficiency
+
+### Incomplete Block Designs
+
+When block size is smaller than number of treatments.
+
+#### Balanced Incomplete Block (BIB) Design
+
+**Properties**:
+- Each treatment appears in r blocks
+- Each block contains k treatments
+- Each pair of treatments appears together in λ blocks
+
+**Parameters**:
+```math
+\lambda = \frac{r(k-1)}{t-1}
+```
+
+Where t is number of treatments.
+
+#### Example: Taste Testing
+
+**Treatments**: 6 food products
+**Block size**: 3 (can only taste 3 at once)
+**Design**: Each product tasted 5 times, each pair appears together twice
 
 ## Sample Size Determination
 
+Sample size determination ensures adequate power to detect effects of interest.
+
+### Understanding Power
+
+Power is the probability of correctly rejecting a false null hypothesis. It depends on effect size, sample size, significance level, and variability.
+
+#### Intuitive Example: Coin Flipping
+
+Consider testing if a coin is fair:
+- **Null hypothesis**: p = 0.5
+- **Alternative**: p ≠ 0.5
+- **Effect size**: How far from 0.5
+- **Power**: Probability of detecting unfairness
+
 ### Power Analysis
 
-```python
-def power_analysis_example():
-    """Demonstrate power analysis for different scenarios"""
-    
-    # Parameters
-    alpha = 0.05  # Significance level
-    power_levels = [0.8, 0.9, 0.95]  # Desired power levels
-    effect_sizes = [0.2, 0.5, 0.8]   # Cohen's d effect sizes
-    
-    results = []
-    
-    for power in power_levels:
-        for effect_size in effect_sizes:
-            # Calculate required sample size
-            n_per_group = power.tt_ind_solve_power(
-                effect_size=effect_size,
-                alpha=alpha,
-                power=power,
-                ratio=1.0  # Equal group sizes
-            )
-            
-            results.append({
-                'power': power,
-                'effect_size': effect_size,
-                'n_per_group': int(n_per_group),
-                'total_n': int(n_per_group * 2)
-            })
-    
-    return pd.DataFrame(results)
+#### Mathematical Framework
 
-power_results = power_analysis_example()
-
-print("Power Analysis Results")
-print(power_results.to_string(index=False))
-
-# Visualize power analysis
-plt.figure(figsize=(15, 5))
-
-# Sample size vs effect size
-plt.subplot(1, 3, 1)
-for power in power_results['power'].unique():
-    subset = power_results[power_results['power'] == power]
-    plt.plot(subset['effect_size'], subset['n_per_group'], 'o-', 
-             label=f'Power = {power}', linewidth=2, markersize=8)
-
-plt.xlabel("Cohen's d Effect Size")
-plt.ylabel('Sample Size per Group')
-plt.title('Sample Size vs Effect Size')
-plt.legend()
-plt.grid(True, alpha=0.3)
-
-# Power curves
-plt.subplot(1, 3, 2)
-sample_sizes = [20, 50, 100, 200]
-effect_sizes = np.linspace(0.1, 1.0, 50)
-
-for n in sample_sizes:
-    powers = []
-    for effect_size in effect_sizes:
-        power = power.tt_ind_power(effect_size, n, n, alpha=0.05)
-        powers.append(power)
-    plt.plot(effect_sizes, powers, label=f'n = {n}', linewidth=2)
-
-plt.xlabel("Cohen's d Effect Size")
-plt.ylabel('Power')
-plt.title('Power Curves')
-plt.legend()
-plt.grid(True, alpha=0.3)
-
-# Effect size detection
-plt.subplot(1, 3, 3)
-n_values = np.arange(10, 201, 10)
-min_effect_sizes = []
-
-for n in n_values:
-    # Find minimum detectable effect size for 80% power
-    min_effect = power.tt_ind_solve_power(
-        effect_size=None,
-        alpha=0.05,
-        power=0.8,
-        nobs1=n
-    )
-    min_effect_sizes.append(min_effect)
-
-plt.plot(n_values, min_effect_sizes, 'b-', linewidth=2)
-plt.xlabel('Sample Size per Group')
-plt.ylabel('Minimum Detectable Effect Size')
-plt.title('Minimum Detectable Effect Size')
-plt.grid(True, alpha=0.3)
-
-plt.tight_layout()
-plt.show()
-
-# Practical example
-def sample_size_calculation_example():
-    """Calculate sample size for a practical example"""
-    
-    # Scenario: Testing a new drug vs placebo
-    # Expected effect size: 0.5 (medium effect)
-    # Desired power: 0.9
-    # Significance level: 0.05
-    
-    effect_size = 0.5
-    desired_power = 0.9
-    alpha = 0.05
-    
-    n_per_group = power.tt_ind_solve_power(
-        effect_size=effect_size,
-        alpha=alpha,
-        power=desired_power,
-        ratio=1.0
-    )
-    
-    total_n = n_per_group * 2
-    
-    print(f"Sample Size Calculation Example:")
-    print(f"Effect size (Cohen's d): {effect_size}")
-    print(f"Desired power: {desired_power}")
-    print(f"Significance level: {alpha}")
-    print(f"Required sample size per group: {int(n_per_group)}")
-    print(f"Total sample size: {int(total_n)}")
-    
-    return int(n_per_group), int(total_n)
-
-sample_size_example = sample_size_calculation_example()
+**Power Function**:
+```math
+Power = P(\text{Reject } H_0 | H_1 \text{ is true})
 ```
+
+**For t-test**:
+```math
+Power = P\left(|t| > t_{\alpha/2, df} | \delta = \frac{\mu_1 - \mu_0}{\sigma/\sqrt{n}}\right)
+```
+
+Where $`\delta`$ is the standardized effect size.
+
+#### Effect Size Measures
+
+**Cohen's d**:
+```math
+d = \frac{\mu_1 - \mu_0}{\sigma}
+```
+
+**Interpretation**:
+- Small: d = 0.2
+- Medium: d = 0.5
+- Large: d = 0.8
+
+#### Sample Size Calculation
+
+**For Two-Sample t-test**:
+```math
+n = \frac{2(z_{\alpha/2} + z_{\beta})^2}{d^2}
+```
+
+Where:
+- $`z_{\alpha/2}`$ = critical value for significance level
+- $`z_{\beta}`$ = critical value for power (1-β)
+- $`d`$ = standardized effect size
+
+#### Example: Clinical Trial
+
+**Effect size**: d = 0.5 (medium)
+**Significance level**: α = 0.05
+**Power**: 1-β = 0.8
+**Sample size per group**:
+```math
+n = \frac{2(1.96 + 0.84)^2}{0.5^2} = \frac{2(7.84)}{0.25} = 63
+```
+
+### Multiple Testing Considerations
+
+#### Bonferroni Correction
+
+**Adjusted significance level**:
+```math
+\alpha_{adjusted} = \frac{\alpha}{m}
+```
+
+Where m is number of tests.
+
+#### False Discovery Rate (FDR)
+
+**Benjamini-Hochberg procedure**:
+1. Order p-values: $`p_{(1)} \leq p_{(2)} \leq \ldots \leq p_{(m)}`$
+2. Find largest k where $`p_{(k)} \leq \frac{k\alpha}{m}`$
+3. Reject hypotheses 1 through k
+
+#### Example: Multiple Endpoints
+
+**Study**: 5 different outcome measures
+**Original α**: 0.05
+**Bonferroni α**: 0.01
+**FDR**: Control false discovery rate at 0.05
 
 ## A/B Testing
 
+A/B testing provides practical frameworks for online experiments and digital optimization.
+
+### Understanding A/B Testing
+
+A/B testing is the application of RCT principles to digital environments, allowing systematic optimization of user experiences.
+
+#### Intuitive Example: Website Optimization
+
+Consider testing a new website design:
+- **Variant A**: Current design (control)
+- **Variant B**: New design (treatment)
+- **Metric**: Conversion rate
+- **Goal**: Determine if new design improves conversions
+
 ### A/B Test Design and Analysis
 
-```python
-def ab_test_simulation(n_a=1000, n_b=1000, true_rate_a=0.10, true_rate_b=0.12):
-    """Simulate A/B test with conversion rates"""
-    
-    # Generate data
-    conversions_a = np.random.binomial(n_a, true_rate_a)
-    conversions_b = np.random.binomial(n_b, true_rate_b)
-    
-    # Calculate observed rates
-    rate_a = conversions_a / n_a
-    rate_b = conversions_b / n_b
-    
-    # Statistical test
-    from scipy.stats import proportions_ztest
-    z_stat, p_value = proportions_ztest([conversions_a, conversions_b], [n_a, n_b])
-    
-    # Confidence interval for difference
-    pooled_rate = (conversions_a + conversions_b) / (n_a + n_b)
-    se_diff = np.sqrt(pooled_rate * (1 - pooled_rate) * (1/n_a + 1/n_b))
-    diff = rate_b - rate_a
-    ci_lower = diff - 1.96 * se_diff
-    ci_upper = diff + 1.96 * se_diff
-    
-    return {
-        'conversions_a': conversions_a,
-        'conversions_b': conversions_b,
-        'rate_a': rate_a,
-        'rate_b': rate_b,
-        'difference': diff,
-        'z_statistic': z_stat,
-        'p_value': p_value,
-        'confidence_interval': (ci_lower, ci_upper)
-    }
+#### Statistical Framework
 
-ab_results = ab_test_simulation()
+**Hypothesis Test**:
+- $`H_0`$: $`p_A = p_B`$ (no difference)
+- $`H_1`$: $`p_A \neq p_B`$ (difference exists)
 
-print("A/B Test Results")
-print(f"Group A: {ab_results['conversions_a']}/{1000} conversions ({ab_results['rate_a']:.3f})")
-print(f"Group B: {ab_results['conversions_b']}/{1000} conversions ({ab_results['rate_b']:.3f})")
-print(f"Difference: {ab_results['difference']:.4f}")
-print(f"Z-statistic: {ab_results['z_statistic']:.3f}")
-print(f"P-value: {ab_results['p_value']:.4f}")
-print(f"95% CI: [{ab_results['confidence_interval'][0]:.4f}, {ab_results['confidence_interval'][1]:.4f}]")
-
-# Sequential A/B testing
-def sequential_ab_test(n_max=2000, true_rate_a=0.10, true_rate_b=0.12, alpha=0.05):
-    """Simulate sequential A/B testing"""
-    
-    conversions_a = []
-    conversions_b = []
-    decisions = []
-    sample_sizes = []
-    
-    for n in range(100, n_max + 1, 100):
-        # Generate data up to current n
-        conv_a = np.random.binomial(n//2, true_rate_a)
-        conv_b = np.random.binomial(n//2, true_rate_b)
-        
-        conversions_a.append(conv_a)
-        conversions_b.append(conv_b)
-        
-        # Statistical test
-        z_stat, p_value = proportions_ztest([conv_a, conv_b], [n//2, n//2])
-        
-        # Decision rule
-        if p_value < alpha:
-            decision = 'reject' if z_stat > 0 else 'reject'
-        else:
-            decision = 'continue'
-        
-        decisions.append(decision)
-        sample_sizes.append(n)
-    
-    return sample_sizes, conversions_a, conversions_b, decisions
-
-sample_sizes, conv_a_seq, conv_b_seq, decisions = sequential_ab_test()
-
-# Visualize sequential testing
-plt.figure(figsize=(15, 5))
-
-# Conversion rates over time
-plt.subplot(1, 3, 1)
-rates_a = [conv_a / (n//2) for conv_a, n in zip(conv_a_seq, sample_sizes)]
-rates_b = [conv_b / (n//2) for conv_b, n in zip(conv_b_seq, sample_sizes)]
-
-plt.plot(sample_sizes, rates_a, 'b-', label='Group A', linewidth=2)
-plt.plot(sample_sizes, rates_b, 'r-', label='Group B', linewidth=2)
-plt.xlabel('Sample Size')
-plt.ylabel('Conversion Rate')
-plt.title('Sequential A/B Test - Conversion Rates')
-plt.legend()
-
-# P-values over time
-plt.subplot(1, 3, 2)
-p_values = []
-for conv_a, conv_b, n in zip(conv_a_seq, conv_b_seq, sample_sizes):
-    z_stat, p_val = proportions_ztest([conv_a, conv_b], [n//2, n//2])
-    p_values.append(p_val)
-
-plt.plot(sample_sizes, p_values, 'g-', linewidth=2)
-plt.axhline(0.05, color='red', linestyle='--', alpha=0.7, label='α = 0.05')
-plt.xlabel('Sample Size')
-plt.ylabel('P-value')
-plt.title('Sequential A/B Test - P-values')
-plt.legend()
-
-# Decision timeline
-plt.subplot(1, 3, 3)
-decision_colors = {'continue': 'yellow', 'reject': 'red'}
-colors = [decision_colors[decision] for decision in decisions]
-
-plt.scatter(sample_sizes, [1] * len(sample_sizes), c=colors, alpha=0.7, s=50)
-plt.xlabel('Sample Size')
-plt.ylabel('Decision')
-plt.title('Sequential A/B Test - Decisions')
-plt.yticks([])
-
-plt.tight_layout()
-plt.show()
-
-# A/B test power analysis
-def ab_test_power_analysis():
-    """Power analysis for A/B testing"""
-    
-    # Parameters
-    baseline_rate = 0.10
-    effect_sizes = [0.01, 0.02, 0.05, 0.10]  # Absolute differences
-    sample_sizes = [500, 1000, 2000, 5000]
-    
-    results = []
-    
-    for effect_size in effect_sizes:
-        for n in sample_sizes:
-            # Calculate power
-            power_val = power.proportion_2ind_power(
-                diff=effect_size,
-                prop2=baseline_rate,
-                nobs1=n//2,
-                alpha=0.05
-            )
-            
-            results.append({
-                'effect_size': effect_size,
-                'sample_size': n,
-                'power': power_val
-            })
-    
-    return pd.DataFrame(results)
-
-ab_power_results = ab_test_power_analysis()
-
-print("\nA/B Test Power Analysis")
-print(ab_power_results.to_string(index=False))
+**Test Statistic**:
+```math
+z = \frac{\hat{p}_B - \hat{p}_A}{\sqrt{\hat{p}(1-\hat{p})(\frac{1}{n_A} + \frac{1}{n_B})}}
 ```
+
+Where $`\hat{p} = \frac{n_A\hat{p}_A + n_B\hat{p}_B}{n_A + n_B}`$ is the pooled proportion.
+
+#### Sample Size Calculation
+
+**For Proportion Test**:
+```math
+n = \frac{(z_{\alpha/2} + z_{\beta})^2(p_A(1-p_A) + p_B(1-p_B))}{(p_B - p_A)^2}
+```
+
+#### Example: Email Campaign
+
+**Current conversion rate**: 2.5%
+**Expected improvement**: 3.5%
+**Significance level**: 0.05
+**Power**: 0.8
+
+**Sample size per group**:
+```math
+n = \frac{(1.96 + 0.84)^2(0.025(0.975) + 0.035(0.965))}{(0.035 - 0.025)^2} = 2,847
+```
+
+### Sequential Testing
+
+Sequential testing allows early stopping when sufficient evidence is accumulated.
+
+#### Sequential Probability Ratio Test (SPRT)
+
+**Boundaries**:
+```math
+A = \log\left(\frac{1-\beta}{\alpha}\right), \quad B = \log\left(\frac{\beta}{1-\alpha}\right)
+```
+
+**Test statistic**:
+```math
+S_n = \sum_{i=1}^n \log\left(\frac{f_1(x_i)}{f_0(x_i)}\right)
+```
+
+**Decision rules**:
+- Continue if $`B < S_n < A`$
+- Reject $`H_0`$ if $`S_n \geq A`$
+- Accept $`H_0`$ if $`S_n \leq B`$
+
+#### Example: Website Testing
+
+**Null hypothesis**: No improvement in conversion rate
+**Alternative**: 20% improvement
+**α = 0.05, β = 0.1**
+
+**Boundaries**: A = 2.89, B = -2.20
+**Analysis**: Monitor cumulative log-likelihood ratio
+
+### Multi-Armed Bandits
+
+Multi-armed bandits balance exploration and exploitation in adaptive experiments.
+
+#### ε-Greedy Algorithm
+
+**Strategy**:
+- With probability ε: random exploration
+- With probability 1-ε: exploit best arm
+
+**Regret**:
+```math
+R(T) = \sum_{t=1}^T (\mu^* - \mu_{a_t})
+```
+
+Where $`\mu^*`$ is the best arm's mean reward.
+
+#### Thompson Sampling
+
+**Bayesian approach**:
+1. Sample from posterior for each arm
+2. Choose arm with highest sampled value
+3. Update posterior with observed reward
+
+**Advantages**:
+- Natural uncertainty quantification
+- Automatic exploration-exploitation balance
+- No tuning parameters
 
 ## Practical Applications
 
 ### Clinical Trial Design
 
-```python
-def clinical_trial_simulation():
-    """Simulate a clinical trial with multiple endpoints"""
-    
-    # Trial parameters
-    n_patients = 200
-    treatment_effect_bp = 5    # Blood pressure reduction (mmHg)
-    treatment_effect_chol = 10 # Cholesterol reduction (mg/dL)
-    
-    # Generate patient data
-    np.random.seed(42)
-    
-    # Baseline characteristics
-    age = np.random.normal(60, 10, n_patients)
-    gender = np.random.binomial(1, 0.5, n_patients)
-    
-    # Randomize to treatment groups
-    treatment = np.random.binomial(1, 0.5, n_patients)
-    
-    # Generate outcomes
-    baseline_bp = 140 + 0.5 * age + np.random.normal(0, 10, n_patients)
-    baseline_chol = 200 + 0.3 * age + np.random.normal(0, 20, n_patients)
-    
-    # Treatment effects
-    bp_reduction = treatment * treatment_effect_bp + np.random.normal(0, 5, n_patients)
-    chol_reduction = treatment * treatment_effect_chol + np.random.normal(0, 15, n_patients)
-    
-    # Final outcomes
-    final_bp = baseline_bp - bp_reduction
-    final_chol = baseline_chol - chol_reduction
-    
-    # Create DataFrame
-    df_trial = pd.DataFrame({
-        'patient_id': range(n_patients),
-        'age': age,
-        'gender': gender,
-        'treatment': treatment,
-        'baseline_bp': baseline_bp,
-        'final_bp': final_bp,
-        'baseline_chol': baseline_chol,
-        'final_chol': final_chol,
-        'bp_change': -bp_reduction,
-        'chol_change': -chol_reduction
-    })
-    
-    return df_trial
+Clinical trials are the foundation of evidence-based medicine.
 
-df_trial = clinical_trial_simulation()
+#### Phase I Trials
 
-print("Clinical Trial Simulation")
-print(f"Number of patients: {len(df_trial)}")
-print(f"Treatment group size: {df_trial['treatment'].sum()}")
-print(f"Control group size: {(1 - df_trial['treatment']).sum()}")
+**Purpose**: Safety and dose finding
+**Design**: Dose escalation
+**Sample size**: 20-80 patients
+**Analysis**: Maximum tolerated dose (MTD)
 
-# Analyze clinical trial
-def analyze_clinical_trial(data):
-    """Analyze clinical trial results"""
-    
-    # Primary endpoint: Blood pressure
-    control_bp = data[data['treatment'] == 0]['bp_change']
-    treatment_bp = data[data['treatment'] == 1]['bp_change']
-    
-    bp_effect = treatment_bp.mean() - control_bp.mean()
-    bp_t_stat, bp_p_value = stats.ttest_ind(treatment_bp, control_bp)
-    
-    # Secondary endpoint: Cholesterol
-    control_chol = data[data['treatment'] == 0]['chol_change']
-    treatment_chol = data[data['treatment'] == 1]['chol_change']
-    
-    chol_effect = treatment_chol.mean() - control_chol.mean()
-    chol_t_stat, chol_p_value = stats.ttest_ind(treatment_chol, control_chol)
-    
-    # Subgroup analysis
-    male_data = data[data['gender'] == 1]
-    female_data = data[data['gender'] == 0]
-    
-    male_effect = (male_data[male_data['treatment'] == 1]['bp_change'].mean() - 
-                  male_data[male_data['treatment'] == 0]['bp_change'].mean())
-    female_effect = (female_data[female_data['treatment'] == 1]['bp_change'].mean() - 
-                    female_data[female_data['treatment'] == 0]['bp_change'].mean())
-    
-    return {
-        'bp_effect': bp_effect,
-        'bp_p_value': bp_p_value,
-        'chol_effect': chol_effect,
-        'chol_p_value': chol_p_value,
-        'male_effect': male_effect,
-        'female_effect': female_effect
-    }
+#### Phase II Trials
 
-trial_results = analyze_clinical_trial(df_trial)
+**Purpose**: Efficacy and safety
+**Design**: Single-arm or randomized
+**Sample size**: 100-300 patients
+**Analysis**: Response rate, progression-free survival
 
-print(f"\nClinical Trial Results:")
-print(f"Blood pressure effect: {trial_results['bp_effect']:.2f} mmHg (p={trial_results['bp_p_value']:.4f})")
-print(f"Cholesterol effect: {trial_results['chol_effect']:.2f} mg/dL (p={trial_results['chol_p_value']:.4f})")
-print(f"Male subgroup effect: {trial_results['male_effect']:.2f} mmHg")
-print(f"Female subgroup effect: {trial_results['female_effect']:.2f} mmHg")
+#### Phase III Trials
 
-# Visualize clinical trial results
-plt.figure(figsize=(15, 10))
+**Purpose**: Confirmatory efficacy
+**Design**: Randomized controlled trial
+**Sample size**: 300-3000 patients
+**Analysis**: Primary and secondary endpoints
 
-# Primary endpoint
-plt.subplot(2, 3, 1)
-control_bp = df_trial[df_trial['treatment'] == 0]['bp_change']
-treatment_bp = df_trial[df_trial['treatment'] == 1]['bp_change']
-plt.boxplot([control_bp, treatment_bp], labels=['Control', 'Treatment'])
-plt.ylabel('Blood Pressure Change (mmHg)')
-plt.title('Primary Endpoint - Blood Pressure')
+#### Example: Cancer Drug Trial
 
-# Secondary endpoint
-plt.subplot(2, 3, 2)
-control_chol = df_trial[df_trial['treatment'] == 0]['chol_change']
-treatment_chol = df_trial[df_trial['treatment'] == 1]['chol_change']
-plt.boxplot([control_chol, treatment_chol], labels=['Control', 'Treatment'])
-plt.ylabel('Cholesterol Change (mg/dL)')
-plt.title('Secondary Endpoint - Cholesterol')
+**Phase I**: Dose escalation (20 patients)
+**Phase II**: Efficacy in specific cancer type (150 patients)
+**Phase III**: Confirmatory trial (500 patients per arm)
 
-# Subgroup analysis
-plt.subplot(2, 3, 3)
-male_control = df_trial[(df_trial['treatment'] == 0) & (df_trial['gender'] == 1)]['bp_change']
-male_treatment = df_trial[(df_trial['treatment'] == 1) & (df_trial['gender'] == 1)]['bp_change']
-female_control = df_trial[(df_trial['treatment'] == 0) & (df_trial['gender'] == 0)]['bp_change']
-female_treatment = df_trial[(df_trial['treatment'] == 1) & (df_trial['gender'] == 0)]['bp_change']
+**Endpoints**:
+- **Primary**: Overall survival
+- **Secondary**: Progression-free survival, quality of life
 
-plt.boxplot([male_control, male_treatment, female_control, female_treatment], 
-           labels=['Male\nControl', 'Male\nTreatment', 'Female\nControl', 'Female\nTreatment'])
-plt.ylabel('Blood Pressure Change (mmHg)')
-plt.title('Subgroup Analysis')
+### Agricultural Experiments
 
-# Baseline characteristics
-plt.subplot(2, 3, 4)
-plt.hist(df_trial[df_trial['treatment'] == 0]['age'], alpha=0.7, label='Control', bins=15)
-plt.hist(df_trial[df_trial['treatment'] == 1]['age'], alpha=0.7, label='Treatment', bins=15)
-plt.xlabel('Age')
-plt.ylabel('Frequency')
-plt.title('Age Distribution')
-plt.legend()
+Agricultural experiments test new varieties, fertilizers, and management practices.
 
-# Treatment effects
-plt.subplot(2, 3, 5)
-effects = ['BP Effect', 'Chol Effect', 'Male Effect', 'Female Effect']
-effect_values = [trial_results['bp_effect'], trial_results['chol_effect'], 
-                trial_results['male_effect'], trial_results['female_effect']]
-colors = ['red' if effect < 0 else 'green' for effect in effect_values]
+#### Split-Plot Design
 
-plt.bar(effects, effect_values, color=colors, alpha=0.7)
-plt.axhline(0, color='black', linestyle='-', alpha=0.7)
-plt.ylabel('Treatment Effect')
-plt.title('Treatment Effects')
-plt.xticks(rotation=45)
+**Whole plots**: Large areas (e.g., irrigation methods)
+**Subplots**: Smaller areas within whole plots (e.g., varieties)
 
-# P-values
-plt.subplot(2, 3, 6)
-endpoints = ['Blood Pressure', 'Cholesterol']
-p_values = [trial_results['bp_p_value'], trial_results['chol_p_value']]
-colors = ['red' if p < 0.05 else 'blue' for p in p_values]
-
-plt.bar(endpoints, p_values, color=colors, alpha=0.7)
-plt.axhline(0.05, color='red', linestyle='--', alpha=0.7, label='α = 0.05')
-plt.ylabel('P-value')
-plt.title('Statistical Significance')
-plt.legend()
-
-plt.tight_layout()
-plt.show()
+**Model**:
+```math
+Y_{ijk} = \mu + \alpha_i + \beta_j + (\alpha\beta)_{ij} + \gamma_k + (\alpha\gamma)_{ik} + \epsilon_{ijk}
 ```
+
+Where:
+- $`\alpha_i`$ = whole plot effect
+- $`\beta_j`$ = subplot effect
+- $`\gamma_k`$ = block effect
+
+#### Example: Crop Yield Study
+
+**Whole plots**: Irrigation methods (drip, sprinkler)
+**Subplots**: Varieties (A, B, C, D)
+**Blocks**: Fields
+**Outcome**: Yield (tons/hectare)
+
+### Industrial Experiments
+
+Industrial experiments optimize manufacturing processes.
+
+#### Response Surface Methodology
+
+**First-order model**:
+```math
+Y = \beta_0 + \sum_{i=1}^k \beta_i X_i + \epsilon
+```
+
+**Second-order model**:
+```math
+Y = \beta_0 + \sum_{i=1}^k \beta_i X_i + \sum_{i=1}^k \beta_{ii} X_i^2 + \sum_{i<j} \beta_{ij} X_i X_j + \epsilon
+```
+
+#### Example: Chemical Process
+
+**Factors**: Temperature, pressure, catalyst concentration
+**Response**: Yield percentage
+**Design**: Central composite design
+**Analysis**: Response surface optimization
+
+### Social Science Experiments
+
+Social science experiments study human behavior and decision-making.
+
+#### Field Experiments
+
+**Natural settings**: Real-world environments
+**Randomization**: Natural or artificial
+**Outcomes**: Behavioral measures
+
+#### Laboratory Experiments
+
+**Controlled environment**: Laboratory settings
+**Randomization**: Computer-generated
+**Outcomes**: Response times, choices
+
+#### Example: Behavioral Economics
+
+**Study**: Nudge interventions for retirement savings
+**Treatment**: Automatic enrollment vs. opt-in
+**Control**: Standard enrollment process
+**Outcome**: Participation rate
 
 ## Practice Problems
 
-1. **RCT Design**: Create functions to design and analyze different types of randomized controlled trials.
+### Problem 1: RCT Design
 
-2. **Factorial Analysis**: Implement comprehensive factorial design analysis with interaction testing.
+**Objective**: Create functions to design and analyze different types of randomized controlled trials.
 
-3. **Power Analysis**: Build power analysis tools for different experimental designs and effect sizes.
+**Tasks**:
+1. Implement simple randomization algorithms
+2. Create stratified randomization functions
+3. Add cluster randomization analysis
+4. Include power analysis for different designs
+5. Add covariate adjustment methods
 
-4. **Sequential Testing**: Develop sequential testing frameworks for early stopping in experiments.
+**Example Implementation**:
+```python
+def design_rct(n_treatment, n_control, stratification_vars=None):
+    """
+    Design a randomized controlled trial.
+    
+    Returns: treatment assignments, analysis plan, power calculations
+    """
+    # Implementation here
+```
+
+### Problem 2: Factorial Analysis
+
+**Objective**: Implement comprehensive factorial design analysis.
+
+**Tasks**:
+1. Create factorial design generators
+2. Add ANOVA analysis for factorial designs
+3. Implement interaction testing
+4. Include fractional factorial designs
+5. Add response surface methodology
+
+### Problem 3: Power Analysis
+
+**Objective**: Build power analysis tools for different experimental designs.
+
+**Tasks**:
+1. Implement power calculations for t-tests
+2. Add power analysis for proportions
+3. Create power analysis for factorial designs
+4. Include multiple testing corrections
+5. Add sequential testing methods
+
+### Problem 4: Sequential Testing
+
+**Objective**: Develop sequential testing frameworks for early stopping.
+
+**Tasks**:
+1. Implement SPRT algorithm
+2. Add group sequential methods
+3. Create multi-armed bandit algorithms
+4. Include Bayesian sequential testing
+5. Add monitoring and stopping rules
+
+### Problem 5: Real-World Experimental Design
+
+**Objective**: Apply experimental design principles to real problems.
+
+**Tasks**:
+1. Choose application area (clinical, agricultural, industrial)
+2. Design appropriate experiment
+3. Perform power analysis
+4. Create analysis plan
+5. Write comprehensive design report
 
 ## Further Reading
 
-- "Design and Analysis of Experiments" by Douglas C. Montgomery
-- "Statistics for Experimenters" by Box, Hunter, and Hunter
-- "Experimental Design" by Roger E. Kirk
-- "A/B Testing: The Most Powerful Way to Turn Clicks Into Customers" by Dan Siroker and Pete Koomen
+### Books
+- **"Design and Analysis of Experiments"** by Douglas C. Montgomery
+- **"Statistics for Experimenters"** by Box, Hunter, and Hunter
+- **"Experimental Design"** by Roger E. Kirk
+- **"A/B Testing: The Most Powerful Way to Turn Clicks Into Customers"** by Dan Siroker and Pete Koomen
+- **"Clinical Trials: A Methodologic Perspective"** by Steven Piantadosi
+
+### Online Resources
+- **RCT Registry**: ClinicalTrials.gov
+- **Experimental Design Software**: JMP, Minitab, R packages
+- **A/B Testing Platforms**: Optimizely, Google Optimize
+- **Statistical Computing**: R, Python, SAS
+
+### Advanced Topics
+- **Adaptive Designs**: Response-adaptive randomization
+- **Bayesian Experimental Design**: Optimal design under uncertainty
+- **Causal Inference**: Rubin's potential outcomes framework
+- **Machine Learning**: Experimental design for ML systems
+- **Multi-Objective Optimization**: Balancing multiple outcomes
 
 ## Key Takeaways
 
+### Fundamental Concepts
 - **Randomized controlled trials** are the gold standard for establishing causality
 - **Factorial designs** efficiently test multiple factors and their interactions
 - **Blocking** reduces variability and increases statistical power
@@ -1176,4 +913,33 @@ plt.show()
 - **Multiple endpoints** require careful consideration of multiple testing
 - **Subgroup analysis** can reveal important treatment effect heterogeneity
 
-In the next chapter, we'll explore statistical learning, including cross-validation, model selection, and ensemble methods. 
+### Mathematical Tools
+- **Potential outcomes framework** provides foundation for causal inference
+- **ANOVA** analyzes factorial designs and interactions
+- **Power analysis** determines required sample sizes
+- **Sequential testing** enables early stopping in experiments
+- **Multi-armed bandits** balance exploration and exploitation
+
+### Applications
+- **Clinical trials** establish safety and efficacy of medical treatments
+- **Agricultural experiments** optimize crop production and management
+- **Industrial experiments** improve manufacturing processes
+- **Social science experiments** study human behavior and decision-making
+- **Digital optimization** improves user experiences and business outcomes
+
+### Best Practices
+- **Always randomize** when possible to ensure comparability
+- **Use appropriate blocking** to control for known sources of variation
+- **Calculate power** before conducting experiments
+- **Plan for multiple testing** when analyzing multiple endpoints
+- **Monitor experiments** for early stopping opportunities
+- **Document procedures** for reproducibility and transparency
+
+### Next Steps
+In the following chapters, we'll build on experimental design foundations to explore:
+- **Statistical Learning**: Cross-validation, model selection, and ensemble methods
+- **Causal Inference**: Advanced methods for establishing causality
+- **Machine Learning**: Experimental design for ML systems
+- **Advanced Topics**: Specialized methods for complex experimental scenarios
+
+Remember that experimental design is not just about statistical methods—it's about creating fair comparisons that allow us to make valid causal inferences. The principles and methods covered in this chapter provide the foundation for rigorous scientific investigation and evidence-based decision making. 
