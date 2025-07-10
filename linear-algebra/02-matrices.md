@@ -83,7 +83,7 @@ Multiplying a matrix by a scalar multiplies each element:
 
 **Geometric Interpretation:**
 - Scalar multiplication scales the linear transformation.
-- $`(cA)\vec{x} = c(A\vec{x})`$
+- $`(cA)\vec{x}`$ = c($`A\vec{x}`$)
 
 ### Matrix Multiplication
 
