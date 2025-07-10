@@ -516,9 +516,9 @@ The Metropolis-Hastings algorithm is the most general MCMC method.
 1. **Initialize**: Start at $`\theta^{(0)}`$
 2. **Propose**: Generate candidate $`\theta^*`$ from proposal distribution $`q(\theta^* | \theta^{(t)})`$
 3. **Accept/Reject**: Calculate acceptance probability:
-   ```math
-   \alpha = \min\left(1, \frac{f(\theta^* | D) q(\theta^{(t)} | \theta^*)}{f(\theta^{(t)} | D) q(\theta^* | \theta^{(t)})}\right)
-   ```
+```math
+\alpha = \min\left(1, \frac{f(\theta^* | D) q(\theta^{(t)} | \theta^*)}{f(\theta^{(t)} | D) q(\theta^* | \theta^{(t)})}\right)
+```
 4. **Update**: $`\theta^{(t+1)} = \theta^*`$ with probability α, otherwise $`\theta^{(t+1)} = \theta^{(t)}`$
 5. **Repeat**: Return to step 2
 
@@ -548,9 +548,9 @@ For parameters $`\theta = (\theta_1, \ldots, \theta_p)`$:
 
 1. **Initialize**: $`\theta^{(0)} = (\theta_1^{(0)}, \ldots, \theta_p^{(0)})`$
 2. **Sample**: For each i = 1, ..., p:
-   ```math
-   \theta_i^{(t+1)} \sim f(\theta_i | \theta_1^{(t+1)}, \ldots, \theta_{i-1}^{(t+1)}, \theta_{i+1}^{(t)}, \ldots, \theta_p^{(t)}, D)
-   ```
+```math
+\theta_i^{(t+1)} \sim f(\theta_i | \theta_1^{(t+1)}, \ldots, \theta_{i-1}^{(t+1)}, \theta_{i+1}^{(t)}, \ldots, \theta_p^{(t)}, D)
+```
 3. **Repeat**: Return to step 2
 
 #### Example: Normal-Normal Model
