@@ -1,9 +1,5 @@
 # Numerical Linear Algebra
 
-[![Chapter](https://img.shields.io/badge/Chapter-9-blue.svg)]()
-[![Topic](https://img.shields.io/badge/Topic-Numerical_Linear_Algebra-green.svg)]()
-[![Difficulty](https://img.shields.io/badge/Difficulty-Advanced-red.svg)]()
-
 ## Introduction
 
 Numerical linear algebra is the study of algorithms for performing linear algebra computations on computers with finite precision arithmetic. This field bridges the gap between theoretical linear algebra and practical computational methods, addressing issues of numerical stability, computational efficiency, and algorithmic complexity.
@@ -39,19 +35,23 @@ Numerical issues can be understood geometrically:
 ### Mathematical Foundation
 
 **Condition Number:**
-The condition number measures how sensitive a problem is to perturbations in the input data. For a matrix A, the condition number is:
+The condition number measures how sensitive a problem is to perturbations in the input data. For a matrix $`A`$, the condition number is:
+```math
+\kappa(A) = \|A\| \cdot \|A^{-1}\|
+```
 
-κ(A) = ||A|| · ||A⁻¹||
-
-where ||·|| is a matrix norm (typically the 2-norm).
+where $`\|\cdot\|`$ is a matrix norm (typically the 2-norm).
 
 **Error Analysis:**
-For the linear system Ax = b, if we perturb b by δb, the solution changes by δx:
-
-(A + δA)(x + δx) = b + δb
+For the linear system $`Ax = b`$, if we perturb $`b`$ by $`\delta b`$, the solution changes by $`\delta x`$:
+```math
+(A + \delta A)(x + \delta x) = b + \delta b
+```
 
 The relative error bound is:
-||δx||/||x|| ≤ κ(A) · (||δA||/||A|| + ||δb||/||b||)
+```math
+\frac{\|\delta x\|}{\|x\|} \leq \kappa(A) \cdot \left(\frac{\|\delta A\|}{\|A\|} + \frac{\|\delta b\|}{\|b\|}\right)
+```
 
 **Backward Error Analysis:**
 Instead of asking "how accurate is the computed solution?", we ask "for what perturbed problem is our computed solution exact?"
@@ -63,1108 +63,974 @@ Instead of asking "how accurate is the computed solution?", we ask "for what per
 
 ### Condition Number Analysis
 
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import linalg
-from scipy.sparse import csr_matrix, csc_matrix, lil_matrix
-from scipy.sparse.linalg import spsolve, eigsh
-import seaborn as sns
-
-def comprehensive_condition_analysis(A, name="Matrix"):
-    """
-    Comprehensive condition number analysis
-    
-    Mathematical approach:
-    κ(A) = ||A||₂ · ||A⁻¹||₂ = σ_max(A) / σ_min(A)
-    
-    Parameters:
-    A: numpy array - matrix to analyze
-    name: str - name for display
-    
-    Returns:
-    dict - comprehensive analysis results
-    """
-    analysis = {}
-    
-    # Basic condition number
-    try:
-        cond_2 = np.linalg.cond(A, p=2)
-        cond_1 = np.linalg.cond(A, p=1)
-        cond_inf = np.linalg.cond(A, p=np.inf)
-        analysis['condition_numbers'] = {
-            '2_norm': cond_2,
-            '1_norm': cond_1,
-            'inf_norm': cond_inf
-        }
-    except np.linalg.LinAlgError:
-        analysis['condition_numbers'] = {'2_norm': np.inf, '1_norm': np.inf, 'inf_norm': np.inf}
-    
-    # SVD-based analysis
-    try:
-        U, S, Vt = np.linalg.svd(A, full_matrices=False)
-        analysis['svd'] = {
-            'singular_values': S,
-            'max_singular': S[0],
-            'min_singular': S[-1],
-            'condition_from_svd': S[0] / S[-1] if S[-1] > 0 else np.inf,
-            'rank': np.sum(S > 1e-10 * S[0])
-        }
-    except np.linalg.LinAlgError:
-        analysis['svd'] = None
-    
-    # Eigenvalue analysis (for square matrices)
-    if A.shape[0] == A.shape[1]:
-        try:
-            eigenvals = np.linalg.eigvals(A)
-            analysis['eigenvalues'] = {
-                'eigenvalues': eigenvals,
-                'max_magnitude': np.max(np.abs(eigenvals)),
-                'min_magnitude': np.min(np.abs(eigenvals)),
-                'condition_from_eigenvalues': np.max(np.abs(eigenvals)) / np.min(np.abs(eigenvals)) if np.min(np.abs(eigenvals)) > 0 else np.inf
-            }
-        except np.linalg.LinAlgError:
-            analysis['eigenvalues'] = None
-    
-    # Numerical rank
-    if analysis['svd']:
-        analysis['numerical_rank'] = analysis['svd']['rank']
-    
-    # Stability assessment
-    cond_2 = analysis['condition_numbers']['2_norm']
-    if cond_2 < 100:
-        stability = "Excellent"
-    elif cond_2 < 1000:
-        stability = "Good"
-    elif cond_2 < 1e6:
-        stability = "Fair"
-    elif cond_2 < 1e12:
-        stability = "Poor"
-    else:
-        stability = "Very Poor"
-    
-    analysis['stability_assessment'] = stability
-    
-    # Print results
-    print(f"\n=== {name} Condition Analysis ===")
-    print(f"Condition number (2-norm): {cond_2:.2e}")
-    print(f"Stability: {stability}")
-    
-    if analysis['svd']:
-        print(f"Singular values range: {S[0]:.2e} to {S[-1]:.2e}")
-        print(f"Numerical rank: {analysis['numerical_rank']}")
-    
-    if analysis['eigenvalues']:
-        eigenvals = analysis['eigenvalues']['eigenvalues']
-        print(f"Eigenvalues range: {np.min(np.abs(eigenvals)):.2e} to {np.max(np.abs(eigenvals)):.2e}")
-    
-    return analysis
-
-def perturbation_analysis(A, b, perturbation_sizes=np.logspace(-15, -1, 15)):
-    """
-    Analyze sensitivity to perturbations
-    
-    Mathematical approach:
-    For Ax = b, perturb b by δb and solve A(x + δx) = b + δb
-    Measure ||δx||/||x|| vs ||δb||/||b||
-    
-    Parameters:
-    A: numpy array - coefficient matrix
-    b: numpy array - right-hand side
-    perturbation_sizes: array - sizes of perturbations to test
-    
-    Returns:
-    dict - perturbation analysis results
-    """
-    # Exact solution
-    x_exact = np.linalg.solve(A, b)
-    
-    # Test different perturbation sizes
-    relative_errors = []
-    amplification_factors = []
-    
-    for eps in perturbation_sizes:
-        # Perturb b
-        b_perturbed = b + eps * np.random.randn(*b.shape)
-        
-        # Solve perturbed system
-        try:
-            x_perturbed = np.linalg.solve(A, b_perturbed)
-            
-            # Compute relative errors
-            rel_error_b = np.linalg.norm(b_perturbed - b) / np.linalg.norm(b)
-            rel_error_x = np.linalg.norm(x_perturbed - x_exact) / np.linalg.norm(x_exact)
-            
-            relative_errors.append(rel_error_x)
-            amplification_factors.append(rel_error_x / rel_error_b if rel_error_b > 0 else np.inf)
-            
-        except np.linalg.LinAlgError:
-            relative_errors.append(np.inf)
-            amplification_factors.append(np.inf)
-    
-    # Theoretical bound
-    cond_A = np.linalg.cond(A)
-    theoretical_bound = cond_A * perturbation_sizes
-    
-    analysis = {
-        'perturbation_sizes': perturbation_sizes,
-        'relative_errors': relative_errors,
-        'amplification_factors': amplification_factors,
-        'theoretical_bound': theoretical_bound,
-        'condition_number': cond_A,
-        'max_amplification': np.max(amplification_factors) if not np.any(np.isinf(amplification_factors)) else np.inf
-    }
-    
-    return analysis
-
-def backward_error_analysis(A, b, x_computed):
-    """
-    Perform backward error analysis
-    
-    Mathematical approach:
-    Find smallest ||δA|| and ||δb|| such that (A + δA)x_computed = b + δb
-    
-    Parameters:
-    A: numpy array - original coefficient matrix
-    b: numpy array - original right-hand side
-    x_computed: numpy array - computed solution
-    
-    Returns:
-    dict - backward error analysis
-    """
-    # Compute residual
-    residual = b - A @ x_computed
-    
-    # Backward error for right-hand side
-    backward_error_b = np.linalg.norm(residual) / np.linalg.norm(b)
-    
-    # Backward error for matrix (simplified)
-    # In practice, this requires more sophisticated analysis
-    backward_error_A = backward_error_b  # Simplified approximation
-    
-    # Forward error bound
-    cond_A = np.linalg.cond(A)
-    forward_error_bound = cond_A * backward_error_b
-    
-    # Actual forward error
-    x_exact = np.linalg.solve(A, b)
-    actual_forward_error = np.linalg.norm(x_computed - x_exact) / np.linalg.norm(x_exact)
-    
-    analysis = {
-        'backward_error_b': backward_error_b,
-        'backward_error_A': backward_error_A,
-        'forward_error_bound': forward_error_bound,
-        'actual_forward_error': actual_forward_error,
-        'residual_norm': np.linalg.norm(residual),
-        'condition_number': cond_A
-    }
-    
-    return analysis
-
-def demonstrate_numerical_instability():
-    """
-    Comprehensive demonstration of numerical instability
-    
-    Mathematical examples:
-    1. Hilbert matrix: Classic ill-conditioned matrix
-    2. Vandermonde matrix: Polynomial interpolation matrix
-    3. Random matrices: Statistical analysis
-    4. Structured matrices: Toeplitz, circulant, etc.
-    """
-    
-    # 1. Hilbert matrix (classic example)
-    def hilbert_matrix(n):
-        """Create n×n Hilbert matrix H[i,j] = 1/(i+j+1)"""
-        H = np.zeros((n, n))
-        for i in range(n):
-            for j in range(n):
-                H[i, j] = 1.0 / (i + j + 1)
-        return H
-    
-    # 2. Vandermonde matrix
-    def vandermonde_matrix(x, n):
-        """Create Vandermonde matrix V[i,j] = x[i]^j"""
-        V = np.zeros((len(x), n))
-        for i in range(len(x)):
-            for j in range(n):
-                V[i, j] = x[i]**j
-        return V
-    
-    # 3. Toeplitz matrix
-    def toeplitz_matrix(c, r):
-        """Create Toeplitz matrix with first column c and first row r"""
-        n = len(c)
-        T = np.zeros((n, n))
-        for i in range(n):
-            for j in range(n):
-                if i >= j:
-                    T[i, j] = c[i - j]
-                else:
-                    T[i, j] = r[j - i]
-        return T
-    
-    # Test different matrix types
-    matrix_types = {
-        'Identity': np.eye(5),
-        'Random': np.random.randn(5, 5),
-        'Hilbert (5×5)': hilbert_matrix(5),
-        'Hilbert (10×10)': hilbert_matrix(10),
-        'Vandermonde': vandermonde_matrix(np.linspace(0, 1, 5), 5),
-        'Toeplitz': toeplitz_matrix([1, 0.5, 0.25, 0.125, 0.0625], [1, 0.5, 0.25, 0.125, 0.0625])
-    }
-    
-    # Analyze each matrix
-    analyses = {}
-    for name, A in matrix_types.items():
-        analyses[name] = comprehensive_condition_analysis(A, name)
-    
-    # Test perturbation sensitivity
-    print(f"\n=== Perturbation Sensitivity Analysis ===")
-    
-    # Use Hilbert matrix as example
-    H = hilbert_matrix(10)
-    b = np.ones(10)
-    x_exact = np.linalg.solve(H, b)
-    
-    perturbation_analysis_result = perturbation_analysis(H, b)
-    
-    # Visualize results
-    plt.figure(figsize=(15, 10))
-    
-    # Plot 1: Condition numbers comparison
-    plt.subplot(2, 3, 1)
-    names = list(analyses.keys())
-    cond_numbers = [analyses[name]['condition_numbers']['2_norm'] for name in names]
-    
-    plt.bar(range(len(names)), cond_numbers)
-    plt.xticks(range(len(names)), names, rotation=45, ha='right')
-    plt.ylabel('Condition Number')
-    plt.title('Condition Numbers Comparison')
-    plt.yscale('log')
-    
-    # Plot 2: Perturbation analysis
-    plt.subplot(2, 3, 2)
-    eps = perturbation_analysis_result['perturbation_sizes']
-    rel_errors = perturbation_analysis_result['relative_errors']
-    theoretical = perturbation_analysis_result['theoretical_bound']
-    
-    plt.loglog(eps, rel_errors, 'bo-', label='Actual Error')
-    plt.loglog(eps, theoretical, 'r--', label='Theoretical Bound')
-    plt.xlabel('Perturbation Size')
-    plt.ylabel('Relative Error in Solution')
-    plt.title('Perturbation Sensitivity')
-    plt.legend()
-    plt.grid(True)
-    
-    # Plot 3: Amplification factors
-    plt.subplot(2, 3, 3)
-    amplification = perturbation_analysis_result['amplification_factors']
-    plt.semilogx(eps, amplification, 'go-')
-    plt.axhline(y=perturbation_analysis_result['condition_number'], color='r', linestyle='--', label='Condition Number')
-    plt.xlabel('Perturbation Size')
-    plt.ylabel('Error Amplification Factor')
-    plt.title('Error Amplification')
-    plt.legend()
-    plt.grid(True)
-    
-    # Plot 4: Singular values for Hilbert matrix
-    plt.subplot(2, 3, 4)
-    S = analyses['Hilbert (10×10)']['svd']['singular_values']
-    plt.semilogy(range(1, len(S)+1), S, 'mo-')
-    plt.xlabel('Index')
-    plt.ylabel('Singular Value')
-    plt.title('Hilbert Matrix Singular Values')
-    plt.grid(True)
-    
-    # Plot 5: Eigenvalue distribution for random matrix
-    plt.subplot(2, 3, 5)
-    eigenvals = analyses['Random']['eigenvalues']['eigenvalues']
-    plt.scatter(eigenvals.real, eigenvals.imag, alpha=0.6)
-    plt.xlabel('Real Part')
-    plt.ylabel('Imaginary Part')
-    plt.title('Random Matrix Eigenvalues')
-    plt.grid(True)
-    plt.axis('equal')
-    
-    # Plot 6: Stability assessment
-    plt.subplot(2, 3, 6)
-    stability_levels = ['Excellent', 'Good', 'Fair', 'Poor', 'Very Poor']
-    stability_counts = {level: 0 for level in stability_levels}
-    
-    for name, analysis in analyses.items():
-        stability = analysis['stability_assessment']
-        stability_counts[stability] += 1
-    
-    plt.bar(stability_levels, [stability_counts[level] for level in stability_levels])
-    plt.ylabel('Number of Matrices')
-    plt.title('Stability Assessment')
-    plt.xticks(rotation=45)
-    
-    plt.tight_layout()
-    plt.show()
-    
-    # Test solving linear systems with different methods
-    print(f"\n=== Linear System Solution Comparison ===")
-    
-    # Test with Hilbert matrix
-    H = hilbert_matrix(8)
-    b = np.ones(8)
-    x_true = np.linalg.solve(H, b)
-    
-    # Different solution methods
-    methods = {
-        'Direct LU': lambda A, b: np.linalg.solve(A, b),
-        'QR Decomposition': lambda A, b: np.linalg.solve(A.T @ A, A.T @ b),
-        'SVD Pseudo-inverse': lambda A, b: np.linalg.pinv(A) @ b,
-        'Tikhonov Regularization': lambda A, b: np.linalg.solve(A.T @ A + 1e-6 * np.eye(A.shape[1]), A.T @ b)
-    }
-    
-    results = {}
-    for method_name, method_func in methods.items():
-        try:
-            x_computed = method_func(H, b)
-            error = np.linalg.norm(x_computed - x_true) / np.linalg.norm(x_true)
-            backward_analysis = backward_error_analysis(H, b, x_computed)
-            
-            results[method_name] = {
-                'error': error,
-                'backward_error': backward_analysis['backward_error_b'],
-                'residual': backward_analysis['residual_norm']
-            }
-            
-            print(f"{method_name}:")
-            print(f"  Relative error: {error:.2e}")
-            print(f"  Backward error: {backward_analysis['backward_error_b']:.2e}")
-            print(f"  Residual norm: {backward_analysis['residual_norm']:.2e}")
-            
-        except Exception as e:
-            print(f"{method_name}: Failed - {e}")
-    
-    return analyses, perturbation_analysis_result, results
-
-# Run comprehensive numerical stability demonstration
-print("=== Comprehensive Numerical Stability Analysis ===")
-analyses, perturbation_result, solution_results = demonstrate_numerical_instability()
-
-# Additional analysis: Growth of condition number with matrix size
-print(f"\n=== Condition Number Growth Analysis ===")
-
-sizes = [5, 10, 15, 20, 25]
-hilbert_conditions = []
-vandermonde_conditions = []
-
-for n in sizes:
-    # Hilbert matrix
-    H = np.array([[1.0/(i+j+1) for j in range(n)] for i in range(n)])
-    hilbert_conditions.append(np.linalg.cond(H))
-    
-    # Vandermonde matrix
-    x = np.linspace(0, 1, n)
-    V = np.array([[x[i]**j for j in range(n)] for i in range(n)])
-    vandermonde_conditions.append(np.linalg.cond(V))
-
-plt.figure(figsize=(12, 4))
-
-plt.subplot(1, 2, 1)
-plt.semilogy(sizes, hilbert_conditions, 'bo-', label='Hilbert Matrix')
-plt.xlabel('Matrix Size')
-plt.ylabel('Condition Number')
-plt.title('Condition Number Growth: Hilbert Matrix')
-plt.grid(True)
-plt.legend()
-
-plt.subplot(1, 2, 2)
-plt.semilogy(sizes, vandermonde_conditions, 'ro-', label='Vandermonde Matrix')
-plt.xlabel('Matrix Size')
-plt.ylabel('Condition Number')
-plt.title('Condition Number Growth: Vandermonde Matrix')
-plt.grid(True)
-plt.legend()
-
-plt.tight_layout()
-plt.show()
-
-print(f"Hilbert matrix condition numbers: {hilbert_conditions}")
-print(f"Vandermonde matrix condition numbers: {vandermonde_conditions}")
+**Mathematical Foundation:**
+The condition number can be computed using singular values:
+```math
+\kappa_2(A) = \frac{\sigma_1}{\sigma_n}
 ```
+
+where $`\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_n`$ are the singular values of $`A`$.
+
+**Properties:**
+- $`\kappa(A) \geq 1`$ for any matrix $`A`$
+- $`\kappa(A) = 1`$ if and only if $`A`$ is a multiple of an orthogonal matrix
+- $`\kappa(AB) \leq \kappa(A) \cdot \kappa(B)`$
+- $`\kappa(A^T A) = \kappa(A)^2`$
+
+**Interpretation:**
+- $`\kappa \approx 1`$: Well-conditioned problem
+- $`\kappa \approx 10^6`$: Moderately ill-conditioned
+- $`\kappa \approx 10^{12}`$: Severely ill-conditioned (may lose all precision)
+
+**Examples:**
+1. **Hilbert Matrix**: $`H_{ij} = \frac{1}{i+j-1}`$ has condition number growing exponentially with size
+2. **Identity Matrix**: $`\kappa(I) = 1`$ (perfectly conditioned)
+3. **Random Matrix**: Typically well-conditioned for large matrices
 
 ### Numerical Stability Examples
 
-```python
-def advanced_numerical_stability_examples():
-    """
-    Advanced examples of numerical stability issues and solutions
-    
-    Mathematical concepts:
-    1. Catastrophic cancellation
-    2. Loss of significance
-    3. Algorithm stability
-    4. Preconditioning
-    """
-    
-    # 1. Catastrophic cancellation example
-    print("=== Catastrophic Cancellation Example ===")
-    
-    def quadratic_formula_unstable(a, b, c):
-        """Unstable quadratic formula implementation"""
-        x1 = (-b + np.sqrt(b**2 - 4*a*c)) / (2*a)
-        x2 = (-b - np.sqrt(b**2 - 4*a*c)) / (2*a)
-        return x1, x2
-    
-    def quadratic_formula_stable(a, b, c):
-        """Stable quadratic formula implementation"""
-        # Use Vieta's formula to avoid cancellation
-        if b >= 0:
-            x1 = (-b - np.sqrt(b**2 - 4*a*c)) / (2*a)
-            x2 = c / (a * x1)
-        else:
-            x1 = (-b + np.sqrt(b**2 - 4*a*c)) / (2*a)
-            x2 = c / (a * x1)
-        return x1, x2
-    
-    # Test with nearly equal roots
-    a, b, c = 1, -1000.001, 1000
-    
-    x1_unstable, x2_unstable = quadratic_formula_unstable(a, b, c)
-    x1_stable, x2_stable = quadratic_formula_stable(a, b, c)
-    
-    print(f"Unstable: x1 = {x1_unstable:.10f}, x2 = {x2_unstable:.10f}")
-    print(f"Stable: x1 = {x1_stable:.10f}, x2 = {x2_stable:.10f}")
-    print(f"Product (should be c/a = {c/a}):")
-    print(f"  Unstable: {x1_unstable * x2_unstable:.10f}")
-    print(f"  Stable: {x1_stable * x2_stable:.10f}")
-    
-    # 2. Loss of significance in matrix operations
-    print(f"\n=== Loss of Significance in Matrix Operations ===")
-    
-    def matrix_conditioning_example():
-        """Demonstrate matrix conditioning and its effects"""
-        
-        # Create a poorly conditioned matrix
-        n = 5
-        A = np.random.randn(n, n)
-        # Make it nearly singular
-        A[:, -1] = A[:, 0] + 1e-10 * np.random.randn(n)
-        
-        # Create right-hand side
-        b = np.ones(n)
-        
-        # Solve with different methods
-        methods = {
-            'Direct': lambda: np.linalg.solve(A, b),
-            'QR': lambda: np.linalg.solve(A.T @ A, A.T @ b),
-            'SVD': lambda: np.linalg.pinv(A) @ b,
-            'Regularized': lambda: np.linalg.solve(A.T @ A + 1e-8 * np.eye(n), A.T @ b)
-        }
-        
-        results = {}
-        for name, method in methods.items():
-            try:
-                x = method()
-                residual = np.linalg.norm(A @ x - b)
-                results[name] = {'x': x, 'residual': residual}
-                print(f"{name}: residual = {residual:.2e}")
-            except Exception as e:
-                print(f"{name}: Failed - {e}")
-        
-        return results
-    
-    matrix_results = matrix_conditioning_example()
-    
-    # 3. Algorithm stability comparison
-    print(f"\n=== Algorithm Stability Comparison ===")
-    
-    def compare_linear_system_solvers():
-        """Compare different linear system solvers for stability"""
-        
-        # Create test problems
-        problems = {
-            'Well-conditioned': np.random.randn(10, 10),
-            'Ill-conditioned': np.array([[1, 1], [1, 1.0001]]),
-            'Singular': np.array([[1, 1], [1, 1]])
-        }
-        
-        solvers = {
-            'LU': lambda A, b: np.linalg.solve(A, b),
-            'QR': lambda A, b: np.linalg.solve(A.T @ A, A.T @ b),
-            'SVD': lambda A, b: np.linalg.pinv(A) @ b,
-            'Tikhonov': lambda A, b: np.linalg.solve(A.T @ A + 1e-6 * np.eye(A.shape[1]), A.T @ b)
-        }
-        
-        for problem_name, A in problems.items():
-            print(f"\n{problem_name} problem:")
-            print(f"Condition number: {np.linalg.cond(A):.2e}")
-            
-            b = np.ones(A.shape[0])
-            
-            for solver_name, solver in solvers.items():
-                try:
-                    x = solver(A, b)
-                    residual = np.linalg.norm(A @ x - b)
-                    print(f"  {solver_name}: residual = {residual:.2e}")
-                except Exception as e:
-                    print(f"  {solver_name}: Failed - {e}")
-    
-    compare_linear_system_solvers()
-    
-    # 4. Preconditioning example
-    print(f"\n=== Preconditioning Example ===")
-    
-    def preconditioning_demo():
-        """Demonstrate the effect of preconditioning"""
-        
-        # Create a poorly conditioned system
-        n = 100
-        A = np.random.randn(n, n)
-        A = A.T @ A + 1e-6 * np.eye(n)  # Make it symmetric positive definite but ill-conditioned
-        
-        b = np.random.randn(n)
-        
-        # Without preconditioning
-        x_direct = np.linalg.solve(A, b)
-        
-        # With diagonal preconditioning
-        D = np.diag(np.sqrt(np.diag(A)))
-        D_inv = np.diag(1.0 / np.sqrt(np.diag(A)))
-        
-        A_precond = D_inv @ A @ D_inv
-        b_precond = D_inv @ b
-        
-        x_precond_raw = np.linalg.solve(A_precond, b_precond)
-        x_precond = D_inv @ x_precond_raw
-        
-        # Compare residuals
-        residual_direct = np.linalg.norm(A @ x_direct - b)
-        residual_precond = np.linalg.norm(A @ x_precond - b)
-        
-        print(f"Condition number (original): {np.linalg.cond(A):.2e}")
-        print(f"Condition number (preconditioned): {np.linalg.cond(A_precond):.2e}")
-        print(f"Residual (direct): {residual_direct:.2e}")
-        print(f"Residual (preconditioned): {residual_precond:.2e}")
-        
-        return A, A_precond, x_direct, x_precond
-    
-    A_orig, A_precond, x_direct, x_precond = preconditioning_demo()
-    
-    # Visualize the effect of preconditioning
-    plt.figure(figsize=(12, 4))
-    
-    # Original matrix spectrum
-    eigenvals_orig = np.linalg.eigvals(A_orig)
-    plt.subplot(1, 3, 1)
-    plt.hist(eigenvals_orig, bins=20, alpha=0.7, label='Original')
-    plt.xlabel('Eigenvalue')
-    plt.ylabel('Frequency')
-    plt.title('Original Matrix Spectrum')
-    plt.legend()
-    
-    # Preconditioned matrix spectrum
-    eigenvals_precond = np.linalg.eigvals(A_precond)
-    plt.subplot(1, 3, 2)
-    plt.hist(eigenvals_precond, bins=20, alpha=0.7, label='Preconditioned', color='orange')
-    plt.xlabel('Eigenvalue')
-    plt.ylabel('Frequency')
-    plt.title('Preconditioned Matrix Spectrum')
-    plt.legend()
-    
-    # Condition number comparison
-    plt.subplot(1, 3, 3)
-    cond_orig = np.linalg.cond(A_orig)
-    cond_precond = np.linalg.cond(A_precond)
-    plt.bar(['Original', 'Preconditioned'], [cond_orig, cond_precond])
-    plt.ylabel('Condition Number')
-    plt.title('Condition Number Comparison')
-    plt.yscale('log')
-    
-    plt.tight_layout()
-    plt.show()
-
-# Run advanced numerical stability examples
-advanced_numerical_stability_examples()
+**Example 1: Linear System Solution**
+Consider the system:
+```math
+\begin{bmatrix} 1 & 1 \\ 1 & 1.0001 \end{bmatrix} \begin{bmatrix} x_1 \\ x_2 \end{bmatrix} = \begin{bmatrix} 2 \\ 2.0001 \end{bmatrix}
 ```
+
+The exact solution is $`x_1 = 1`$, $`x_2 = 1`$. However, small perturbations can cause large changes in the solution due to the high condition number.
+
+**Example 2: Matrix Inversion**
+For a nearly singular matrix:
+```math
+A = \begin{bmatrix} 1 & 1 \\ 1 & 1 + \epsilon \end{bmatrix}
+```
+
+The condition number is $`\kappa(A) \approx \frac{2}{\epsilon}`$, which becomes very large as $`\epsilon \to 0`$.
+
+**Example 3: Eigenvalue Computation**
+The eigenvalues of a matrix can be very sensitive to perturbations. For example, the matrix:
+```math
+A = \begin{bmatrix} 1 & 1 \\ 0 & 1 + \epsilon \end{bmatrix}
+```
+
+has eigenvalues $`1`$ and $`1 + \epsilon`$, but small perturbations can cause complex eigenvalues.
 
 ## 2. Iterative Methods for Linear Systems
 
 ### Jacobi Method
+
+**Mathematical Foundation:**
+The Jacobi method decomposes matrix $`A`$ as $`A = D + L + U`$, where:
+- $`D`$ is the diagonal of $`A`$
+- $`L`$ is the strictly lower triangular part
+- $`U`$ is the strictly upper triangular part
+
+**Iteration Formula:**
+```math
+x^{(k+1)} = D^{-1}(b - (L + U)x^{(k)})
+```
+
+**Component-wise Form:**
+```math
+x_i^{(k+1)} = \frac{1}{a_{ii}}\left(b_i - \sum_{j \neq i} a_{ij} x_j^{(k)}\right)
+```
+
+**Convergence:**
+- **Sufficient Condition**: $`A`$ is strictly diagonally dominant
+- **Necessary Condition**: $`\rho(D^{-1}(L + U)) < 1`$ where $`\rho`$ is the spectral radius
+
+**Algorithm:**
+1. **Initialize**: $`x^{(0)} = 0`$
+2. **For each iteration** $`k = 0, 1, \ldots`$:
+   - $`x^{(k+1)} = D^{-1}(b - (L + U)x^{(k)})`$
+   - Check convergence: $`\|x^{(k+1)} - x^{(k)}\| < \epsilon`$
+3. **Return**: $`x^{(k+1)}`$
+
+### Gauss-Seidel Method
+
+**Mathematical Foundation:**
+Gauss-Seidel uses the most recent values available:
+```math
+x^{(k+1)} = (D + L)^{-1}(b - U x^{(k)})
+```
+
+**Component-wise Form:**
+```math
+x_i^{(k+1)} = \frac{1}{a_{ii}}\left(b_i - \sum_{j < i} a_{ij} x_j^{(k+1)} - \sum_{j > i} a_{ij} x_j^{(k)}\right)
+```
+
+**Advantages over Jacobi:**
+- Generally faster convergence
+- Uses updated values immediately
+- Better for parallel implementation
+
+**Convergence:**
+- **Sufficient Condition**: $`A`$ is symmetric positive definite
+- **Rate**: Typically faster than Jacobi for well-conditioned systems
+
+### Conjugate Gradient Method
+
+**Mathematical Foundation:**
+Conjugate gradient is an iterative method for symmetric positive definite systems that minimizes the quadratic form:
+```math
+\phi(x) = \frac{1}{2} x^T A x - x^T b
+```
+
+**Algorithm:**
+1. **Initialize**: $`x^{(0)} = 0`$, $`r^{(0)} = b`$, $`p^{(0)} = r^{(0)}`$
+2. **For each iteration** $`k = 0, 1, \ldots, n-1`$:
+   - $`\alpha_k = \frac{(r^{(k)})^T r^{(k)}}{(p^{(k)})^T A p^{(k)}}`$
+   - $`x^{(k+1)} = x^{(k)} + \alpha_k p^{(k)}`$
+   - $`r^{(k+1)} = r^{(k)} - \alpha_k A p^{(k)}`$
+   - $`\beta_k = \frac{(r^{(k+1)})^T r^{(k+1)}}{(r^{(k)})^T r^{(k)}}`$
+   - $`p^{(k+1)} = r^{(k+1)} + \beta_k p^{(k)}`$
+
+**Properties:**
+- **Exact Solution**: Converges in at most $`n`$ iterations (in exact arithmetic)
+- **Optimality**: Minimizes error in $`A`$-norm at each step
+- **Efficiency**: Only requires matrix-vector products
+
+**Convergence Rate:**
+```math
+\|x^{(k)} - x^*\|_A \leq 2\left(\frac{\sqrt{\kappa(A)} - 1}{\sqrt{\kappa(A)} + 1}\right)^k \|x^{(0)} - x^*\|_A
+```
+
+## 3. Sparse Matrix Operations
+
+### Sparse Matrix Formats
+
+**Mathematical Foundation:**
+Sparse matrices have most entries zero, allowing efficient storage and computation.
+
+**Common Formats:**
+
+**1. Coordinate Format (COO):**
+- Store triplets $`(i, j, value)`$ for non-zero entries
+- Memory: $`O(nnz)`$ where $`nnz`$ is number of non-zeros
+- Good for construction, poor for operations
+
+**2. Compressed Sparse Row (CSR):**
+- Row pointers, column indices, values
+- Memory: $`O(nnz + n)`$
+- Efficient for matrix-vector multiplication
+
+**3. Compressed Sparse Column (CSC):**
+- Column pointers, row indices, values
+- Memory: $`O(nnz + n)`$
+- Efficient for column operations
+
+**4. Diagonal Format (DIA):**
+- Store diagonals with offsets
+- Memory: $`O(nd)`$ where $`d`$ is number of diagonals
+- Efficient for banded matrices
+
+### Sparse Matrix-Vector Multiplication
+
+**Mathematical Foundation:**
+For sparse matrix $`A`$ and vector $`x`$:
+```math
+y_i = \sum_{j: a_{ij} \neq 0} a_{ij} x_j
+```
+
+**CSR Implementation:**
 ```python
-def jacobi_iteration(A, b, x0=None, max_iter=1000, tol=1e-6):
-    """Solve Ax = b using Jacobi iteration"""
-    n = len(b)
-    if x0 is None:
-        x0 = np.zeros(n)
+def csr_matvec(A_data, A_indices, A_indptr, x):
+    n = len(A_indptr) - 1
+    y = np.zeros(n)
     
-    x = x0.copy()
+    for i in range(n):
+        for j in range(A_indptr[i], A_indptr[i+1]):
+            y[i] += A_data[j] * x[A_indices[j]]
+    
+    return y
+```
+
+**Performance Considerations:**
+- **Memory Access Pattern**: Cache-friendly access improves performance
+- **Load Balancing**: Parallel implementation requires careful load balancing
+- **Compression**: Further compression possible for structured sparsity
+
+### Sparse Direct Solvers
+
+**Mathematical Foundation:**
+Sparse direct solvers use matrix factorizations adapted for sparse matrices.
+
+**LU Decomposition for Sparse Matrices:**
+1. **Symbolic Factorization**: Determine sparsity pattern of factors
+2. **Numeric Factorization**: Compute actual values
+3. **Forward/Backward Substitution**: Solve triangular systems
+
+**Fill-in:**
+The process of creating new non-zeros during factorization. Minimizing fill-in is crucial for efficiency.
+
+**Ordering Strategies:**
+- **Minimum Degree**: Minimize fill-in locally
+- **Nested Dissection**: Recursive graph partitioning
+- **Approximate Minimum Degree (AMD)**: Heuristic for large matrices
+
+## 4. Eigenvalue Problems
+
+### Power Iteration
+
+**Mathematical Foundation:**
+Power iteration finds the dominant eigenvalue and eigenvector:
+```math
+x^{(k+1)} = \frac{A x^{(k)}}{\|A x^{(k)}\|_2}
+```
+
+**Convergence:**
+```math
+\|x^{(k)} - v_1\|_2 \leq C \left|\frac{\lambda_2}{\lambda_1}\right|^k
+```
+
+where $`v_1`$ is the dominant eigenvector and $`\lambda_1, \lambda_2`$ are the largest eigenvalues.
+
+**Algorithm:**
+1. **Initialize**: $`x^{(0)}`$ (random vector)
+2. **For each iteration** $`k = 0, 1, \ldots`$:
+   - $`y^{(k+1)} = A x^{(k)}`$
+   - $`x^{(k+1)} = \frac{y^{(k+1)}}{\|y^{(k+1)}\|_2}`$
+   - Check convergence: $`\|x^{(k+1)} - x^{(k)}\|_2 < \epsilon`$
+3. **Eigenvalue**: $`\lambda_1 = \frac{(x^{(k)})^T A x^{(k)}}{(x^{(k)})^T x^{(k)}}`$
+
+**Properties:**
+- **Convergence Rate**: Linear with ratio $`|\lambda_2/\lambda_1|`$
+- **Dominant Eigenvalue**: Finds largest eigenvalue in magnitude
+- **Extensions**: Can find multiple eigenvalues with deflation
+
+### Inverse Iteration
+
+**Mathematical Foundation:**
+Inverse iteration finds eigenvalues closest to a shift $`\mu`$:
+```math
+x^{(k+1)} = \frac{(A - \mu I)^{-1} x^{(k)}}{\|(A - \mu I)^{-1} x^{(k)}\|_2}
+```
+
+**Convergence:**
+```math
+\|x^{(k)} - v_i\|_2 \leq C \left|\frac{\lambda_i - \mu}{\lambda_j - \mu}\right|^k
+```
+
+where $`\lambda_j`$ is the eigenvalue closest to $`\mu`$.
+
+**Algorithm:**
+1. **Initialize**: $`x^{(0)}`$ (random vector), choose shift $`\mu`$
+2. **For each iteration** $`k = 0, 1, \ldots`$:
+   - Solve: $`(A - \mu I) y^{(k+1)} = x^{(k)}`$
+   - Normalize: $`x^{(k+1)} = \frac{y^{(k+1)}}{\|y^{(k+1)}\|_2}`$
+3. **Eigenvalue**: $`\lambda_i = \mu + \frac{1}{(x^{(k)})^T y^{(k+1)}}`$
+
+**Applications:**
+- **Shift-and-Invert**: Find eigenvalues near specific values
+- **Rayleigh Quotient Iteration**: Adaptive shift selection
+- **Deflation**: Remove found eigenvalues to find others
+
+## 5. QR Algorithm for Eigenvalues
+
+### Mathematical Foundation
+
+**QR Decomposition:**
+Every matrix $`A`$ can be written as:
+```math
+A = QR
+```
+
+where $`Q`$ is orthogonal and $`R`$ is upper triangular.
+
+**QR Algorithm:**
+1. **Initialize**: $`A_0 = A`$
+2. **For each iteration** $`k = 0, 1, \ldots`$:
+   - Compute QR decomposition: $`A_k = Q_k R_k`$
+   - Update: $`A_{k+1} = R_k Q_k`$
+3. **Convergence**: $`A_k`$ converges to upper triangular form with eigenvalues on diagonal
+
+**Shifted QR Algorithm:**
+```math
+A_k - \mu_k I = Q_k R_k
+A_{k+1} = R_k Q_k + \mu_k I
+```
+
+**Wilkinson Shift:**
+```math
+\mu_k = a_{nn}^{(k)} - \frac{(a_{n,n-1}^{(k)})^2}{a_{n-1,n-1}^{(k)} - a_{nn}^{(k)}}
+```
+
+**Convergence Properties:**
+- **Global Convergence**: Always converges for symmetric matrices
+- **Local Convergence**: Quadratic convergence for simple eigenvalues
+- **Deflation**: Can deflate converged eigenvalues
+
+### Implementation Details
+
+**Hessenberg Form:**
+Reduce matrix to upper Hessenberg form before QR iterations:
+```math
+A = U^T H U
+```
+
+where $`H`$ is upper Hessenberg (zeros below first subdiagonal).
+
+**Givens Rotations:**
+Use Givens rotations to zero subdiagonal elements:
+```math
+G_{i,i+1} = \begin{bmatrix} c & -s \\ s & c \end{bmatrix}
+```
+
+where $`c = \frac{h_{i,i}}{\sqrt{h_{i,i}^2 + h_{i+1,i}^2}}`$ and $`s = \frac{h_{i+1,i}}{\sqrt{h_{i,i}^2 + h_{i+1,i}^2}}`$.
+
+**Implicit QR:**
+Avoid explicit QR decomposition by applying Givens rotations directly to the matrix.
+
+## 6. Singular Value Decomposition (SVD) for Large Matrices
+
+### Mathematical Foundation
+
+**SVD for Large Matrices:**
+For large matrices, computing full SVD is expensive. We use iterative methods to find partial SVD.
+
+**Power Method for SVD:**
+```math
+u^{(k+1)} = \frac{A v^{(k)}}{\|A v^{(k)}\|_2}
+v^{(k+1)} = \frac{A^T u^{(k+1)}}{\|A^T u^{(k+1)}\|_2}
+```
+
+**Lanczos Method:**
+Build Krylov subspace for $`A^T A`$:
+```math
+\mathcal{K}_k(A^T A, v_1) = \text{span}\{v_1, A^T A v_1, \ldots, (A^T A)^{k-1} v_1\}
+```
+
+**Randomized SVD:**
+1. **Generate**: Random matrix $`\Omega \in \mathbb{R}^{n \times k}`$
+2. **Compute**: $`Y = A \Omega`$
+3. **QR**: $`Y = QR`$
+4. **Project**: $`B = Q^T A`$
+5. **SVD**: $`B = \hat{U} \Sigma V^T`$
+6. **Result**: $`A \approx Q \hat{U} \Sigma V^T`$
+
+**Advantages:**
+- **Efficiency**: $`O(mnk)`$ instead of $`O(mn^2)`$
+- **Accuracy**: Good approximation for top-$`k`$ singular values
+- **Parallelization**: Easy to parallelize
+
+### Applications in Data Science
+
+**Low-Rank Approximation:**
+```math
+A_k = \sum_{i=1}^k \sigma_i u_i v_i^T
+```
+
+**Error Bound:**
+```math
+\|A - A_k\|_F = \sqrt{\sum_{i=k+1}^r \sigma_i^2}
+```
+
+**Randomized PCA:**
+1. **Project**: $`Y = A \Omega`$ where $`\Omega`$ is random
+2. **QR**: $`Y = QR`$
+3. **SVD**: $`Q^T A = U \Sigma V^T`$
+4. **Result**: Principal components are columns of $`QU`$
+
+**Performance Comparison:**
+- **Classical SVD**: $`O(mn^2)`$ time, $`O(mn)`$ memory
+- **Randomized SVD**: $`O(mnk)`$ time, $`O(mk + nk)`$ memory
+- **Accuracy**: Randomized methods provide good approximations
+
+## 7. Performance Comparison
+
+### Computational Complexity
+
+**Matrix Operations:**
+| Operation | Dense | Sparse |
+|-----------|-------|--------|
+| Matrix-Vector | $`O(n^2)`$ | $`O(nnz)`$ |
+| Matrix-Matrix | $`O(n^3)`$ | $`O(nnz \cdot n)`$ |
+| LU Decomposition | $`O(n^3)`$ | $`O(nnz^{1.5})`$ |
+| Eigenvalues | $`O(n^3)`$ | $`O(n^2)`$ |
+
+**Memory Requirements:**
+| Format | Memory |
+|--------|--------|
+| Dense | $`O(n^2)`$ |
+| CSR | $`O(nnz + n)`$ |
+| CSC | $`O(nnz + n)`$ |
+| Diagonal | $`O(nd)`$ |
+
+### Numerical Stability Comparison
+
+**Direct Methods:**
+- **Gaussian Elimination**: $`O(n^3)`$, can be unstable
+- **LU with Pivoting**: $`O(n^3)`$, stable
+- **QR Decomposition**: $`O(n^3)`$, very stable
+- **Cholesky**: $`O(n^3/3)`$, stable for positive definite
+
+**Iterative Methods:**
+- **Jacobi**: $`O(n^2)`$ per iteration, slow convergence
+- **Gauss-Seidel**: $`O(n^2)`$ per iteration, faster than Jacobi
+- **Conjugate Gradient**: $`O(n^2)`$ per iteration, optimal for SPD
+
+**Eigenvalue Methods:**
+- **Power Iteration**: $`O(n^2)`$ per iteration, finds dominant eigenvalue
+- **QR Algorithm**: $`O(n^3)`$, finds all eigenvalues
+- **Lanczos**: $`O(n^2)`$ per iteration, finds extreme eigenvalues
+
+### Practical Considerations
+
+**Matrix Size Guidelines:**
+- **Small** ($`n < 100`$): Use direct methods
+- **Medium** ($`100 \leq n < 1000`$): Consider iterative methods
+- **Large** ($`n \geq 1000`$): Use iterative or randomized methods
+
+**Sparsity Guidelines:**
+- **Dense**: Use dense algorithms
+- **Sparse** ($`nnz = O(n)`$): Use sparse formats
+- **Very Sparse** ($`nnz \ll n^2`$): Use specialized algorithms
+
+**Hardware Considerations:**
+- **Cache**: Optimize memory access patterns
+- **Parallelism**: Use parallel algorithms for large matrices
+- **GPU**: Accelerate matrix operations on GPU
+
+## Exercises
+
+### Exercise 1: Condition Number Analysis
+
+**Objective**: Analyze condition numbers and their impact on numerical stability.
+
+**Tasks:**
+1. Create matrices with different condition numbers:
+   - Identity matrix: $`I_n`$
+   - Hilbert matrix: $`H_{ij} = \frac{1}{i+j-1}`$
+   - Random matrix with controlled condition number
+2. Solve linear systems $`Ax = b`$ with perturbed right-hand sides
+3. Analyze relative errors and their relationship to condition numbers
+4. Compare exact vs computed solutions
+
+### Exercise 2: Iterative Methods Comparison
+
+**Objective**: Implement and compare different iterative methods for linear systems.
+
+**Tasks:**
+1. Generate test matrices with known properties:
+   - Symmetric positive definite
+   - Diagonally dominant
+   - Random sparse matrix
+2. Implement Jacobi, Gauss-Seidel, and Conjugate Gradient methods
+3. Compare convergence rates and final accuracy
+4. Analyze performance vs matrix size and condition number
+
+### Exercise 3: Sparse Matrix Operations
+
+**Objective**: Implement sparse matrix formats and operations.
+
+**Tasks:**
+1. Create sparse matrices in different formats (COO, CSR, CSC)
+2. Implement matrix-vector multiplication for each format
+3. Compare memory usage and performance
+4. Analyze sparsity patterns and their impact on performance
+
+### Exercise 4: Eigenvalue Computation
+
+**Objective**: Implement eigenvalue algorithms and analyze their properties.
+
+**Tasks:**
+1. Implement power iteration and inverse iteration
+2. Test on matrices with known eigenvalues
+3. Analyze convergence rates and accuracy
+4. Compare with built-in eigenvalue solvers
+
+### Exercise 5: QR Algorithm Implementation
+
+**Objective**: Implement the QR algorithm for eigenvalue computation.
+
+**Tasks:**
+1. Implement basic QR algorithm
+2. Add Wilkinson shift for faster convergence
+3. Test on symmetric and non-symmetric matrices
+4. Compare with other eigenvalue methods
+
+### Exercise 6: Randomized SVD
+
+**Objective**: Implement randomized SVD and compare with classical methods.
+
+**Tasks:**
+1. Implement randomized SVD algorithm
+2. Test on large matrices with known structure
+3. Compare accuracy and performance with classical SVD
+4. Analyze the effect of oversampling parameter
+
+## Solutions
+
+### Solution 1: Condition Number Analysis
+
+**Step 1: Matrix Generation**
+```python
+import numpy as np
+from scipy.linalg import hilbert
+
+def create_test_matrices(n=10):
+    # Identity matrix (well-conditioned)
+    I = np.eye(n)
+    
+    # Hilbert matrix (ill-conditioned)
+    H = hilbert(n)
+    
+    # Random matrix with controlled condition number
+    U, _ = np.linalg.qr(np.random.randn(n, n))
+    S = np.diag(np.logspace(0, 6, n))  # Condition number ~10^6
+    V, _ = np.linalg.qr(np.random.randn(n, n))
+    A = U @ S @ V.T
+    
+    return I, H, A
+
+# Compute condition numbers
+I, H, A = create_test_matrices()
+print(f"Identity matrix condition number: {np.linalg.cond(I):.2e}")
+print(f"Hilbert matrix condition number: {np.linalg.cond(H):.2e}")
+print(f"Random matrix condition number: {np.linalg.cond(A):.2e}")
+```
+
+**Step 2: Error Analysis**
+```python
+def solve_with_perturbation(A, b, perturbation_level=1e-10):
+    # Exact solution
+    x_exact = np.linalg.solve(A, b)
+    
+    # Perturbed right-hand side
+    b_perturbed = b + perturbation_level * np.random.randn(len(b))
+    x_perturbed = np.linalg.solve(A, b_perturbed)
+    
+    # Relative errors
+    rel_error_b = np.linalg.norm(b_perturbed - b) / np.linalg.norm(b)
+    rel_error_x = np.linalg.norm(x_perturbed - x_exact) / np.linalg.norm(x_exact)
+    
+    return rel_error_b, rel_error_x
+
+# Test on different matrices
+b = np.random.randn(10)
+for name, matrix in [("Identity", I), ("Hilbert", H), ("Random", A)]:
+    rel_error_b, rel_error_x = solve_with_perturbation(matrix, b)
+    condition_number = np.linalg.cond(matrix)
+    amplification = rel_error_x / rel_error_b
+    print(f"{name}: Amplification factor = {amplification:.2e}, Condition number = {condition_number:.2e}")
+```
+
+### Solution 2: Iterative Methods Implementation
+
+**Step 1: Jacobi Method**
+```python
+def jacobi_method(A, b, max_iter=1000, tol=1e-10):
+    n = len(A)
+    x = np.zeros(n)
     
     # Extract diagonal and off-diagonal parts
     D = np.diag(np.diag(A))
     L_plus_U = A - D
     
-    for iteration in range(max_iter):
+    for k in range(max_iter):
         x_new = np.linalg.solve(D, b - L_plus_U @ x)
         
-        # Check convergence
         if np.linalg.norm(x_new - x) < tol:
-            print(f"Converged after {iteration + 1} iterations")
             break
-        
         x = x_new
     
-    return x
+    return x, k + 1
 
-# Test Jacobi method
-A = np.array([[4, -1, 0], [-1, 4, -1], [0, -1, 4]])
-b = np.array([1, 5, 0])
-
-x_jacobi = jacobi_iteration(A, b)
-x_exact = np.linalg.solve(A, b)
-
-print("Jacobi solution:", x_jacobi)
-print("Exact solution:", x_exact)
-print("Error:", np.linalg.norm(x_jacobi - x_exact))
-```
-
-### Gauss-Seidel Method
-```python
-def gauss_seidel_iteration(A, b, x0=None, max_iter=1000, tol=1e-6):
-    """Solve Ax = b using Gauss-Seidel iteration"""
-    n = len(b)
-    if x0 is None:
-        x0 = np.zeros(n)
+def gauss_seidel_method(A, b, max_iter=1000, tol=1e-10):
+    n = len(A)
+    x = np.zeros(n)
     
-    x = x0.copy()
-    
-    for iteration in range(max_iter):
+    for k in range(max_iter):
         x_old = x.copy()
-        
         for i in range(n):
-            # Forward substitution
-            sum_val = 0
-            for j in range(n):
-                if i != j:
-                    sum_val += A[i, j] * x[j]
-            x[i] = (b[i] - sum_val) / A[i, i]
+            x[i] = (b[i] - A[i, :i] @ x[:i] - A[i, i+1:] @ x[i+1:]) / A[i, i]
         
-        # Check convergence
         if np.linalg.norm(x - x_old) < tol:
-            print(f"Converged after {iteration + 1} iterations")
             break
     
-    return x
+    return x, k + 1
 
-# Test Gauss-Seidel
-x_gauss_seidel = gauss_seidel_iteration(A, b)
-print("Gauss-Seidel solution:", x_gauss_seidel)
-print("Error:", np.linalg.norm(x_gauss_seidel - x_exact))
-```
-
-### Conjugate Gradient Method
-```python
-def conjugate_gradient(A, b, x0=None, max_iter=1000, tol=1e-6):
-    """Solve Ax = b using Conjugate Gradient method (for symmetric positive definite A)"""
-    n = len(b)
-    if x0 is None:
-        x0 = np.zeros(n)
+def conjugate_gradient_method(A, b, max_iter=None, tol=1e-10):
+    n = len(A)
+    if max_iter is None:
+        max_iter = n
     
-    x = x0.copy()
-    r = b - A @ x
+    x = np.zeros(n)
+    r = b.copy()
     p = r.copy()
     
-    for iteration in range(max_iter):
+    for k in range(max_iter):
         Ap = A @ p
-        alpha = np.dot(r, r) / np.dot(p, Ap)
+        alpha = (r @ r) / (p @ Ap)
         x = x + alpha * p
         r_new = r - alpha * Ap
         
-        # Check convergence
         if np.linalg.norm(r_new) < tol:
-            print(f"Converged after {iteration + 1} iterations")
             break
         
-        beta = np.dot(r_new, r_new) / np.dot(r, r)
+        beta = (r_new @ r_new) / (r @ r)
         p = r_new + beta * p
         r = r_new
     
-    return x
-
-# Test Conjugate Gradient
-x_cg = conjugate_gradient(A, b)
-print("Conjugate Gradient solution:", x_cg)
-print("Error:", np.linalg.norm(x_cg - x_exact))
+    return x, k + 1
 ```
 
-## 3. Sparse Matrix Operations
-
+**Step 2: Performance Comparison**
 ```python
-from scipy.sparse import csr_matrix, csc_matrix, lil_matrix
-from scipy.sparse.linalg import spsolve, eigsh
+def create_test_systems(n=100):
+    # Symmetric positive definite
+    A_spd = np.random.randn(n, n)
+    A_spd = A_spd.T @ A_spd + n * np.eye(n)
+    
+    # Diagonally dominant
+    A_dd = np.random.randn(n, n)
+    A_dd = A_dd + n * np.eye(n)
+    
+    # Random sparse
+    A_sparse = np.random.randn(n, n)
+    mask = np.random.random((n, n)) < 0.1  # 10% sparsity
+    A_sparse[~mask] = 0
+    A_sparse = A_sparse + n * np.eye(n)
+    
+    b = np.random.randn(n)
+    return A_spd, A_dd, A_sparse, b
 
-def sparse_matrix_example():
-    """Demonstrate sparse matrix operations"""
-    
-    # Create a sparse matrix (tridiagonal)
-    n = 1000
-    diagonals = [np.ones(n), -0.5 * np.ones(n-1), -0.5 * np.ones(n-1)]
-    A_dense = np.diag(diagonals[0]) + np.diag(diagonals[1], 1) + np.diag(diagonals[1], -1)
-    
-    # Convert to sparse format
-    A_sparse = csr_matrix(A_dense)
-    
-    print(f"Dense matrix size: {A_dense.nbytes / 1024:.1f} KB")
-    print(f"Sparse matrix size: {A_sparse.data.nbytes / 1024:.1f} KB")
-    print(f"Compression ratio: {A_dense.nbytes / A_sparse.data.nbytes:.1f}x")
-    
-    # Solve linear system
-    b = np.ones(n)
-    
-    # Dense solve
-    import time
-    start_time = time.time()
-    x_dense = np.linalg.solve(A_dense, b)
-    dense_time = time.time() - start_time
-    
-    # Sparse solve
-    start_time = time.time()
-    x_sparse = spsolve(A_sparse, b)
-    sparse_time = time.time() - start_time
-    
-    print(f"\nDense solve time: {dense_time:.4f} seconds")
-    print(f"Sparse solve time: {sparse_time:.4f} seconds")
-    print(f"Speedup: {dense_time / sparse_time:.1f}x")
-    
-    # Check accuracy
-    error = np.linalg.norm(x_dense - x_sparse)
-    print(f"Solution error: {error:.2e}")
-    
-    return A_sparse, x_sparse
+# Test all methods
+A_spd, A_dd, A_sparse, b = create_test_systems()
 
-A_sparse, x_sparse = sparse_matrix_example()
+for name, A in [("SPD", A_spd), ("Diagonally Dominant", A_dd), ("Sparse", A_sparse)]:
+    print(f"\n{name} Matrix:")
+    
+    x_jacobi, iter_jacobi = jacobi_method(A, b)
+    x_gs, iter_gs = gauss_seidel_method(A, b)
+    x_cg, iter_cg = conjugate_gradient_method(A, b)
+    
+    x_exact = np.linalg.solve(A, b)
+    
+    print(f"Jacobi: {iter_jacobi} iterations, error: {np.linalg.norm(x_jacobi - x_exact):.2e}")
+    print(f"Gauss-Seidel: {iter_gs} iterations, error: {np.linalg.norm(x_gs - x_exact):.2e}")
+    print(f"Conjugate Gradient: {iter_cg} iterations, error: {np.linalg.norm(x_cg - x_exact):.2e}")
 ```
 
-## 4. Eigenvalue Problems
+### Solution 3: Sparse Matrix Implementation
 
-### Power Iteration
+**Step 1: CSR Format**
 ```python
-def power_iteration(A, max_iter=1000, tol=1e-6):
-    """Find the largest eigenvalue and eigenvector using power iteration"""
+def dense_to_csr(A):
+    """Convert dense matrix to CSR format"""
+    n, m = A.shape
+    data = []
+    indices = []
+    indptr = [0]
+    
+    for i in range(n):
+        for j in range(m):
+            if A[i, j] != 0:
+                data.append(A[i, j])
+                indices.append(j)
+        indptr.append(len(data))
+    
+    return np.array(data), np.array(indices), np.array(indptr)
+
+def csr_matvec(data, indices, indptr, x):
+    """Matrix-vector multiplication for CSR format"""
+    n = len(indptr) - 1
+    y = np.zeros(n)
+    
+    for i in range(n):
+        for j in range(indptr[i], indptr[i+1]):
+            y[i] += data[j] * x[indices[j]]
+    
+    return y
+```
+
+**Step 2: Performance Comparison**
+```python
+def create_sparse_matrix(n=1000, density=0.01):
+    """Create random sparse matrix"""
+    nnz = int(n * n * density)
+    data = np.random.randn(nnz)
+    row_indices = np.random.randint(0, n, nnz)
+    col_indices = np.random.randint(0, n, nnz)
+    
+    # Create dense matrix
+    A_dense = np.zeros((n, n))
+    for i in range(nnz):
+        A_dense[row_indices[i], col_indices[i]] = data[i]
+    
+    # Convert to CSR
+    data_csr, indices_csr, indptr_csr = dense_to_csr(A_dense)
+    
+    return A_dense, data_csr, indices_csr, indptr_csr
+
+# Performance test
+n = 1000
+A_dense, data_csr, indices_csr, indptr_csr = create_sparse_matrix(n, 0.01)
+x = np.random.randn(n)
+
+# Time dense multiplication
+import time
+start = time.time()
+y_dense = A_dense @ x
+time_dense = time.time() - start
+
+# Time sparse multiplication
+start = time.time()
+y_sparse = csr_matvec(data_csr, indices_csr, indptr_csr, x)
+time_sparse = time.time() - start
+
+print(f"Dense multiplication: {time_dense:.4f}s")
+print(f"Sparse multiplication: {time_sparse:.4f}s")
+print(f"Speedup: {time_dense/time_sparse:.2f}x")
+print(f"Memory dense: {A_dense.nbytes} bytes")
+print(f"Memory sparse: {(data_csr.nbytes + indices_csr.nbytes + indptr_csr.nbytes)} bytes")
+```
+
+### Solution 4: Eigenvalue Methods
+
+**Step 1: Power Iteration**
+```python
+def power_iteration(A, max_iter=1000, tol=1e-10):
     n = A.shape[0]
-    v = np.random.randn(n)
-    v = v / np.linalg.norm(v)
+    x = np.random.randn(n)
+    x = x / np.linalg.norm(x)
     
-    for iteration in range(max_iter):
-        v_new = A @ v
-        v_new = v_new / np.linalg.norm(v_new)
+    for k in range(max_iter):
+        x_new = A @ x
+        x_new = x_new / np.linalg.norm(x_new)
         
-        # Estimate eigenvalue
-        eigenvalue = np.dot(v_new, A @ v_new)
-        
-        # Check convergence
-        if np.linalg.norm(v_new - v) < tol:
-            print(f"Converged after {iteration + 1} iterations")
+        if np.linalg.norm(x_new - x) < tol:
             break
-        
-        v = v_new
+        x = x_new
     
-    return eigenvalue, v
+    # Compute eigenvalue
+    lambda_1 = (x.T @ A @ x) / (x.T @ x)
+    return lambda_1, x, k + 1
 
-# Test power iteration
-A = np.random.randn(5, 5)
+def inverse_iteration(A, mu, max_iter=1000, tol=1e-10):
+    n = A.shape[0]
+    x = np.random.randn(n)
+    x = x / np.linalg.norm(x)
+    
+    for k in range(max_iter):
+        # Solve (A - mu*I)y = x
+        y = np.linalg.solve(A - mu * np.eye(n), x)
+        x_new = y / np.linalg.norm(y)
+        
+        if np.linalg.norm(x_new - x) < tol:
+            break
+        x = x_new
+    
+    # Compute eigenvalue
+    lambda_i = mu + 1 / (x.T @ y)
+    return lambda_i, x, k + 1
+```
+
+**Step 2: Testing**
+```python
+# Create test matrix
+n = 100
+A = np.random.randn(n, n)
 A = A + A.T  # Make symmetric
-eigenvalue, eigenvector = power_iteration(A)
 
-# Compare with numpy
-eigenvals_np, eigenvecs_np = np.linalg.eig(A)
-max_eigenval_idx = np.argmax(np.abs(eigenvals_np))
+# Find eigenvalues using different methods
+eigenvals_exact, eigenvecs_exact = np.linalg.eig(A)
+lambda_max_exact = np.max(np.abs(eigenvals_exact))
+lambda_min_exact = np.min(np.abs(eigenvals_exact))
 
-print(f"Power iteration eigenvalue: {eigenvalue:.6f}")
-print(f"Numpy largest eigenvalue: {eigenvals_np[max_eigenval_idx]:.6f}")
-print(f"Eigenvalue error: {abs(eigenvalue - eigenvals_np[max_eigenval_idx]):.2e}")
+# Power iteration for largest eigenvalue
+lambda_max_power, v_max, iter_max = power_iteration(A)
+print(f"Largest eigenvalue:")
+print(f"  Exact: {lambda_max_exact:.6f}")
+print(f"  Power iteration: {lambda_max_power:.6f}")
+print(f"  Error: {abs(lambda_max_power - lambda_max_exact):.2e}")
+print(f"  Iterations: {iter_max}")
+
+# Inverse iteration for smallest eigenvalue
+lambda_min_inv, v_min, iter_min = inverse_iteration(A, 0)
+print(f"\nSmallest eigenvalue:")
+print(f"  Exact: {lambda_min_exact:.6f}")
+print(f"  Inverse iteration: {lambda_min_inv:.6f}")
+print(f"  Error: {abs(lambda_min_inv - lambda_min_exact):.2e}")
+print(f"  Iterations: {iter_min}")
 ```
 
-### Inverse Iteration
+### Solution 5: QR Algorithm
+
+**Step 1: Basic QR Algorithm**
 ```python
-def inverse_iteration(A, sigma, max_iter=1000, tol=1e-6):
-    """Find eigenvalue closest to sigma using inverse iteration"""
-    n = A.shape[0]
-    v = np.random.randn(n)
-    v = v / np.linalg.norm(v)
-    
-    # Shift matrix
-    A_shifted = A - sigma * np.eye(n)
-    
-    for iteration in range(max_iter):
-        # Solve linear system
-        v_new = np.linalg.solve(A_shifted, v)
-        v_new = v_new / np.linalg.norm(v_new)
-        
-        # Estimate eigenvalue
-        eigenvalue = np.dot(v_new, A @ v_new)
-        
-        # Check convergence
-        if np.linalg.norm(v_new - v) < tol:
-            print(f"Converged after {iteration + 1} iterations")
-            break
-        
-        v = v_new
-    
-    return eigenvalue, v
-
-# Test inverse iteration
-sigma = 2.0  # Target eigenvalue
-eigenvalue_inv, eigenvector_inv = inverse_iteration(A, sigma)
-print(f"Inverse iteration eigenvalue: {eigenvalue_inv:.6f}")
-```
-
-## 5. QR Algorithm for Eigenvalues
-
-```python
-def qr_algorithm(A, max_iter=100, tol=1e-6):
-    """Find all eigenvalues using QR algorithm"""
+def qr_algorithm(A, max_iter=100, tol=1e-10):
     n = A.shape[0]
     A_k = A.copy()
     
-    for iteration in range(max_iter):
+    for k in range(max_iter):
         # QR decomposition
         Q, R = np.linalg.qr(A_k)
-        
-        # Update A
-        A_new = R @ Q
+        A_k = R @ Q
         
         # Check convergence (off-diagonal elements)
-        off_diag_norm = np.linalg.norm(A_new - np.diag(np.diag(A_new)))
-        
-        if off_diag_norm < tol:
-            print(f"Converged after {iteration + 1} iterations")
+        off_diag = np.abs(A_k - np.diag(np.diag(A_k)))
+        if np.max(off_diag) < tol:
             break
-        
-        A_k = A_new
     
-    eigenvalues = np.diag(A_k)
-    return eigenvalues
+    return np.diag(A_k), A_k, k + 1
 
-# Test QR algorithm
-eigenvalues_qr = qr_algorithm(A)
-eigenvalues_np = np.linalg.eigvals(A)
-
-print("QR algorithm eigenvalues:", eigenvalues_qr)
-print("Numpy eigenvalues:", eigenvalues_np)
-print("Maximum error:", np.max(np.abs(eigenvalues_qr - eigenvalues_np)))
+def qr_algorithm_with_shift(A, max_iter=100, tol=1e-10):
+    n = A.shape[0]
+    A_k = A.copy()
+    
+    for k in range(max_iter):
+        # Wilkinson shift
+        if n > 1:
+            a = A_k[n-2, n-2]
+            b = A_k[n-2, n-1]
+            c = A_k[n-1, n-1]
+            delta = (a - c) / 2
+            mu = c - b**2 / (delta + np.sign(delta) * np.sqrt(delta**2 + b**2))
+        else:
+            mu = A_k[0, 0]
+        
+        # Shifted QR
+        Q, R = np.linalg.qr(A_k - mu * np.eye(n))
+        A_k = R @ Q + mu * np.eye(n)
+        
+        # Check convergence
+        off_diag = np.abs(A_k - np.diag(np.diag(A_k)))
+        if np.max(off_diag) < tol:
+            break
+    
+    return np.diag(A_k), A_k, k + 1
 ```
 
-## 6. Singular Value Decomposition (SVD) for Large Matrices
-
+**Step 2: Comparison**
 ```python
-def truncated_svd(A, k):
-    """Compute truncated SVD for large matrices"""
-    from scipy.sparse.linalg import svds
-    
-    if A.shape[0] * A.shape[1] > 1e6:  # Use sparse SVD for large matrices
-        U, S, Vt = svds(A, k=k)
-    else:
-        U, S, Vt = np.linalg.svd(A, full_matrices=False)
-        U = U[:, :k]
-        S = S[:k]
-        Vt = Vt[:k, :]
-    
-    return U, S, Vt
+# Create symmetric test matrix
+n = 50
+A = np.random.randn(n, n)
+A = A + A.T
 
-# Example: Image compression using truncated SVD
-def compress_image_svd(image, k):
-    """Compress image using truncated SVD"""
-    U, S, Vt = truncated_svd(image, k)
-    compressed = U @ np.diag(S) @ Vt
-    
-    # Calculate compression ratio
-    original_size = image.size
-    compressed_size = U.size + S.size + Vt.size
-    compression_ratio = original_size / compressed_size
-    
-    return compressed, compression_ratio
+# Exact eigenvalues
+eigenvals_exact = np.linalg.eigvals(A)
+eigenvals_exact = np.sort(eigenvals_exact)
 
-# Test with a simple image
-image = np.random.rand(100, 100)
-compressed_10, ratio_10 = compress_image_svd(image, 10)
-compressed_50, ratio_50 = compress_image_svd(image, 50)
+# QR algorithm without shift
+eigenvals_qr, _, iter_qr = qr_algorithm(A)
+eigenvals_qr = np.sort(eigenvals_qr)
 
-print(f"Compression ratio (k=10): {ratio_10:.1f}x")
-print(f"Compression ratio (k=50): {ratio_50:.1f}x")
-print(f"Error (k=10): {np.linalg.norm(image - compressed_10):.4f}")
-print(f"Error (k=50): {np.linalg.norm(image - compressed_50):.4f}")
+# QR algorithm with shift
+eigenvals_qr_shift, _, iter_qr_shift = qr_algorithm_with_shift(A)
+eigenvals_qr_shift = np.sort(eigenvals_qr_shift)
+
+print("Eigenvalue Comparison:")
+print(f"Exact eigenvalues (first 5): {eigenvals_exact[:5]}")
+print(f"QR without shift (first 5): {eigenvals_qr[:5]}")
+print(f"QR with shift (first 5): {eigenvals_qr_shift[:5]}")
+print(f"\nIterations:")
+print(f"QR without shift: {iter_qr}")
+print(f"QR with shift: {iter_qr_shift}")
+print(f"\nErrors:")
+print(f"QR without shift: {np.linalg.norm(eigenvals_qr - eigenvals_exact):.2e}")
+print(f"QR with shift: {np.linalg.norm(eigenvals_qr_shift - eigenvals_exact):.2e}")
 ```
 
-## 7. Performance Comparison
+### Solution 6: Randomized SVD
 
+**Step 1: Implementation**
 ```python
-def performance_comparison():
-    """Compare performance of different linear algebra operations"""
-    import time
+def randomized_svd(A, k, oversample=10):
+    """Randomized SVD for large matrices"""
+    m, n = A.shape
+    l = k + oversample
     
-    sizes = [100, 500, 1000, 2000]
-    times = {'dense_solve': [], 'sparse_solve': [], 'eigenvalues': [], 'svd': []}
+    # Generate random matrix
+    Omega = np.random.randn(n, l)
     
-    for n in sizes:
-        print(f"\nTesting size {n}x{n}")
-        
-        # Generate test matrix
-        A = np.random.randn(n, n)
-        A = A + A.T  # Make symmetric
-        b = np.random.randn(n)
-        
-        # Dense solve
-        start_time = time.time()
-        x = np.linalg.solve(A, b)
-        times['dense_solve'].append(time.time() - start_time)
-        
-        # Sparse solve
-        A_sparse = csr_matrix(A)
-        start_time = time.time()
-        x_sparse = spsolve(A_sparse, b)
-        times['sparse_solve'].append(time.time() - start_time)
-        
-        # Eigenvalues
-        start_time = time.time()
-        eigenvals = np.linalg.eigvals(A)
-        times['eigenvalues'].append(time.time() - start_time)
-        
-        # SVD
-        start_time = time.time()
-        U, S, Vt = np.linalg.svd(A, full_matrices=False)
-        times['svd'].append(time.time() - start_time)
+    # Compute Y = A * Omega
+    Y = A @ Omega
     
-    # Plot results
-    plt.figure(figsize=(12, 8))
+    # QR decomposition of Y
+    Q, _ = np.linalg.qr(Y)
     
-    for i, (operation, time_list) in enumerate(times.items()):
-        plt.subplot(2, 2, i+1)
-        plt.loglog(sizes, time_list, 'bo-', label=operation)
-        plt.xlabel('Matrix Size')
-        plt.ylabel('Time (seconds)')
-        plt.title(f'{operation.replace("_", " ").title()}')
-        plt.grid(True)
-        plt.legend()
+    # Project A onto Q
+    B = Q.T @ A
     
-    plt.tight_layout()
-    plt.show()
+    # SVD of B
+    U_tilde, S, Vt = np.linalg.svd(B, full_matrices=False)
     
-    return times
+    # Reconstruct U
+    U = Q @ U_tilde
+    
+    return U[:, :k], S[:k], Vt[:k, :]
 
-times = performance_comparison()
-```
-
-## Exercises
-
-1. **Condition Number**: Compute condition numbers for different matrix types and analyze their sensitivity.
-2. **Iterative Methods**: Implement and compare Jacobi, Gauss-Seidel, and Conjugate Gradient methods.
-3. **Sparse Matrices**: Create a sparse matrix and compare dense vs sparse operations.
-4. **Eigenvalue Methods**: Implement power iteration and inverse iteration for finding eigenvalues.
-5. **Performance Analysis**: Profile different linear algebra operations for various matrix sizes.
-
-## Solutions
-
-```python
-# Exercise 1: Condition Number Analysis
-def analyze_condition_numbers():
-    matrices = {
-        'Identity': np.eye(5),
-        'Random': np.random.randn(5, 5),
-        'Hilbert': linalg.hilbert(5),
-        'Vandermonde': np.vander(np.arange(1, 6))
-    }
+def randomized_svd_power_iteration(A, k, oversample=10, power_iter=2):
+    """Randomized SVD with power iteration for better accuracy"""
+    m, n = A.shape
+    l = k + oversample
     
-    for name, A in matrices.items():
-        cond = condition_number(A)
-        print(f"{name} matrix condition number: {cond:.2e}")
-
-# Exercise 2: Iterative Methods Comparison
-def compare_iterative_methods(A, b):
-    x_exact = np.linalg.solve(A, b)
+    # Generate random matrix
+    Omega = np.random.randn(n, l)
     
-    x_jacobi = jacobi_iteration(A, b)
-    x_gauss_seidel = gauss_seidel_iteration(A, b)
-    x_cg = conjugate_gradient(A, b)
-    
-    errors = {
-        'Jacobi': np.linalg.norm(x_jacobi - x_exact),
-        'Gauss-Seidel': np.linalg.norm(x_gauss_seidel - x_exact),
-        'Conjugate Gradient': np.linalg.norm(x_cg - x_exact)
-    }
-    
-    for method, error in errors.items():
-        print(f"{method} error: {error:.2e}")
-
-# Exercise 3: Sparse vs Dense
-def sparse_vs_dense_comparison(n=1000):
-    # Create tridiagonal matrix
-    diagonals = [np.ones(n), -0.5 * np.ones(n-1), -0.5 * np.ones(n-1)]
-    A_dense = np.diag(diagonals[0]) + np.diag(diagonals[1], 1) + np.diag(diagonals[1], -1)
-    A_sparse = csr_matrix(A_dense)
-    b = np.ones(n)
-    
-    # Compare solve times
-    import time
-    
-    start_time = time.time()
-    x_dense = np.linalg.solve(A_dense, b)
-    dense_time = time.time() - start_time
-    
-    start_time = time.time()
-    x_sparse = spsolve(A_sparse, b)
-    sparse_time = time.time() - start_time
-    
-    print(f"Dense solve time: {dense_time:.4f}s")
-    print(f"Sparse solve time: {sparse_time:.4f}s")
-    print(f"Speedup: {dense_time / sparse_time:.1f}x")
-
-# Exercise 4: Eigenvalue Methods
-def eigenvalue_methods_comparison(A):
     # Power iteration
-    eigenval_power, eigenvec_power = power_iteration(A)
+    Y = A @ Omega
+    for _ in range(power_iter):
+        Y = A.T @ Y
+        Y = A @ Y
     
-    # Inverse iteration (target largest eigenvalue)
-    eigenvals_np = np.linalg.eigvals(A)
-    target = np.max(np.abs(eigenvals_np))
-    eigenval_inv, eigenvec_inv = inverse_iteration(A, target)
+    # QR decomposition
+    Q, _ = np.linalg.qr(Y)
     
-    # QR algorithm
-    eigenvals_qr = qr_algorithm(A)
+    # Project and compute SVD
+    B = Q.T @ A
+    U_tilde, S, Vt = np.linalg.svd(B, full_matrices=False)
+    U = Q @ U_tilde
     
-    print(f"Power iteration: {eigenval_power:.6f}")
-    print(f"Inverse iteration: {eigenval_inv:.6f}")
-    print(f"QR algorithm (max): {np.max(eigenvals_qr):.6f}")
-    print(f"Numpy (max): {np.max(eigenvals_np):.6f}")
+    return U[:, :k], S[:k], Vt[:k, :]
+```
 
-# Exercise 5: Performance Analysis
-def performance_analysis():
-    sizes = [100, 500, 1000]
-    operations = ['solve', 'eigenvalues', 'svd', 'inverse']
-    
-    for size in sizes:
-        print(f"\nMatrix size: {size}x{size}")
-        A = np.random.randn(size, size)
-        
-        for operation in operations:
-            start_time = time.time()
-            if operation == 'solve':
-                b = np.random.randn(size)
-                x = np.linalg.solve(A, b)
-            elif operation == 'eigenvalues':
-                eigenvals = np.linalg.eigvals(A)
-            elif operation == 'svd':
-                U, S, Vt = np.linalg.svd(A, full_matrices=False)
-            elif operation == 'inverse':
-                A_inv = np.linalg.inv(A)
-            
-            elapsed_time = time.time() - start_time
-            print(f"  {operation}: {elapsed_time:.4f}s")
+**Step 2: Comparison**
+```python
+# Create large test matrix
+m, n = 1000, 500
+A = np.random.randn(m, n)
+k = 10
+
+# Exact SVD
+U_exact, s_exact, Vt_exact = np.linalg.svd(A, full_matrices=False)
+U_exact = U_exact[:, :k]
+s_exact = s_exact[:k]
+Vt_exact = Vt_exact[:k, :]
+
+# Randomized SVD
+U_rand, s_rand, Vt_rand = randomized_svd(A, k)
+
+# Randomized SVD with power iteration
+U_rand_power, s_rand_power, Vt_rand_power = randomized_svd_power_iteration(A, k)
+
+# Compare accuracy
+A_exact = U_exact @ np.diag(s_exact) @ Vt_exact
+A_rand = U_rand @ np.diag(s_rand) @ Vt_rand
+A_rand_power = U_rand_power @ np.diag(s_rand_power) @ Vt_rand_power
+
+error_exact = np.linalg.norm(A - A_exact, 'fro')
+error_rand = np.linalg.norm(A - A_rand, 'fro')
+error_rand_power = np.linalg.norm(A - A_rand_power, 'fro')
+
+print("SVD Comparison:")
+print(f"Exact SVD error: {error_exact:.2e}")
+print(f"Randomized SVD error: {error_rand:.2e}")
+print(f"Randomized SVD with power iteration error: {error_rand_power:.2e}")
+print(f"Error ratio (rand/exact): {error_rand/error_exact:.2f}")
+print(f"Error ratio (rand_power/exact): {error_rand_power/error_exact:.2f}")
 ```
 
 ## Key Takeaways
 
-- Numerical stability is crucial for reliable computations
-- Condition number measures problem sensitivity to perturbations
-- Iterative methods are efficient for large, sparse systems
-- Sparse matrix formats save memory and computation time
-- Different eigenvalue algorithms have different strengths
-- Performance varies significantly with matrix size and structure
+- **Numerical stability is crucial** for reliable computations
+- **Condition number measures problem sensitivity** to perturbations
+- **Iterative methods are efficient** for large, sparse systems
+- **Sparse matrix formats save memory** and computation time
+- **Different eigenvalue algorithms** have different strengths
+- **Performance varies significantly** with matrix size and structure
+- **Randomized methods** provide good approximations for large matrices
+- **Hardware considerations** impact algorithm choice and performance
 
 ## Next Chapter
 
