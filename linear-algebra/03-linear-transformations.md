@@ -21,8 +21,20 @@ Linear transformations are functions that preserve vector addition and scalar mu
 
 A function $`T: \mathbb{R}^n \rightarrow \mathbb{R}^m`$ is linear if it satisfies two fundamental properties:
 
-1. **Additivity**: $`T(\vec{u} + \vec{v}) = T(\vec{u}) + T(\vec{v})`$ for all vectors $`\vec{u}, \vec{v} \in \mathbb{R}^n`$
-2. **Homogeneity**: $`T(c\vec{u}) = cT(\vec{u})`$ for all scalars $`c`$ and vectors $`\vec{u} \in \mathbb{R}^n`$
+1. **Additivity**: 
+
+```math
+T(\vec{u} + \vec{v}) = T(\vec{u}) + T(\vec{v})
+```
+
+      for all vectors $`\vec{u}, \vec{v} \in \mathbb{R}^n`$
+
+2. **Homogeneity**: 
+```math
+T(c\vec{u}) = cT(\vec{u})
+```
+
+      for all scalars $`c`$ and vectors $`\vec{u} \in \mathbb{R}^n`$
 
 ### Mathematical Foundation
 
@@ -39,14 +51,15 @@ This means linear transformations preserve linear combinations, which is why the
 T(\vec{x}) = A\vec{x}
 ```
 **Proof Sketch**:
-1. Let $`\{\vec{e}_1, \vec{e}_2, \ldots, \vec{e}_n\}`$ be the standard basis for $`\mathbb{R}^n`$
-2. Define $`A`$ as the matrix whose columns are $`T(\vec{e}_1), T(\vec{e}_2), \ldots, T(\vec{e}_n)`$
-3. For any vector $`\vec{x} = x_1\vec{e}_1 + x_2\vec{e}_2 + \cdots + x_n\vec{e}_n`$:
-   ```math
-   T(\vec{x}) = T(x_1\vec{e}_1 + x_2\vec{e}_2 + \cdots + x_n\vec{e}_n)
-   = x_1T(\vec{e}_1) + x_2T(\vec{e}_2) + \cdots + x_nT(\vec{e}_n)
-   = A\vec{x}
-   ```
+1. Let $\{\vec{e}_1, \vec{e}_2, \ldots, \vec{e}_n\}$ be the standard basis for $\mathbb{R}^n$
+2. Define $A$ as the matrix whose columns are $T(\vec{e}_1), T(\vec{e}_2), \ldots, T(\vec{e}_n)$
+3. For any vector $\vec{x} = x_1\vec{e}_1 + x_2\vec{e}_2 + \cdots + x_n\vec{e}_n$:
+
+```math
+T(\vec{x}) = T(x_1\vec{e}_1 + x_2\vec{e}_2 + \cdots + x_n\vec{e}_n)
+= x_1T(\vec{e}_1) + x_2T(\vec{e}_2) + \cdots + x_nT(\vec{e}_n)
+= A\vec{x}
+```
 
 ### Geometric Interpretation
 
