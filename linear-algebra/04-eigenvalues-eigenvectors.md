@@ -21,11 +21,20 @@ Eigenvalues and eigenvectors are fundamental concepts in linear algebra that rev
 
 ### Mathematical Definition
 
-For a square matrix $`A`$ of size $`n \times n`$, a non-zero vector $`\vec{v} \in \mathbb{R}^n`$ is an **eigenvector** if:
+For a square matrix $`A`$ of size $`n \times n`$, a non-zero vector 
+
 ```math
-A\vec{v} = \lambda\vec{v}
+\mathbf{v} \in \mathbb{R}^n
 ```
-where $`\lambda`$ is a scalar called the **eigenvalue** corresponding to $`\vec{v}`$.
+
+is an **eigenvector** if:
+
+```math
+A\mathbf{v} = \lambda\mathbf{v}
+```
+
+where $`\lambda`$ is a scalar called the **eigenvalue** corresponding to 
+$`\mathbf{v}`$.
 
 ### Geometric Interpretation
 
@@ -39,7 +48,7 @@ Eigenvectors are special vectors that don't change direction when transformed by
 
 ### Fundamental Properties
 
-1. **Eigenvectors are not unique**: If $`\vec{v}`$ is an eigenvector, then $`c\vec{v}`$ is also an eigenvector for any scalar $`c \neq 0`$.
+1. **Eigenvectors are not unique**: If $`\mathbf{v}`$ is an eigenvector, then $`c \mathbf{v}`$ is also an eigenvector for any scalar $`c \neq 0`$.
 2. **Eigenvalues are unique**: Each eigenvector corresponds to exactly one eigenvalue.
 3. **Eigenvectors can be complex**: Even for real matrices, eigenvalues and eigenvectors can be complex numbers.
 4. **Number of eigenvalues**: An $`n \times n`$ matrix has exactly $`n`$ eigenvalues (counting multiplicities).
@@ -59,7 +68,7 @@ This is a polynomial equation of degree $`n`$ in $`\lambda`$, called the charact
 1. **Form the matrix** $`A - \lambda I`$
 2. **Compute the determinant** $`\det(A - \lambda I)`$
 3. **Set equal to zero** and solve for $`\lambda`$
-4. **For each eigenvalue** $`\lambda_i`$, solve $`(A - \lambda_i I)\vec{v} = \vec{0}`$ for $`\vec{v}`$
+4. **For each eigenvalue** $`\lambda_i`$, solve $`(A - \lambda_i I)\mathbf{v} = \mathbf{0}`$ for $`\mathbf{v}`$
 
 ## Properties of Eigenvalues and Eigenvectors
 
@@ -111,9 +120,9 @@ The power method is an iterative algorithm to find the dominant eigenvalue and e
 
 ### Algorithm
 
-1. Start with a random vector $`\vec{v}_0`$
-2. Iterate: $`\vec{v}_{k+1} = \frac{A\vec{v}_k}{\|A\vec{v}_k\|}`$
-3. The eigenvalue is approximated by: $`\lambda \approx \frac{\vec{v}_k^T A \vec{v}_k}{\vec{v}_k^T \vec{v}_k}`$
+1. Start with a random vector $`\mathbf{v}_0`$
+2. Iterate: $`\mathbf{v}_{k+1} = \frac{A\mathbf{v}_k}{\|A\mathbf{v}_k\|}`$
+3. The eigenvalue is approximated by: $`\lambda \approx \frac{\mathbf{v}_k^T A \mathbf{v}_k}{\mathbf{v}_k^T \mathbf{v}_k}`$
 
 ### Convergence
 
