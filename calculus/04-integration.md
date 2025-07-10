@@ -81,7 +81,7 @@ The constant $`C`$ represents the fact that any function differing by a constant
 | Function | Antiderivative |
 |----------|----------------|
 | $`x^n`$ | $`\frac{x^{n+1}}{n+1} + C`$ (for $`n \neq -1`$) |
-| $`\frac{1}{x}`$ | $`\ln|x| + C`$ |
+| $`\frac{1}{x}`$ | $`\ln\|x\| + C`$ |
 | $`e^x`$ | $`e^x + C`$ |
 | $`\sin(x)`$ | $`-\cos(x) + C`$ |
 | $`\cos(x)`$ | $`\sin(x) + C`$ |
