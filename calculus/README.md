@@ -25,7 +25,6 @@ This guide provides a comprehensive introduction to calculus concepts essential 
 10. [Numerical Methods](10-numerical-methods.md) - [Python Implementation](10-numerical-methods.py)
 
 ### Additional Resources
-- [Summary](SUMMARY.md) - Quick reference guide
 - [Requirements](requirements.txt) - Python dependencies
 
 ## Prerequisites
