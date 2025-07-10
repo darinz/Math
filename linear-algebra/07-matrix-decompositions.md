@@ -1,18 +1,16 @@
 # Matrix Decompositions
 
-[![Chapter](https://img.shields.io/badge/Chapter-7-blue.svg)]()
-[![Topic](https://img.shields.io/badge/Topic-Matrix_Decompositions-green.svg)]()
-[![Difficulty](https://img.shields.io/badge/Difficulty-Advanced-red.svg)]()
-
 ## Introduction
 
 Matrix decompositions are fundamental tools in linear algebra that break down complex matrices into simpler, more manageable components. These decompositions reveal the underlying structure of matrices and enable efficient algorithms for solving systems of equations, understanding data patterns, and implementing machine learning algorithms.
 
 **Mathematical Foundation:**
-Matrix decompositions express a matrix A as a product of simpler matrices:
-A = B₁ × B₂ × ... × Bₖ
+Matrix decompositions express a matrix $`A`$ as a product of simpler matrices:
+```math
+A = B_1 \times B_2 \times \cdots \times B_k
+```
 
-where each Bᵢ has a special structure (triangular, orthogonal, diagonal, etc.) that makes certain operations computationally efficient.
+where each $`B_i`$ has a special structure (triangular, orthogonal, diagonal, etc.) that makes certain operations computationally efficient.
 
 **Key Benefits:**
 1. **Computational Efficiency**: Decompositions enable fast algorithms for solving systems, computing inverses, and finding eigenvalues
@@ -29,360 +27,78 @@ Matrix decompositions can be viewed as coordinate transformations that reveal th
 
 ## LU Decomposition
 
-LU decomposition factors a square matrix A into A = LU, where L is lower triangular and U is upper triangular. This decomposition is fundamental for solving systems of linear equations efficiently.
+LU decomposition factors a square matrix $`A`$ into $`A = LU`$, where $`L`$ is lower triangular and $`U`$ is upper triangular. This decomposition is fundamental for solving systems of linear equations efficiently.
 
 ### Mathematical Foundation
 
 **Definition:**
-For a square matrix A ∈ ℝ^(n×n), the LU decomposition is:
+For a square matrix $`A \in \mathbb{R}^{n \times n}`$, the LU decomposition is:
+```math
 A = LU
+```
 
 where:
-- L ∈ ℝ^(n×n) is lower triangular (Lᵢⱼ = 0 for i < j)
-- U ∈ ℝ^(n×n) is upper triangular (Uᵢⱼ = 0 for i > j)
+- $`L \in \mathbb{R}^{n \times n}`$ is lower triangular ($`L_{ij} = 0`$ for $`i < j`$)
+- $`U \in \mathbb{R}^{n \times n}`$ is upper triangular ($`U_{ij} = 0`$ for $`i > j`$)
 
 **Existence and Uniqueness:**
-- **Existence**: LU decomposition exists if and only if all leading principal minors of A are non-zero
-- **Uniqueness**: If A is invertible, the LU decomposition is unique when L has ones on the diagonal
-- **Generalization**: For any matrix, we can find A = PLU where P is a permutation matrix
+- **Existence**: LU decomposition exists if and only if all leading principal minors of $`A`$ are non-zero
+- **Uniqueness**: If $`A`$ is invertible, the LU decomposition is unique when $`L`$ has ones on the diagonal
+- **Generalization**: For any matrix, we can find $`A = PLU`$ where $`P`$ is a permutation matrix
 
 **Geometric Interpretation:**
-LU decomposition represents A as a sequence of elementary row operations:
+LU decomposition represents $`A`$ as a sequence of elementary row operations:
 1. **L matrix**: Represents the row operations needed to eliminate entries below the diagonal
 2. **U matrix**: The resulting upper triangular form after elimination
 3. **P matrix**: Represents row exchanges needed for numerical stability
 
 **Key Properties:**
-1. **Determinant**: det(A) = det(L) × det(U) = ∏ᵢ Lᵢᵢ × ∏ᵢ Uᵢᵢ
-2. **Inverse**: A⁻¹ = U⁻¹L⁻¹ (if A is invertible)
-3. **Linear Systems**: Ax = b becomes LUx = b, solved by forward/backward substitution
+1. **Determinant**: $`\det(A) = \det(L) \times \det(U) = \prod_i L_{ii} \times \prod_i U_{ii}`$
+2. **Inverse**: $`A^{-1} = U^{-1}L^{-1}`$ (if $`A`$ is invertible)
+3. **Linear Systems**: $`Ax = b`$ becomes $`LUx = b`$, solved by forward/backward substitution
 
-```python
-import numpy as np
-from scipy.linalg import lu, lu_factor, lu_solve
-import matplotlib.pyplot as plt
+### Algorithm: LU Decomposition with Partial Pivoting
 
-def lu_decomposition_detailed(A, pivot=True):
-    """
-    Perform detailed LU decomposition with comprehensive analysis
-    
-    Mathematical approach:
-    A = PLU where P is permutation matrix, L is lower triangular, U is upper triangular
-    
-    Parameters:
-    A: numpy array - square matrix to decompose
-    pivot: bool - whether to use partial pivoting for numerical stability
-    
-    Returns:
-    tuple - (P, L, U, analysis_results)
-    """
-    n, m = A.shape
-    if n != m:
-        raise ValueError("Matrix must be square for LU decomposition")
-    
-    # Perform LU decomposition
-    if pivot:
-        P, L, U = lu(A)
-    else:
-        # Manual LU without pivoting (for educational purposes)
-        P, L, U = lu_decomposition_manual(A)
-    
-    # Comprehensive analysis
-    analysis = analyze_lu_decomposition(A, P, L, U)
-    
-    return P, L, U, analysis
+**Mathematical Foundation:**
+The LU decomposition with partial pivoting algorithm:
 
-def lu_decomposition_manual(A):
-    """
-    Manual LU decomposition without pivoting (educational implementation)
-    
-    Mathematical approach:
-    Use Gaussian elimination to construct L and U matrices
-    """
-    n = A.shape[0]
-    A_copy = A.copy().astype(float)
-    L = np.eye(n)
-    U = np.zeros_like(A_copy)
-    
-    for k in range(n):
-        # Check if pivot is zero
-        if abs(A_copy[k, k]) < 1e-10:
-            raise ValueError("Zero pivot encountered - matrix may not have LU decomposition")
-        
-        # Store diagonal element in U
-        U[k, k] = A_copy[k, k]
-        
-        # Eliminate column k
-        for i in range(k+1, n):
-            # Compute multiplier
-            multiplier = A_copy[i, k] / A_copy[k, k]
-            
-            # Store multiplier in L
-            L[i, k] = multiplier
-            
-            # Eliminate entry in A
-            for j in range(k, n):
-                A_copy[i, j] -= multiplier * A_copy[k, j]
-        
-        # Copy row k to U
-        U[k, k:] = A_copy[k, k:]
-    
-    return np.eye(n), L, U  # No permutation matrix in manual version
+1. **Initialize**: $`L = I`$, $`U = A`$, $`P = I`$
+2. **For each column** $`k = 1, 2, \ldots, n-1`$:
+   - Find pivot: $`p = \arg\max_{i \geq k} |U_{ik}|`$
+   - Exchange rows: $`U_{k,:} \leftrightarrow U_{p,:}`$, $`L_{k,1:k-1} \leftrightarrow L_{p,1:k-1}`$, $`P_{k,:} \leftrightarrow P_{p,:}`$
+   - Eliminate: For $`i = k+1, \ldots, n`$:
+     - $`L_{ik} = U_{ik}/U_{kk}`$
+     - $`U_{i,k:n} = U_{i,k:n} - L_{ik}U_{k,k:n}`$
 
-def analyze_lu_decomposition(A, P, L, U):
-    """
-    Comprehensive analysis of LU decomposition
-    
-    Parameters:
-    A: numpy array - original matrix
-    P: numpy array - permutation matrix
-    L: numpy array - lower triangular matrix
-    U: numpy array - upper triangular matrix
-    
-    Returns:
-    dict - analysis results
-    """
-    # Verify decomposition
-    A_reconstructed = P @ L @ U
-    decomposition_error = np.linalg.norm(A - A_reconstructed, 'fro')
-    
-    # Check triangular structure
-    L_upper_entries = np.triu(L, k=1)
-    U_lower_entries = np.tril(U, k=-1)
-    L_triangular_error = np.linalg.norm(L_upper_entries)
-    U_triangular_error = np.linalg.norm(U_lower_entries)
-    
-    # Check L has ones on diagonal (if applicable)
-    L_diagonal = np.diag(L)
-    L_diagonal_error = np.linalg.norm(L_diagonal - np.ones_like(L_diagonal))
-    
-    # Compute determinants
-    det_A = np.linalg.det(A)
-    det_L = np.linalg.det(L)
-    det_U = np.linalg.det(U)
-    det_P = np.linalg.det(P)
-    det_product = det_P * det_L * det_U
-    
-    # Condition numbers
-    cond_A = np.linalg.cond(A)
-    cond_L = np.linalg.cond(L)
-    cond_U = np.linalg.cond(U)
-    
-    # Growth factor (measure of numerical stability)
-    max_U_element = np.max(np.abs(U))
-    max_A_element = np.max(np.abs(A))
-    growth_factor = max_U_element / max_A_element if max_A_element > 0 else float('inf')
-    
-    return {
-        'decomposition_error': decomposition_error,
-        'L_triangular_error': L_triangular_error,
-        'U_triangular_error': U_triangular_error,
-        'L_diagonal_error': L_diagonal_error,
-        'det_A': det_A,
-        'det_L': det_L,
-        'det_U': det_U,
-        'det_P': det_P,
-        'det_product': det_product,
-        'det_preserved': abs(det_A - det_product) < 1e-10,
-        'cond_A': cond_A,
-        'cond_L': cond_L,
-        'cond_U': cond_U,
-        'growth_factor': growth_factor,
-        'numerically_stable': growth_factor < 100  # Heuristic threshold
-    }
-
-def solve_system_lu_detailed(A, b, method='scipy'):
-    """
-    Solve linear system Ax = b using LU decomposition with detailed analysis
-    
-    Parameters:
-    A: numpy array - coefficient matrix
-    b: numpy array - right-hand side vector
-    method: str - 'scipy' or 'manual'
-    
-    Returns:
-    tuple - (x, analysis_results)
-    """
-    if method == 'scipy':
-        # Use scipy's optimized implementation
-        lu_factor_result = lu_factor(A)
-        x = lu_solve(lu_factor_result, b)
-        
-        # Extract L and U from lu_factor result
-        L = np.tril(lu_factor_result[0])
-        U = np.triu(lu_factor_result[0])
-        np.fill_diagonal(L, 1.0)  # Ensure L has ones on diagonal
-        
-        analysis = analyze_lu_decomposition(A, np.eye(A.shape[0]), L, U)
-        
-    else:
-        # Manual implementation
-        P, L, U, analysis = lu_decomposition_detailed(A)
-        
-        # Solve PLUx = b
-        # Step 1: Solve Py = b
-        y1 = P.T @ b
-        
-        # Step 2: Solve Ly = y1 (forward substitution)
-        y2 = np.linalg.solve(L, y1)
-        
-        # Step 3: Solve Ux = y2 (backward substitution)
-        x = np.linalg.solve(U, y2)
-    
-    # Verify solution
-    b_computed = A @ x
-    residual = np.linalg.norm(b - b_computed)
-    relative_residual = residual / np.linalg.norm(b) if np.linalg.norm(b) > 0 else residual
-    
-    analysis['solution_residual'] = residual
-    analysis['relative_residual'] = relative_residual
-    analysis['solution_accurate'] = relative_residual < 1e-10
-    
-    return x, analysis
-
-def compare_lu_methods(A, b):
-    """
-    Compare different LU decomposition methods
-    
-    Parameters:
-    A: numpy array - coefficient matrix
-    b: numpy array - right-hand side vector
-    
-    Returns:
-    dict - comparison results
-    """
-    methods = ['scipy_pivot', 'manual_no_pivot']
-    results = {}
-    
-    for method in methods:
-        try:
-            if method == 'scipy_pivot':
-                x, analysis = solve_system_lu_detailed(A, b, method='scipy')
-            else:
-                x, analysis = solve_system_lu_detailed(A, b, method='manual')
-            
-            results[method] = {
-                'x': x,
-                'analysis': analysis,
-                'success': True
-            }
-            
-        except Exception as e:
-            results[method] = {
-                'error': str(e),
-                'success': False
-            }
-    
-    return results
-
-# Example: Comprehensive LU decomposition analysis
-print("=== Comprehensive LU Decomposition Analysis ===")
-
-# Test matrix
-A = np.array([[2, 1, 1], [4, -6, 0], [-2, 7, 2]], dtype=float)
-b = np.array([5, -2, 9], dtype=float)
-
-print(f"Matrix A:\n{A}")
-print(f"Right-hand side b: {b}")
-
-# Perform detailed LU decomposition
-P, L, U, analysis = lu_decomposition_detailed(A)
-
-print(f"\nPermutation matrix P:\n{P}")
-print(f"Lower triangular matrix L:\n{L}")
-print(f"Upper triangular matrix U:\n{U}")
-
-# Display analysis results
-print(f"\nLU Decomposition Analysis:")
-for key, value in analysis.items():
-    if isinstance(value, float):
-        print(f"  {key}: {value:.6f}")
-    else:
-        print(f"  {key}: {value}")
-
-# Verify decomposition
-A_reconstructed = P @ L @ U
-print(f"\nVerification:")
-print(f"Original A:\n{A}")
-print(f"Reconstructed A:\n{A_reconstructed}")
-print(f"Decomposition error: {analysis['decomposition_error']:.2e}")
-
-# Solve system with detailed analysis
-x, solution_analysis = solve_system_lu_detailed(A, b)
-
-print(f"\nSystem Solution:")
-print(f"x = {x}")
-print(f"Solution residual: {solution_analysis['solution_residual']:.2e}")
-print(f"Relative residual: {solution_analysis['relative_residual']:.2e}")
-print(f"Solution accurate: {solution_analysis['solution_accurate']}")
-
-# Verify solution
-b_computed = A @ x
-print(f"\nVerification:")
-print(f"Original b: {b}")
-print(f"Computed b: {b_computed}")
-print(f"Verification error: {np.linalg.norm(b - b_computed):.2e}")
-
-# Compare methods
-print(f"\n=== Method Comparison ===")
-comparison = compare_lu_methods(A, b)
-
-for method, result in comparison.items():
-    print(f"\n{method}:")
-    if result['success']:
-        analysis = result['analysis']
-        print(f"  Success: {result['success']}")
-        print(f"  Decomposition error: {analysis['decomposition_error']:.2e}")
-        print(f"  Growth factor: {analysis['growth_factor']:.2f}")
-        print(f"  Solution residual: {analysis['solution_residual']:.2e}")
-    else:
-        print(f"  Success: {result['success']}")
-        print(f"  Error: {result['error']}")
-
-# Test with different matrix types
-print(f"\n=== Testing Different Matrix Types ===")
-
-# Well-conditioned matrix
-A_well = np.array([[4, 1, 0], [1, 4, 1], [0, 1, 4]], dtype=float)
-b_well = np.array([1, 2, 3], dtype=float)
-
-print(f"Well-conditioned matrix (condition number: {np.linalg.cond(A_well):.2f}):")
-x_well, analysis_well = solve_system_lu_detailed(A_well, b_well)
-print(f"  Solution residual: {analysis_well['solution_residual']:.2e}")
-
-# Ill-conditioned matrix
-A_ill = np.array([[1, 1], [1, 1.0001]], dtype=float)
-b_ill = np.array([2, 2.0001], dtype=float)
-
-print(f"Ill-conditioned matrix (condition number: {np.linalg.cond(A_ill):.2e}):")
-x_ill, analysis_ill = solve_system_lu_detailed(A_ill, b_ill)
-print(f"  Solution residual: {analysis_ill['solution_residual']:.2e}")
-print(f"  Growth factor: {analysis_ill['growth_factor']:.2f}")
-
-# Singular matrix (should fail)
-A_singular = np.array([[1, 1], [1, 1]], dtype=float)
-b_singular = np.array([1, 1], dtype=float)
-
-print(f"Singular matrix:")
-try:
-    x_singular, analysis_singular = solve_system_lu_detailed(A_singular, b_singular)
-    print(f"  Unexpected success!")
-except Exception as e:
-    print(f"  Expected failure: {e}")
-```
+**Computational Complexity:**
+- **Time Complexity**: $`O(n^3)`$ operations
+- **Space Complexity**: $`O(n^2)`$ storage (in-place possible)
+- **Numerical Stability**: Partial pivoting ensures $`|L_{ij}| \leq 1`$
 
 ### Solving Systems with LU Decomposition
 
 **Mathematical Foundation:**
-The LU decomposition enables efficient solution of linear systems Ax = b through forward and backward substitution:
+The LU decomposition enables efficient solution of linear systems $`Ax = b`$ through forward and backward substitution:
 
-1. **Decomposition**: A = LU
-2. **Forward Substitution**: Solve Ly = b for y
-3. **Backward Substitution**: Solve Ux = y for x
+1. **Decomposition**: $`A = LU`$
+2. **Forward Substitution**: Solve $`Ly = b`$ for $`y`$
+3. **Backward Substitution**: Solve $`Ux = y`$ for $`x`$
+
+**Forward Substitution Algorithm:**
+For $`i = 1, 2, \ldots, n`$:
+```math
+y_i = \frac{1}{L_{ii}}\left(b_i - \sum_{j=1}^{i-1} L_{ij} y_j\right)
+```
+
+**Backward Substitution Algorithm:**
+For $`i = n, n-1, \ldots, 1`$:
+```math
+x_i = \frac{1}{U_{ii}}\left(y_i - \sum_{j=i+1}^n U_{ij} x_j\right)
+```
 
 **Computational Complexity:**
-- **Decomposition**: O(n³) operations (one-time cost)
-- **Forward/Backward Substitution**: O(n²) operations per right-hand side
+- **Decomposition**: $`O(n^3)`$ operations (one-time cost)
+- **Forward/Backward Substitution**: $`O(n^2)`$ operations per right-hand side
 - **Multiple Right-hand Sides**: Very efficient after initial decomposition
 
 **Numerical Stability:**
@@ -390,539 +106,67 @@ The LU decomposition enables efficient solution of linear systems Ax = b through
 - **Growth Factor**: Measure of numerical stability
 - **Condition Number**: Relationship between input and output perturbations
 
-```python
-def solve_multiple_systems_lu(A, B):
-    """
-    Solve multiple systems AX = B using LU decomposition
-    
-    Mathematical approach:
-    After computing A = LU, solve LUx_i = b_i for each column b_i of B
-    
-    Parameters:
-    A: numpy array - coefficient matrix (n × n)
-    B: numpy array - right-hand side matrix (n × k)
-    
-    Returns:
-    numpy array - solution matrix X (n × k)
-    """
-    n, m = A.shape
-    if n != m:
-        raise ValueError("Matrix A must be square")
-    
-    k = B.shape[1] if len(B.shape) > 1 else 1
-    
-    # Perform LU decomposition once
-    lu_factor_result = lu_factor(A)
-    
-    # Solve for each right-hand side
-    if k == 1:
-        X = lu_solve(lu_factor_result, B)
-    else:
-        X = np.zeros((n, k))
-        for i in range(k):
-            X[:, i] = lu_solve(lu_factor_result, B[:, i])
-    
-    return X
-
-def analyze_system_sensitivity(A, b, perturbation_magnitude=1e-6):
-    """
-    Analyze sensitivity of linear system solution to perturbations
-    
-    Parameters:
-    A: numpy array - coefficient matrix
-    b: numpy array - right-hand side vector
-    perturbation_magnitude: float - magnitude of perturbations to test
-    
-    Returns:
-    dict - sensitivity analysis results
-    """
-    # Solve original system
-    x_original, _ = solve_system_lu_detailed(A, b)
-    
-    # Test perturbations in A
-    A_perturbed = A + perturbation_magnitude * np.random.randn(*A.shape)
-    x_A_perturbed, _ = solve_system_lu_detailed(A_perturbed, b)
-    sensitivity_A = np.linalg.norm(x_original - x_A_perturbed) / perturbation_magnitude
-    
-    # Test perturbations in b
-    b_perturbed = b + perturbation_magnitude * np.random.randn(*b.shape)
-    x_b_perturbed, _ = solve_system_lu_detailed(A, b_perturbed)
-    sensitivity_b = np.linalg.norm(x_original - x_b_perturbed) / perturbation_magnitude
-    
-    # Theoretical bounds
-    cond_A = np.linalg.cond(A)
-    norm_A_inv = np.linalg.norm(np.linalg.inv(A))
-    norm_x = np.linalg.norm(x_original)
-    norm_b = np.linalg.norm(b)
-    
-    return {
-        'sensitivity_A': sensitivity_A,
-        'sensitivity_b': sensitivity_b,
-        'condition_number': cond_A,
-        'norm_A_inv': norm_A_inv,
-        'theoretical_bound_A': cond_A * norm_x / norm_A,
-        'theoretical_bound_b': cond_A / norm_A,
-        'well_conditioned': cond_A < 100
-    }
-
-# Example: Multiple systems and sensitivity analysis
-print("\n=== Multiple Systems and Sensitivity Analysis ===")
-
-# Create multiple right-hand sides
-B = np.column_stack([
-    np.array([5, -2, 9]),
-    np.array([1, 0, 1]),
-    np.array([0, 1, 0])
-])
-
-print(f"Multiple right-hand sides B:\n{B}")
-
-# Solve all systems efficiently
-X = solve_multiple_systems_lu(A, B)
-
-print(f"Solution matrix X:\n{X}")
-
-# Verify solutions
-for i in range(B.shape[1]):
-    b_i = B[:, i]
-    x_i = X[:, i]
-    residual = np.linalg.norm(A @ x_i - b_i)
-    print(f"System {i+1} residual: {residual:.2e}")
-
-# Sensitivity analysis
-sensitivity_results = analyze_system_sensitivity(A, b)
-
-print(f"\nSensitivity Analysis:")
-for key, value in sensitivity_results.items():
-    if isinstance(value, float):
-        print(f"  {key}: {value:.6f}")
-    else:
-        print(f"  {key}: {value}")
-
-# Compare with theoretical bounds
-print(f"\nSensitivity Comparison:")
-print(f"  Observed sensitivity to A: {sensitivity_results['sensitivity_A']:.2e}")
-print(f"  Theoretical bound for A: {sensitivity_results['theoretical_bound_A']:.2e}")
-print(f"  Observed sensitivity to b: {sensitivity_results['sensitivity_b']:.2e}")
-print(f"  Theoretical bound for b: {sensitivity_results['theoretical_bound_b']:.2e}")
-```
-
 ## QR Decomposition
 
-QR decomposition factors a matrix A into A = QR, where Q is orthogonal and R is upper triangular. This decomposition is fundamental for least squares problems, eigenvalue computation, and numerical stability.
+QR decomposition factors a matrix $`A`$ into $`A = QR`$, where $`Q`$ is orthogonal and $`R`$ is upper triangular. This decomposition is fundamental for least squares problems, eigenvalue computation, and numerical stability.
 
 ### Mathematical Foundation
 
 **Definition:**
-For a matrix A ∈ ℝ^(m×n) with m ≥ n, the QR decomposition is:
+For a matrix $`A \in \mathbb{R}^{m \times n}`$ with $`m \geq n`$, the QR decomposition is:
+```math
 A = QR
+```
 
 where:
-- Q ∈ ℝ^(m×m) is orthogonal (QᵀQ = I)
-- R ∈ ℝ^(m×n) is upper triangular (Rᵢⱼ = 0 for i > j)
+- $`Q \in \mathbb{R}^{m \times m}`$ is orthogonal ($`Q^T Q = I`$)
+- $`R \in \mathbb{R}^{m \times n}`$ is upper triangular ($`R_{ij} = 0`$ for $`i > j`$)
 
 **Existence and Uniqueness:**
-- **Existence**: QR decomposition always exists for any matrix A
-- **Uniqueness**: If A has full column rank, the decomposition is unique when R has positive diagonal entries
-- **Reduced Form**: For m > n, we can write A = Q₁R₁ where Q₁ ∈ ℝ^(m×n) has orthonormal columns
+- **Existence**: QR decomposition always exists for any matrix $`A`$
+- **Uniqueness**: If $`A`$ has full column rank, the decomposition is unique when $`R`$ has positive diagonal entries
+- **Reduced Form**: For $`m > n`$, we can write $`A = Q_1 R_1`$ where $`Q_1 \in \mathbb{R}^{m \times n}`$ has orthonormal columns
 
 **Geometric Interpretation:**
-QR decomposition represents A as:
-1. **Q matrix**: Orthonormal basis for the column space of A
-2. **R matrix**: Coordinates of A's columns in the Q basis
-3. **Gram-Schmidt Connection**: QR decomposition is essentially Gram-Schmidt orthogonalization applied to A's columns
+QR decomposition represents $`A`$ as:
+1. **Q matrix**: Orthonormal basis for the column space of $`A`$
+2. **R matrix**: Coordinates of $`A`$'s columns in the $`Q`$ basis
+3. **Gram-Schmidt Connection**: QR decomposition is essentially Gram-Schmidt orthogonalization applied to $`A`$'s columns
 
 **Key Properties:**
-1. **Orthogonality**: QᵀQ = I (Q preserves lengths and angles)
-2. **Upper Triangular**: R is upper triangular, enabling efficient back-substitution
-3. **Rank Preservation**: rank(A) = rank(R) = number of non-zero diagonal elements of R
+1. **Orthogonality**: $`Q^T Q = I`$ ($`Q`$ preserves lengths and angles)
+2. **Upper Triangular**: $`R`$ is upper triangular, enabling efficient back-substitution
+3. **Rank Preservation**: $`\text{rank}(A) = \text{rank}(R) =`$ number of non-zero diagonal elements of $`R`$
 4. **Least Squares**: QR decomposition provides numerically stable solution to least squares problems
 
-```python
-def qr_decomposition_detailed(A, method='numpy'):
-    """
-    Perform detailed QR decomposition with comprehensive analysis
-    
-    Mathematical approach:
-    A = QR where Q is orthogonal and R is upper triangular
-    
-    Parameters:
-    A: numpy array - matrix to decompose
-    method: str - 'numpy', 'gram_schmidt', or 'householder'
-    
-    Returns:
-    tuple - (Q, R, analysis_results)
-    """
-    m, n = A.shape
-    
-    if method == 'numpy':
-        # Use numpy's optimized implementation
-        Q, R = np.linalg.qr(A)
-        
-    elif method == 'gram_schmidt':
-        # Manual Gram-Schmidt implementation
-        Q, R = qr_gram_schmidt(A)
-        
-    elif method == 'householder':
-        # Manual Householder implementation
-        Q, R = qr_householder(A)
-        
-    else:
-        raise ValueError(f"Unknown method: {method}")
-    
-    # Comprehensive analysis
-    analysis = analyze_qr_decomposition(A, Q, R)
-    
-    return Q, R, analysis
+### Algorithm: Householder QR Decomposition
 
-def qr_gram_schmidt(A):
-    """
-    QR decomposition using Gram-Schmidt orthogonalization
-    
-    Mathematical approach:
-    Apply Gram-Schmidt to columns of A to obtain Q, then compute R = Q^T A
-    """
-    m, n = A.shape
-    Q = np.zeros((m, n))
-    R = np.zeros((n, n))
-    
-    for j in range(n):
-        # Start with column j of A
-        v = A[:, j].copy()
-        
-        # Subtract projections onto previous orthogonal vectors
-        for i in range(j):
-            R[i, j] = np.dot(Q[:, i], A[:, j])
-            v = v - R[i, j] * Q[:, i]
-        
-        # Normalize to get next column of Q
-        R[j, j] = np.linalg.norm(v)
-        if R[j, j] > 1e-10:
-            Q[:, j] = v / R[j, j]
-        else:
-            # Handle zero or near-zero vectors
-            Q[:, j] = np.zeros(m)
-            R[j, j] = 0
-    
-    return Q, R
+**Mathematical Foundation:**
+Householder reflections provide a numerically stable method for QR decomposition:
 
-def qr_householder(A):
-    """
-    QR decomposition using Householder reflections
-    
-    Mathematical approach:
-    Use Householder matrices to zero out subdiagonal elements
-    """
-    m, n = A.shape
-    A_copy = A.copy().astype(float)
-    Q = np.eye(m)
-    
-    for j in range(min(m-1, n)):
-        # Extract column j from row j onwards
-        x = A_copy[j:, j]
-        
-        # Compute Householder vector
-        norm_x = np.linalg.norm(x)
-        if norm_x > 1e-10:
-            # Choose sign to avoid cancellation
-            if x[0] >= 0:
-                x[0] += norm_x
-            else:
-                x[0] -= norm_x
-            
-            # Normalize Householder vector
-            u = x / np.linalg.norm(x)
-            
-            # Apply Householder reflection to A
-            A_copy[j:, j:] = A_copy[j:, j:] - 2 * np.outer(u, u.T @ A_copy[j:, j:])
-            
-            # Update Q matrix
-            Q[j:, :] = Q[j:, :] - 2 * np.outer(u, u.T @ Q[j:, :])
-    
-    R = A_copy
-    return Q.T, R
+1. **For each column** $`k = 1, 2, \ldots, n`$:
+   - Define $`v_k = a_k - \text{sign}(a_{kk})\|a_k\|_2 e_k`$
+   - Householder matrix: $`H_k = I - 2\frac{v_k v_k^T}{v_k^T v_k}`$
+   - Apply: $`A = H_k A`$, $`Q = Q H_k`$
 
-def analyze_qr_decomposition(A, Q, R):
-    """
-    Comprehensive analysis of QR decomposition
-    
-    Parameters:
-    A: numpy array - original matrix
-    Q: numpy array - orthogonal matrix
-    R: numpy array - upper triangular matrix
-    
-    Returns:
-    dict - analysis results
-    """
-    # Verify decomposition
-    A_reconstructed = Q @ R
-    decomposition_error = np.linalg.norm(A - A_reconstructed, 'fro')
-    
-    # Check orthogonality of Q
-    Q_orthogonal_error = np.linalg.norm(Q.T @ Q - np.eye(Q.shape[1]), 'fro')
-    
-    # Check upper triangular structure of R
-    R_lower_entries = np.tril(R, k=-1)
-    R_triangular_error = np.linalg.norm(R_lower_entries)
-    
-    # Check diagonal positivity of R (for uniqueness)
-    R_diagonal = np.diag(R)
-    negative_diagonal_count = np.sum(R_diagonal < -1e-10)
-    
-    # Rank analysis
-    rank_A = np.linalg.matrix_rank(A)
-    rank_R = np.sum(np.abs(R_diagonal) > 1e-10)
-    
-    # Condition numbers
-    cond_A = np.linalg.cond(A)
-    cond_R = np.linalg.cond(R)
-    
-    # Norm preservation
-    norm_A = np.linalg.norm(A, 'fro')
-    norm_QR = np.linalg.norm(Q @ R, 'fro')
-    norm_preservation_error = abs(norm_A - norm_QR)
-    
-    return {
-        'decomposition_error': decomposition_error,
-        'Q_orthogonal_error': Q_orthogonal_error,
-        'R_triangular_error': R_triangular_error,
-        'negative_diagonal_count': negative_diagonal_count,
-        'rank_A': rank_A,
-        'rank_R': rank_R,
-        'rank_preserved': rank_A == rank_R,
-        'cond_A': cond_A,
-        'cond_R': cond_R,
-        'norm_preservation_error': norm_preservation_error,
-        'numerically_stable': decomposition_error < 1e-10 and Q_orthogonal_error < 1e-10
-    }
-
-def solve_least_squares_qr_detailed(A, b, method='numpy'):
-    """
-    Solve least squares problem using QR decomposition with detailed analysis
-    
-    Mathematical approach:
-    min ||Ax - b||₂ is solved by QR decomposition:
-    1. A = QR
-    2. min ||QRx - b||₂ = min ||Rx - Q^T b||₂
-    3. Solve Rx = Q^T b by back-substitution
-    
-    Parameters:
-    A: numpy array - coefficient matrix
-    b: numpy array - right-hand side vector
-    method: str - QR decomposition method
-    
-    Returns:
-    tuple - (x, analysis_results)
-    """
-    m, n = A.shape
-    
-    # Perform QR decomposition
-    Q, R, qr_analysis = qr_decomposition_detailed(A, method=method)
-    
-    # Solve least squares problem
-    # Step 1: Compute Q^T b
-    Qtb = Q.T @ b
-    
-    # Step 2: Solve Rx = Q^T b
-    # Use only the first n rows of R and Q^T b
-    R_n = R[:n, :n]
-    Qtb_n = Qtb[:n]
-    
-    try:
-        x = np.linalg.solve(R_n, Qtb_n)
-        solution_exists = True
-    except np.linalg.LinAlgError:
-        # Handle rank-deficient case
-        x = np.linalg.lstsq(R_n, Qtb_n, rcond=None)[0]
-        solution_exists = False
-    
-    # Analysis
-    residual = A @ x - b
-    residual_norm = np.linalg.norm(residual)
-    relative_residual = residual_norm / np.linalg.norm(b) if np.linalg.norm(b) > 0 else residual_norm
-    
-    # Check if solution is unique
-    rank_A = qr_analysis['rank_A']
-    solution_unique = rank_A == n
-    
-    # Compare with numpy's least squares
-    x_numpy = np.linalg.lstsq(A, b, rcond=None)[0]
-    numpy_residual = A @ x_numpy - b
-    numpy_residual_norm = np.linalg.norm(numpy_residual)
-    
-    analysis = {
-        'x': x,
-        'residual_norm': residual_norm,
-        'relative_residual': relative_residual,
-        'solution_exists': solution_exists,
-        'solution_unique': solution_unique,
-        'rank_A': rank_A,
-        'numpy_solution': x_numpy,
-        'numpy_residual_norm': numpy_residual_norm,
-        'solution_difference': np.linalg.norm(x - x_numpy),
-        'qr_analysis': qr_analysis
-    }
-    
-    return x, analysis
-
-def compare_qr_methods(A, b):
-    """
-    Compare different QR decomposition methods for least squares
-    
-    Parameters:
-    A: numpy array - coefficient matrix
-    b: numpy array - right-hand side vector
-    
-    Returns:
-    dict - comparison results
-    """
-    methods = ['numpy', 'gram_schmidt', 'householder']
-    results = {}
-    
-    for method in methods:
-        try:
-            x, analysis = solve_least_squares_qr_detailed(A, b, method=method)
-            results[method] = {
-                'x': x,
-                'analysis': analysis,
-                'success': True
-            }
-        except Exception as e:
-            results[method] = {
-                'error': str(e),
-                'success': False
-            }
-    
-    return results
-
-# Example: Comprehensive QR decomposition analysis
-print("\n=== Comprehensive QR Decomposition Analysis ===")
-
-# Test matrix (overdetermined system)
-A = np.array([[1, 1], [1, 2], [1, 3], [1, 4]], dtype=float)
-b = np.array([2, 3, 4, 5], dtype=float)
-
-print(f"Matrix A:\n{A}")
-print(f"Right-hand side b: {b}")
-print(f"System shape: {A.shape}")
-
-# Perform detailed QR decomposition
-Q, R, analysis = qr_decomposition_detailed(A)
-
-print(f"\nOrthogonal matrix Q:\n{Q}")
-print(f"Upper triangular matrix R:\n{R}")
-
-# Display analysis results
-print(f"\nQR Decomposition Analysis:")
-for key, value in analysis.items():
-    if isinstance(value, float):
-        print(f"  {key}: {value:.6f}")
-    else:
-        print(f"  {key}: {value}")
-
-# Verify decomposition
-A_reconstructed = Q @ R
-print(f"\nVerification:")
-print(f"Original A:\n{A}")
-print(f"Reconstructed A:\n{A_reconstructed}")
-print(f"Decomposition error: {analysis['decomposition_error']:.2e}")
-
-# Verify orthogonality
-Q_orthogonal = Q.T @ Q
-print(f"\nOrthogonality check (Q^T @ Q):")
-print(Q_orthogonal)
-print(f"Orthogonality error: {analysis['Q_orthogonal_error']:.2e}")
-
-# Solve least squares with detailed analysis
-x, ls_analysis = solve_least_squares_qr_detailed(A, b)
-
-print(f"\nLeast Squares Solution:")
-print(f"x = {x}")
-print(f"Residual norm: {ls_analysis['residual_norm']:.6f}")
-print(f"Relative residual: {ls_analysis['relative_residual']:.6f}")
-print(f"Solution unique: {ls_analysis['solution_unique']}")
-
-# Compare with numpy
-print(f"\nComparison with numpy:")
-print(f"QR solution: {x}")
-print(f"Numpy solution: {ls_analysis['numpy_solution']}")
-print(f"Solution difference: {ls_analysis['solution_difference']:.2e}")
-
-# Compare methods
-print(f"\n=== Method Comparison ===")
-comparison = compare_qr_methods(A, b)
-
-for method, result in comparison.items():
-    print(f"\n{method}:")
-    if result['success']:
-        analysis = result['analysis']
-        print(f"  Success: {result['success']}")
-        print(f"  Decomposition error: {analysis['qr_analysis']['decomposition_error']:.2e}")
-        print(f"  Residual norm: {analysis['residual_norm']:.6f}")
-        print(f"  Solution difference from numpy: {analysis['solution_difference']:.2e}")
-    else:
-        print(f"  Success: {result['success']}")
-        print(f"  Error: {result['error']}")
-
-# Test with different matrix types
-print(f"\n=== Testing Different Matrix Types ===")
-
-# Well-conditioned overdetermined system
-A_well = np.array([[1, 0], [0, 1], [1, 1]], dtype=float)
-b_well = np.array([1, 2, 3], dtype=float)
-
-print(f"Well-conditioned system:")
-x_well, analysis_well = solve_least_squares_qr_detailed(A_well, b_well)
-print(f"  Residual norm: {analysis_well['residual_norm']:.6f}")
-print(f"  Solution unique: {analysis_well['solution_unique']}")
-
-# Ill-conditioned system
-A_ill = np.array([[1, 1], [1, 1.0001], [1, 1.0002]], dtype=float)
-b_ill = np.array([2, 2.0001, 2.0002], dtype=float)
-
-print(f"Ill-conditioned system:")
-x_ill, analysis_ill = solve_least_squares_qr_detailed(A_ill, b_ill)
-print(f"  Residual norm: {analysis_ill['residual_norm']:.6f}")
-print(f"  Condition number: {analysis_ill['qr_analysis']['cond_A']:.2e}")
-
-# Rank-deficient system
-A_rank_def = np.array([[1, 1], [1, 1], [1, 1]], dtype=float)
-b_rank_def = np.array([1, 2, 3], dtype=float)
-
-print(f"Rank-deficient system:")
-x_rank_def, analysis_rank_def = solve_least_squares_qr_detailed(A_rank_def, b_rank_def)
-print(f"  Residual norm: {analysis_rank_def['residual_norm']:.6f}")
-print(f"  Rank: {analysis_rank_def['rank_A']}")
-print(f"  Solution unique: {analysis_rank_def['solution_unique']}")
-
-# Test with square system (should give exact solution)
-print(f"\n=== Square System Test ===")
-A_square = np.array([[2, 1], [1, 3]], dtype=float)
-b_square = np.array([5, 6], dtype=float)
-
-print(f"Square system:")
-x_square, analysis_square = solve_least_squares_qr_detailed(A_square, b_square)
-print(f"  Solution: {x_square}")
-print(f"  Residual norm: {analysis_square['residual_norm']:.6f}")
-print(f"  Should be exact: {analysis_square['residual_norm'] < 1e-10}")
-
-# Verify exact solution
-x_exact = np.linalg.solve(A_square, b_square)
-print(f"  Exact solution: {x_exact}")
-print(f"  Difference: {np.linalg.norm(x_square - x_exact):.2e}")
-```
+**Properties:**
+- **Numerical Stability**: Householder method is more stable than Gram-Schmidt
+- **Orthogonality**: $`Q`$ is exactly orthogonal (up to machine precision)
+- **Sparsity**: $`R`$ is upper triangular with zeros below diagonal
 
 ### Least Squares Applications
 
 **Mathematical Foundation:**
 QR decomposition provides a numerically stable method for solving least squares problems:
 
-min ||Ax - b||₂
+```math
+\min \|Ax - b\|_2
+```
 
 The solution is obtained by:
-1. **Decomposition**: A = QR
-2. **Transformation**: ||Ax - b||₂ = ||QRx - b||₂ = ||Rx - Qᵀb||₂
-3. **Solution**: Solve Rx = Qᵀb by back-substitution
+1. **Decomposition**: $`A = QR`$
+2. **Transformation**: $`\|Ax - b\|_2 = \|QRx - b\|_2 = \|Rx - Q^T b\|_2`$
+3. **Solution**: Solve $`Rx = Q^T b`$ by back-substitution
 
 **Key Advantages:**
 1. **Numerical Stability**: QR decomposition is more stable than normal equations
@@ -930,549 +174,561 @@ The solution is obtained by:
 3. **Multiple Right-hand Sides**: Efficient for solving multiple least squares problems
 4. **Conditioning**: Preserves conditioning better than other methods
 
-```python
-def solve_multiple_least_squares_qr(A, B):
-    """
-    Solve multiple least squares problems AX ≈ B using QR decomposition
-    
-    Mathematical approach:
-    After computing A = QR, solve Rx_i = Q^T b_i for each column b_i of B
-    
-    Parameters:
-    A: numpy array - coefficient matrix (m × n)
-    B: numpy array - right-hand side matrix (m × k)
-    
-    Returns:
-    numpy array - solution matrix X (n × k)
-    """
-    m, n = A.shape
-    k = B.shape[1] if len(B.shape) > 1 else 1
-    
-    # Perform QR decomposition once
-    Q, R = np.linalg.qr(A)
-    
-    # Solve for each right-hand side
-    if k == 1:
-        Qtb = Q.T @ B
-        X = np.linalg.solve(R[:n, :n], Qtb[:n])
-    else:
-        Qtb = Q.T @ B
-        X = np.zeros((n, k))
-        for i in range(k):
-            X[:, i] = np.linalg.solve(R[:n, :n], Qtb[:n, i])
-    
-    return X
-
-def analyze_least_squares_sensitivity(A, b, perturbation_magnitude=1e-6):
-    """
-    Analyze sensitivity of least squares solution to perturbations
-    
-    Parameters:
-    A: numpy array - coefficient matrix
-    b: numpy array - right-hand side vector
-    perturbation_magnitude: float - magnitude of perturbations to test
-    
-    Returns:
-    dict - sensitivity analysis results
-    """
-    # Solve original problem
-    x_original, _ = solve_least_squares_qr_detailed(A, b)
-    
-    # Test perturbations in A
-    A_perturbed = A + perturbation_magnitude * np.random.randn(*A.shape)
-    x_A_perturbed, _ = solve_least_squares_qr_detailed(A_perturbed, b)
-    sensitivity_A = np.linalg.norm(x_original - x_A_perturbed) / perturbation_magnitude
-    
-    # Test perturbations in b
-    b_perturbed = b + perturbation_magnitude * np.random.randn(*b.shape)
-    x_b_perturbed, _ = solve_least_squares_qr_detailed(A, b_perturbed)
-    sensitivity_b = np.linalg.norm(x_original - x_b_perturbed) / perturbation_magnitude
-    
-    # Theoretical bounds
-    cond_A = np.linalg.cond(A)
-    norm_A_pinv = np.linalg.norm(np.linalg.pinv(A))
-    norm_x = np.linalg.norm(x_original)
-    norm_b = np.linalg.norm(b)
-    
-    return {
-        'sensitivity_A': sensitivity_A,
-        'sensitivity_b': sensitivity_b,
-        'condition_number': cond_A,
-        'norm_A_pinv': norm_A_pinv,
-        'theoretical_bound_A': cond_A * norm_x / norm_A,
-        'theoretical_bound_b': cond_A / norm_A,
-        'well_conditioned': cond_A < 100
-    }
-
-# Example: Multiple least squares and sensitivity analysis
-print("\n=== Multiple Least Squares and Sensitivity Analysis ===")
-
-# Create multiple right-hand sides
-B = np.column_stack([
-    np.array([2, 3, 4, 5]),
-    np.array([1, 2, 3, 4]),
-    np.array([0, 1, 2, 3])
-])
-
-print(f"Multiple right-hand sides B:\n{B}")
-
-# Solve all least squares problems efficiently
-X = solve_multiple_least_squares_qr(A, B)
-
-print(f"Solution matrix X:\n{X}")
-
-# Verify solutions
-for i in range(B.shape[1]):
-    b_i = B[:, i]
-    x_i = X[:, i]
-    residual = np.linalg.norm(A @ x_i - b_i)
-    print(f"System {i+1} residual: {residual:.6f}")
-
-# Sensitivity analysis
-sensitivity_results = analyze_least_squares_sensitivity(A, b)
-
-print(f"\nSensitivity Analysis:")
-for key, value in sensitivity_results.items():
-    if isinstance(value, float):
-        print(f"  {key}: {value:.6f}")
-    else:
-        print(f"  {key}: {value}")
-
-# Compare with theoretical bounds
-print(f"\nSensitivity Comparison:")
-print(f"  Observed sensitivity to A: {sensitivity_results['sensitivity_A']:.2e}")
-print(f"  Theoretical bound for A: {sensitivity_results['theoretical_bound_A']:.2e}")
-print(f"  Observed sensitivity to b: {sensitivity_results['sensitivity_b']:.2e}")
-print(f"  Theoretical bound for b: {sensitivity_results['theoretical_bound_b']:.2e}")
-```
+**Algorithm:**
+1. Compute $`A = QR`$ using Householder method
+2. Compute $`c = Q^T b`$
+3. Solve $`Rx = c`$ by back-substitution
+4. Solution: $`x = R^{-1} c`$
 
 ## Singular Value Decomposition (SVD)
 
-SVD decomposes a matrix A into A = UΣVᵀ, where U and V are orthogonal and Σ is diagonal.
+SVD decomposes a matrix $`A`$ into $`A = U\Sigma V^T`$, where $`U`$ and $`V`$ are orthogonal and $`\Sigma`$ is diagonal. This is one of the most powerful matrix decompositions, revealing the fundamental structure of any matrix.
 
 ### Mathematical Definition
-A = UΣVᵀ where:
-- U is orthogonal (left singular vectors)
-- Σ is diagonal (singular values)
-- V is orthogonal (right singular vectors)
 
-```python
-def svd_decomposition_example():
-    """Demonstrate SVD decomposition"""
-    A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    print("Matrix A:")
-    print(A)
-    
-    # Perform SVD
-    U, S, Vt = np.linalg.svd(A)
-    
-    print("\nLeft singular vectors U:")
-    print(U)
-    print("\nSingular values S:")
-    print(S)
-    print("\nRight singular vectors V^T:")
-    print(Vt)
-    
-    # Verify orthogonality
-    U_orthogonal = U.T @ U
-    V_orthogonal = Vt @ Vt.T
-    print(f"\nU orthogonality error: {np.linalg.norm(U_orthogonal - np.eye(U.shape[0])):.2e}")
-    print(f"V orthogonality error: {np.linalg.norm(V_orthogonal - np.eye(Vt.shape[1])):.2e}")
-    
-    # Reconstruct matrix
-    Sigma = np.zeros_like(A, dtype=float)
-    Sigma[:len(S), :len(S)] = np.diag(S)
-    A_reconstructed = U @ Sigma @ Vt
-    
-    print("\nA reconstructed (U @ Σ @ V^T):")
-    print(A_reconstructed)
-    print(f"Decomposition error: {np.linalg.norm(A - A_reconstructed):.2e}")
-    
-    return U, S, Vt
-
-U, S, Vt = svd_decomposition_example()
+**Full SVD:**
+For a matrix $`A \in \mathbb{R}^{m \times n}`$, the SVD is:
+```math
+A = U \Sigma V^T
 ```
+
+where:
+- $`U \in \mathbb{R}^{m \times m}`$ is orthogonal (left singular vectors)
+- $`\Sigma \in \mathbb{R}^{m \times n}`$ is diagonal (singular values)
+- $`V \in \mathbb{R}^{n \times n}`$ is orthogonal (right singular vectors)
+
+**Reduced SVD:**
+For $`m \geq n`$, we can write:
+```math
+A = U_1 \Sigma_1 V^T
+```
+
+where $`U_1 \in \mathbb{R}^{m \times n}`$ has orthonormal columns and $`\Sigma_1 \in \mathbb{R}^{n \times n}`$ is diagonal.
+
+**Properties:**
+1. **Singular Values**: $`\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_r > 0`$ where $`r = \text{rank}(A)`$
+2. **Rank**: $`\text{rank}(A) =`$ number of non-zero singular values
+3. **Condition Number**: $`\kappa(A) = \sigma_1 / \sigma_r`$
+4. **Frobenius Norm**: $`\|A\|_F = \sqrt{\sum_{i=1}^r \sigma_i^2}`$
+
+### Geometric Interpretation
+
+**SVD as Coordinate Transformation:**
+1. **Right Singular Vectors** ($`V`$): Orthonormal basis for the input space
+2. **Left Singular Vectors** ($`U`$): Orthonormal basis for the output space
+3. **Singular Values** ($`\Sigma`$): Scaling factors along principal axes
+
+**Data Analysis Perspective:**
+- **Principal Components**: Right singular vectors are principal components
+- **Variance**: Singular values squared represent variance explained
+- **Dimensionality**: Number of significant singular values indicates intrinsic dimension
 
 ### Low-Rank Approximation
-```python
-def low_rank_approximation(A, k):
-    """Compute rank-k approximation of matrix A using SVD"""
-    U, S, Vt = np.linalg.svd(A)
-    
-    # Keep only k singular values
-    U_k = U[:, :k]
-    S_k = S[:k]
-    Vt_k = Vt[:k, :]
-    
-    # Reconstruct rank-k approximation
-    A_k = U_k @ np.diag(S_k) @ Vt_k
-    
-    return A_k, U_k, S_k, Vt_k
 
-# Example: Image compression simulation
-np.random.seed(42)
-# Create a "low-rank" matrix (simulating an image)
-n, m = 50, 50
-A_original = np.random.randn(n, m)
-# Make it approximately low-rank by adding some structure
-A_original = A_original @ A_original.T / m
-
-print(f"Original matrix shape: {A_original.shape}")
-print(f"Original rank: {np.linalg.matrix_rank(A_original)}")
-
-# Compute different rank approximations
-ranks = [5, 10, 20]
-for k in ranks:
-    A_k, U_k, S_k, Vt_k = low_rank_approximation(A_original, k)
-    
-    # Calculate compression ratio
-    original_size = A_original.size
-    compressed_size = U_k.size + S_k.size + Vt_k.size
-    compression_ratio = original_size / compressed_size
-    
-    # Calculate reconstruction error
-    error = np.linalg.norm(A_original - A_k) / np.linalg.norm(A_original)
-    
-    print(f"\nRank {k} approximation:")
-    print(f"  Compression ratio: {compression_ratio:.2f}x")
-    print(f"  Relative error: {error:.4f}")
+**Mathematical Foundation:**
+The best rank-$`k`$ approximation of $`A`$ is:
+```math
+A_k = \sum_{i=1}^k \sigma_i u_i v_i^T
 ```
+
+where $`u_i`$ and $`v_i`$ are the $`i`$-th columns of $`U`$ and $`V`$ respectively.
+
+**Optimality:**
+- **Eckart-Young Theorem**: $`A_k`$ is the best rank-$`k`$ approximation in both Frobenius and spectral norms
+- **Error**: $`\|A - A_k\|_F = \sqrt{\sum_{i=k+1}^r \sigma_i^2}`$
+
+**Applications:**
+- **Data Compression**: Store only top-$`k`$ singular values and vectors
+- **Noise Reduction**: Remove components with small singular values
+- **Dimensionality Reduction**: Project data onto top singular vectors
 
 ## Cholesky Decomposition
 
-Cholesky decomposition factors a positive definite matrix A into A = LLᵀ, where L is lower triangular.
+Cholesky decomposition factors a positive definite matrix $`A`$ into $`A = LL^T`$, where $`L`$ is lower triangular. This is the most efficient decomposition for positive definite matrices.
 
 ### Mathematical Definition
-A = LLᵀ where:
-- L is lower triangular
-- A is symmetric positive definite
 
-```python
-def cholesky_decomposition_example():
-    """Demonstrate Cholesky decomposition"""
-    # Create a positive definite matrix
-    A = np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]])
-    print("Positive definite matrix A:")
-    print(A)
-    
-    # Verify positive definiteness
-    eigenvals = np.linalg.eigvals(A)
-    print(f"Eigenvalues: {eigenvals}")
-    print(f"Is positive definite: {np.all(eigenvals > 0)}")
-    
-    # Perform Cholesky decomposition
-    L = np.linalg.cholesky(A)
-    
-    print("\nLower triangular matrix L:")
-    print(L)
-    
-    # Verify decomposition
-    A_reconstructed = L @ L.T
-    print("\nA reconstructed (L @ L^T):")
-    print(A_reconstructed)
-    print(f"Decomposition error: {np.linalg.norm(A - A_reconstructed):.2e}")
-    
-    return L
-
-L = cholesky_decomposition_example()
+**Definition:**
+For a symmetric positive definite matrix $`A \in \mathbb{R}^{n \times n}`$:
+```math
+A = LL^T
 ```
+
+where $`L \in \mathbb{R}^{n \times n}`$ is lower triangular with positive diagonal entries.
+
+**Existence and Uniqueness:**
+- **Existence**: Cholesky decomposition exists if and only if $`A`$ is symmetric positive definite
+- **Uniqueness**: The decomposition is unique when $`L`$ has positive diagonal entries
+
+**Algorithm:**
+For $`j = 1, 2, \ldots, n`$:
+```math
+\begin{align}
+L_{jj} &= \sqrt{A_{jj} - \sum_{k=1}^{j-1} L_{jk}^2} \\
+L_{ij} &= \frac{1}{L_{jj}}\left(A_{ij} - \sum_{k=1}^{j-1} L_{ik} L_{jk}\right) \quad \text{for } i = j+1, \ldots, n
+\end{align}
+```
+
+**Properties:**
+1. **Stability**: Cholesky is numerically stable for positive definite matrices
+2. **Efficiency**: Requires $`O(n^3/3)`$ operations (half of LU)
+3. **Storage**: Can overwrite $`A`$ with $`L`$ (saves memory)
+4. **Determinant**: $`\det(A) = \prod_{i=1}^n L_{ii}^2`$
 
 ### Solving Systems with Cholesky
-```python
-def solve_with_cholesky(A, b):
-    """Solve Ax = b using Cholesky decomposition"""
-    # Cholesky decomposition
-    L = np.linalg.cholesky(A)
-    
-    # Solve L y = b (forward substitution)
-    y = np.linalg.solve(L, b)
-    
-    # Solve L^T x = y (backward substitution)
-    x = np.linalg.solve(L.T, y)
-    
-    return x
 
-# Example: Solve system with positive definite matrix
-A = np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]])
-b = np.array([1, 2, 3])
+**Mathematical Foundation:**
+For solving $`Ax = b`$ where $`A`$ is positive definite:
 
-print("System Ax = b (A positive definite):")
-print(f"A:\n{A}")
-print(f"b: {b}")
+1. **Decomposition**: $`A = LL^T`$
+2. **Forward Substitution**: Solve $`Ly = b`$ for $`y`$
+3. **Backward Substitution**: Solve $`L^T x = y`$ for $`x`$
 
-x = solve_with_cholesky(A, b)
-print(f"\nSolution x: {x}")
+**Advantages over LU:**
+- **Efficiency**: Requires half the operations of LU
+- **Stability**: No pivoting needed for positive definite matrices
+- **Memory**: Can overwrite original matrix
 
-# Verify solution
-b_computed = A @ x
-print(f"Computed b: {b_computed}")
-print(f"Verification error: {np.linalg.norm(b - b_computed):.2e}")
-```
+**Applications:**
+- **Covariance Matrices**: Natural for multivariate statistics
+- **Finite Element Methods**: Stiffness matrices are positive definite
+- **Optimization**: Hessian matrices in Newton's method
 
 ## Eigenvalue Decomposition
 
-Eigenvalue decomposition factors a diagonalizable matrix A into A = PDP⁻¹, where P contains eigenvectors and D is diagonal.
+Eigenvalue decomposition factors a diagonalizable matrix $`A`$ into $`A = PDP^{-1}`$, where $`P`$ contains eigenvectors and $`D`$ is diagonal.
 
 ### Mathematical Definition
-A = PDP⁻¹ where:
-- P contains eigenvectors as columns
-- D is diagonal with eigenvalues
-- A must be diagonalizable
 
-```python
-def eigenvalue_decomposition_example():
-    """Demonstrate eigenvalue decomposition"""
-    A = np.array([[4, -2], [1, 1]])
-    print("Matrix A:")
-    print(A)
-    
-    # Perform eigenvalue decomposition
-    eigenvals, eigenvecs = np.linalg.eig(A)
-    
-    print(f"\nEigenvalues: {eigenvals}")
-    print("\nEigenvectors (columns):")
-    print(eigenvecs)
-    
-    # Construct diagonal matrix
-    D = np.diag(eigenvals)
-    P = eigenvecs
-    P_inv = np.linalg.inv(P)
-    
-    print("\nDiagonal matrix D:")
-    print(D)
-    print("\nEigenvector matrix P:")
-    print(P)
-    
-    # Verify decomposition
-    A_reconstructed = P @ D @ P_inv
-    print("\nA reconstructed (P @ D @ P^(-1)):")
-    print(A_reconstructed)
-    print(f"Decomposition error: {np.linalg.norm(A - A_reconstructed):.2e}")
-    
-    return eigenvals, eigenvecs
-
-eigenvals, eigenvecs = eigenvalue_decomposition_example()
+**Definition:**
+For a diagonalizable matrix $`A \in \mathbb{R}^{n \times n}`$:
+```math
+A = PDP^{-1}
 ```
+
+where:
+- $`P \in \mathbb{R}^{n \times n}`$ contains eigenvectors as columns
+- $`D \in \mathbb{R}^{n \times n}`$ is diagonal with eigenvalues
+- $`A`$ must be diagonalizable (have $`n`$ linearly independent eigenvectors)
+
+**Properties:**
+1. **Eigenvalues**: $`D_{ii} = \lambda_i`$ are the eigenvalues of $`A`$
+2. **Eigenvectors**: $`P_{:,i}`$ is the eigenvector corresponding to $`\lambda_i`$
+3. **Powers**: $`A^k = PD^k P^{-1}`$ for any integer $`k`$
+4. **Functions**: $`f(A) = Pf(D) P^{-1}`$ for analytic functions $`f`$
+
+**Existence:**
+- **Sufficient Condition**: If $`A`$ has $`n`$ distinct eigenvalues, it is diagonalizable
+- **Necessary Condition**: $`A`$ must have $`n`$ linearly independent eigenvectors
+- **Symmetric Matrices**: Always diagonalizable with orthogonal eigenvectors
+
+### Algorithm: Power Iteration
+
+**Mathematical Foundation:**
+For finding the dominant eigenvalue and eigenvector:
+
+1. **Initialize**: $`x_0`$ (random vector)
+2. **Iterate**: $`x_{k+1} = \frac{A x_k}{\|A x_k\|_2}`$
+3. **Converge**: $`x_k \to v_1`$ (dominant eigenvector)
+4. **Eigenvalue**: $`\lambda_1 = \frac{x_k^T A x_k}{x_k^T x_k}`$
+
+**Properties:**
+- **Convergence Rate**: Linear with ratio $`|\lambda_2/\lambda_1|`$
+- **Dominant Eigenvalue**: Finds largest eigenvalue in magnitude
+- **Extensions**: Can find multiple eigenvalues with deflation
 
 ## Applications in Machine Learning
 
 ### Principal Component Analysis (PCA)
-```python
-def pca_with_svd(data, n_components=None):
-    """Perform PCA using SVD"""
-    # Center the data
-    data_centered = data - np.mean(data, axis=0)
-    
-    # SVD of centered data
-    U, S, Vt = np.linalg.svd(data_centered, full_matrices=False)
-    
-    if n_components is None:
-        n_components = len(S)
-    
-    # Principal components are right singular vectors
-    principal_components = Vt[:n_components, :]
-    
-    # Project data onto principal components
-    data_pca = U[:, :n_components] @ np.diag(S[:n_components])
-    
-    return data_pca, principal_components, S
 
-# Example: PCA on synthetic data
-np.random.seed(42)
-n_samples, n_features = 100, 3
-data = np.random.randn(n_samples, n_features)
-# Add correlation
-data[:, 2] = 0.8 * data[:, 0] + 0.2 * np.random.randn(n_samples)
+**Mathematical Foundation:**
+PCA finds the principal components of data matrix $`X \in \mathbb{R}^{n \times d}`$:
 
-print(f"Original data shape: {data.shape}")
+1. **Center Data**: $`X' = X - \bar{X}`$
+2. **Covariance Matrix**: $`C = \frac{1}{n-1} X'^T X'`$
+3. **Eigenvalue Decomposition**: $`C = V \Lambda V^T`$
+4. **Projection**: $`Y = X' V`$
 
-# Perform PCA
-data_pca, components, singular_values = pca_with_svd(data, n_components=2)
-
-print(f"PCA data shape: {data_pca.shape}")
-print(f"Principal components shape: {components.shape}")
-
-# Explained variance
-explained_variance = singular_values**2 / (n_samples - 1)
-total_variance = np.sum(explained_variance)
-explained_variance_ratio = explained_variance / total_variance
-
-print(f"\nExplained variance ratio:")
-for i, ratio in enumerate(explained_variance_ratio[:2]):
-    print(f"PC{i+1}: {ratio:.3f}")
+**SVD Connection:**
+PCA can also be computed via SVD of $`X'`$:
+```math
+X' = U \Sigma V^T
 ```
+
+The principal components are the right singular vectors $`V`$, and the explained variance is proportional to $`\sigma_i^2`$.
+
+**Applications:**
+- **Dimensionality Reduction**: Keep top-$`k`$ components
+- **Data Visualization**: Project to 2D/3D for plotting
+- **Feature Engineering**: Create new features from principal components
+- **Noise Reduction**: Remove components with low variance
 
 ### Matrix Factorization for Recommender Systems
-```python
-def matrix_factorization(R, k, max_iter=100, learning_rate=0.01, reg=0.1):
-    """Simple matrix factorization for recommender systems"""
-    m, n = R.shape
-    
-    # Initialize factors
-    U = np.random.randn(m, k) * 0.1
-    V = np.random.randn(n, k) * 0.1
-    
-    # Find non-zero entries
-    non_zero = R != 0
-    
-    for iteration in range(max_iter):
-        # Compute prediction
-        R_pred = U @ V.T
-        
-        # Compute error only for non-zero entries
-        error = R_pred - R
-        error[~non_zero] = 0
-        
-        # Update factors
-        U_grad = error @ V + reg * U
-        V_grad = error.T @ U + reg * V
-        
-        U -= learning_rate * U_grad
-        V -= learning_rate * V_grad
-        
-        # Compute loss
-        if iteration % 20 == 0:
-            loss = np.sum(error**2) + reg * (np.sum(U**2) + np.sum(V**2))
-            print(f"Iteration {iteration}, Loss: {loss:.4f}")
-    
-    return U, V
 
-# Example: Simple recommender system
-np.random.seed(42)
-# Create rating matrix (users x items)
-n_users, n_items = 10, 15
-R = np.random.randint(1, 6, (n_users, n_items))
-# Add some missing ratings
-R[np.random.rand(n_users, n_items) < 0.3] = 0
-
-print("Rating matrix (0 = missing rating):")
-print(R)
-
-# Perform matrix factorization
-k = 3  # Number of latent factors
-U, V = matrix_factorization(R, k, max_iter=100)
-
-# Predict missing ratings
-R_pred = U @ V.T
-print(f"\nPredicted ratings:")
-print(R_pred.round(2))
-
-# Evaluate on non-zero entries
-non_zero = R != 0
-mse = np.mean((R_pred[non_zero] - R[non_zero])**2)
-print(f"\nMean squared error on observed ratings: {mse:.4f}")
+**Mathematical Foundation:**
+Matrix factorization models user-item ratings as:
+```math
+R \approx U V^T
 ```
+
+where:
+- $`R \in \mathbb{R}^{m \times n}`$ is the rating matrix
+- $`U \in \mathbb{R}^{m \times k}`$ contains user embeddings
+- $`V \in \mathbb{R}^{n \times k}`$ contains item embeddings
+
+**Optimization Problem:**
+```math
+\min_{U,V} \sum_{(i,j) \in \Omega} (R_{ij} - U_i^T V_j)^2 + \lambda(\|U\|_F^2 + \|V\|_F^2)
+```
+
+where $`\Omega`$ is the set of observed ratings.
+
+**Algorithms:**
+1. **Alternating Least Squares**: Fix $`U`$, solve for $`V`$, then vice versa
+2. **Stochastic Gradient Descent**: Update embeddings for each rating
+3. **SVD-based**: Use truncated SVD for initialization
+
+### Linear Regression and Regularization
+
+**Mathematical Foundation:**
+Linear regression solves:
+```math
+\min_w \|Xw - y\|_2^2 + \lambda \|w\|_2^2
+```
+
+**QR Solution:**
+1. Compute $`X = QR`$
+2. Solve $`Rw = Q^T y`$ by back-substitution
+
+**Ridge Regression:**
+The solution is:
+```math
+w = (X^T X + \lambda I)^{-1} X^T y
+```
+
+**Cholesky Solution:**
+1. Compute $`X^T X + \lambda I = LL^T`$
+2. Solve $`LL^T w = X^T y`$ by forward/backward substitution
+
+### Neural Network Initialization
+
+**Mathematical Foundation:**
+Orthogonal initialization for neural networks:
+
+1. **Generate**: Random matrix $`W \in \mathbb{R}^{m \times n}`$
+2. **SVD**: $`W = U \Sigma V^T`$
+3. **Initialize**: $`W = UV^T`$ (orthogonal matrix)
+
+**Properties:**
+- **Orthogonality**: $`W^T W = I`$ (for $`m \geq n`$)
+- **Gradient Flow**: Prevents vanishing/exploding gradients
+- **Feature Diversity**: Ensures neurons learn different features
 
 ## Exercises
 
 ### Exercise 1: LU Decomposition
-```python
-# Perform LU decomposition on matrix
-A = np.array([[2, 1, 1], [4, -6, 0], [-2, 7, 2]])
 
-# Your code here:
-# 1. Perform LU decomposition
-# 2. Solve the system Ax = [5, -2, 9] using LU
-# 3. Verify the solution
-```
+**Objective**: Implement and analyze LU decomposition with partial pivoting.
+
+**Tasks:**
+1. Implement LU decomposition with partial pivoting
+2. Test on matrix $`A = \begin{bmatrix} 2 & 1 & 1 \\ 4 & -6 & 0 \\ -2 & 7 & 2 \end{bmatrix}`$
+3. Verify $`PA = LU`$ where $`P`$ is the permutation matrix
+4. Solve the system $`Ax = [1, -2, 7]^T`$
 
 ### Exercise 2: QR Decomposition
-```python
-# Perform QR decomposition and least squares
-A = np.array([[1, 1], [1, 2], [1, 3], [1, 4]])
-b = np.array([2, 3, 4, 5])
 
-# Your code here:
-# 1. Perform QR decomposition
-# 2. Solve least squares problem
-# 3. Compare with numpy's lstsq
-```
+**Objective**: Implement QR decomposition and apply to least squares.
+
+**Tasks:**
+1. Implement Householder QR decomposition
+2. Test on matrix $`A = \begin{bmatrix} 1 & 2 \\ 3 & 4 \\ 5 & 6 \end{bmatrix}`$
+3. Verify $`A = QR`$ and $`Q^T Q = I`$
+4. Solve least squares problem $`\min \|Ax - b\|_2`$ where $`b = [1, 2, 3]^T`$
 
 ### Exercise 3: SVD and Low-Rank Approximation
-```python
-# Create a matrix and perform SVD
-A = np.random.randn(10, 8)
 
-# Your code here:
-# 1. Perform SVD decomposition
-# 2. Create rank-3 approximation
-# 3. Calculate compression ratio and error
-```
+**Objective**: Implement SVD and analyze low-rank approximations.
+
+**Tasks:**
+1. Implement SVD using numpy.linalg.svd
+2. Test on matrix $`A = \begin{bmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{bmatrix}`$
+3. Compute rank-1 and rank-2 approximations
+4. Compare reconstruction error for different ranks
+
+### Exercise 4: Cholesky Decomposition
+
+**Objective**: Implement Cholesky decomposition for positive definite matrices.
+
+**Tasks:**
+1. Implement Cholesky decomposition
+2. Test on matrix $`A = \begin{bmatrix} 4 & 12 & -16 \\ 12 & 37 & -43 \\ -16 & -43 & 98 \end{bmatrix}`$
+3. Verify $`A = LL^T`$
+4. Solve system $`Ax = [1, 2, 3]^T`$ using Cholesky
+
+### Exercise 5: Eigenvalue Decomposition
+
+**Objective**: Implement power iteration and analyze eigenvalue decomposition.
+
+**Tasks:**
+1. Implement power iteration for dominant eigenvalue
+2. Test on symmetric matrix $`A = \begin{bmatrix} 2 & 1 \\ 1 & 3 \end{bmatrix}`$
+3. Compare with numpy.linalg.eig
+4. Analyze convergence rate
+
+### Exercise 6: PCA Implementation
+
+**Objective**: Implement PCA from scratch using SVD.
+
+**Tasks:**
+1. Generate synthetic data with known structure
+2. Implement PCA using SVD
+3. Analyze explained variance ratio
+4. Visualize data in principal component space
 
 ## Solutions
 
 ### Solution 1: LU Decomposition
+
+**Step 1: Implementation**
 ```python
-# 1. Perform LU decomposition
-P, L, U = lu(A)
-print("LU decomposition:")
-print(f"L:\n{L}")
-print(f"U:\n{U}")
+def lu_decomposition(A):
+    n = len(A)
+    L = np.eye(n)
+    U = A.copy()
+    P = np.eye(n)
+    
+    for k in range(n-1):
+        # Find pivot
+        p = k + np.argmax(np.abs(U[k:, k]))
+        
+        # Exchange rows
+        U[k], U[p] = U[p].copy(), U[k].copy()
+        L[k, :k], L[p, :k] = L[p, :k].copy(), L[k, :k].copy()
+        P[k], P[p] = P[p].copy(), P[k].copy()
+        
+        # Eliminate
+        for i in range(k+1, n):
+            L[i, k] = U[i, k] / U[k, k]
+            U[i, k:] -= L[i, k] * U[k, k:]
+    
+    return P, L, U
+```
 
-# 2. Solve system using LU
-b = np.array([5, -2, 9])
-x = lu_solve(lu_factor(A), b)
-print(f"\nSolution x: {x}")
+**Step 2: Verification**
+```python
+A = np.array([[2, 1, 1], [4, -6, 0], [-2, 7, 2]])
+P, L, U = lu_decomposition(A)
+print("PA = LU:", np.allclose(P @ A, L @ U))
+```
 
-# 3. Verify solution
-b_computed = A @ x
-print(f"Computed b: {b_computed}")
-print(f"Verification error: {np.linalg.norm(b - b_computed):.2e}")
+**Step 3: System Solution**
+```python
+b = np.array([1, -2, 7])
+# Forward substitution: Ly = Pb
+y = np.linalg.solve(L, P @ b)
+# Backward substitution: Ux = y
+x = np.linalg.solve(U, y)
+print("Solution:", x)
 ```
 
 ### Solution 2: QR Decomposition
+
+**Step 1: Householder Implementation**
 ```python
-# 1. Perform QR decomposition
-Q, R = np.linalg.qr(A)
-print("QR decomposition:")
-print(f"Q:\n{Q}")
-print(f"R:\n{R}")
+def householder_qr(A):
+    m, n = A.shape
+    Q = np.eye(m)
+    R = A.copy()
+    
+    for k in range(n):
+        # Householder vector
+        x = R[k:, k]
+        e1 = np.zeros_like(x)
+        e1[0] = 1
+        v = x - np.sign(x[0]) * np.linalg.norm(x) * e1
+        
+        # Householder matrix
+        H = np.eye(m)
+        H[k:, k:] -= 2 * np.outer(v, v) / (v @ v)
+        
+        # Apply transformation
+        R = H @ R
+        Q = Q @ H
+    
+    return Q, R
+```
 
-# 2. Solve least squares
-Qtb = Q.T @ b
-x = np.linalg.solve(R, Qtb)
-print(f"\nLeast squares solution: {x}")
+**Step 2: Least Squares Solution**
+```python
+A = np.array([[1, 2], [3, 4], [5, 6]])
+b = np.array([1, 2, 3])
+Q, R = householder_qr(A)
 
-# 3. Compare with numpy
-x_numpy = np.linalg.lstsq(A, b, rcond=None)[0]
-print(f"Numpy solution: {x_numpy}")
-print(f"Difference: {np.linalg.norm(x - x_numpy):.2e}")
+# Solve Rx = Q^T b
+c = Q.T @ b
+x = np.linalg.solve(R[:2, :2], c[:2])
+print("Least squares solution:", x)
 ```
 
 ### Solution 3: SVD and Low-Rank Approximation
+
+**Step 1: SVD Implementation**
 ```python
-# 1. Perform SVD
-U, S, Vt = np.linalg.svd(A)
-print(f"Singular values: {S}")
+def low_rank_approximation(A, k):
+    U, s, Vt = np.linalg.svd(A, full_matrices=False)
+    
+    # Truncate to rank k
+    U_k = U[:, :k]
+    s_k = s[:k]
+    Vt_k = Vt[:k, :]
+    
+    # Reconstruct
+    A_k = U_k @ np.diag(s_k) @ Vt_k
+    return A_k, s
+```
 
-# 2. Create rank-3 approximation
-k = 3
-U_k = U[:, :k]
-S_k = S[:k]
-Vt_k = Vt[:k, :]
-A_k = U_k @ np.diag(S_k) @ Vt_k
+**Step 2: Analysis**
+```python
+A = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+A_1, s_1 = low_rank_approximation(A, 1)
+A_2, s_2 = low_rank_approximation(A, 2)
 
-# 3. Calculate metrics
-original_size = A.size
-compressed_size = U_k.size + S_k.size + Vt_k.size
-compression_ratio = original_size / compressed_size
-error = np.linalg.norm(A - A_k) / np.linalg.norm(A)
+print("Rank-1 error:", np.linalg.norm(A - A_1, 'fro'))
+print("Rank-2 error:", np.linalg.norm(A - A_2, 'fro'))
+print("Singular values:", s_1)
+```
 
-print(f"Compression ratio: {compression_ratio:.2f}x")
-print(f"Relative error: {error:.4f}")
+### Solution 4: Cholesky Decomposition
+
+**Step 1: Implementation**
+```python
+def cholesky(A):
+    n = len(A)
+    L = np.zeros_like(A)
+    
+    for j in range(n):
+        # Diagonal element
+        L[j, j] = np.sqrt(A[j, j] - np.sum(L[j, :j]**2))
+        
+        # Off-diagonal elements
+        for i in range(j+1, n):
+            L[i, j] = (A[i, j] - np.sum(L[i, :j] * L[j, :j])) / L[j, j]
+    
+    return L
+```
+
+**Step 2: System Solution**
+```python
+A = np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]])
+L = cholesky(A)
+b = np.array([1, 2, 3])
+
+# Solve LL^T x = b
+y = np.linalg.solve(L, b)
+x = np.linalg.solve(L.T, y)
+print("Cholesky solution:", x)
+```
+
+### Solution 5: Eigenvalue Decomposition
+
+**Step 1: Power Iteration**
+```python
+def power_iteration(A, max_iter=100, tol=1e-10):
+    n = A.shape[0]
+    x = np.random.randn(n)
+    x = x / np.linalg.norm(x)
+    
+    for i in range(max_iter):
+        x_new = A @ x
+        x_new = x_new / np.linalg.norm(x_new)
+        
+        if np.linalg.norm(x_new - x) < tol:
+            break
+        x = x_new
+    
+    # Compute eigenvalue
+    lambda_1 = (x.T @ A @ x) / (x.T @ x)
+    return lambda_1, x
+```
+
+**Step 2: Comparison**
+```python
+A = np.array([[2, 1], [1, 3]])
+lambda_1, v_1 = power_iteration(A)
+eigenvals, eigenvecs = np.linalg.eig(A)
+
+print("Power iteration eigenvalue:", lambda_1)
+print("Exact eigenvalues:", eigenvals)
+```
+
+### Solution 6: PCA Implementation
+
+**Step 1: PCA Algorithm**
+```python
+def pca(X, n_components):
+    # Center data
+    X_centered = X - np.mean(X, axis=0)
+    
+    # SVD
+    U, s, Vt = np.linalg.svd(X_centered, full_matrices=False)
+    
+    # Project to principal components
+    X_pca = X_centered @ Vt.T[:, :n_components]
+    
+    return X_pca, s, Vt
+```
+
+**Step 2: Analysis**
+```python
+# Generate data
+np.random.seed(42)
+X = np.random.randn(100, 3)
+X[:, 2] = 0.5 * X[:, 0] + 0.3 * X[:, 1]  # Linear dependency
+
+X_pca, s, Vt = pca(X, 2)
+explained_variance = s**2 / (len(X) - 1)
+explained_variance_ratio = explained_variance / np.sum(explained_variance)
+
+print("Explained variance ratio:", explained_variance_ratio[:2])
 ```
 
 ## Summary
 
-In this chapter, we covered:
-- LU decomposition for solving linear systems
-- QR decomposition for least squares problems
-- SVD for dimensionality reduction and matrix approximation
-- Cholesky decomposition for positive definite matrices
-- Eigenvalue decomposition for diagonalizable matrices
-- Applications in PCA and recommender systems
+In this comprehensive chapter on matrix decompositions, we have covered:
 
-Matrix decompositions are essential tools for understanding matrix structure and implementing efficient algorithms in machine learning.
+### Key Decompositions
+- **LU Decomposition**: For solving linear systems efficiently
+- **QR Decomposition**: For least squares problems and numerical stability
+- **SVD**: For dimensionality reduction and matrix approximation
+- **Cholesky Decomposition**: For positive definite matrices
+- **Eigenvalue Decomposition**: For diagonalizable matrices
+
+### Mathematical Foundations
+- **Existence and Uniqueness**: Conditions for each decomposition
+- **Algorithms**: Efficient computational methods
+- **Numerical Stability**: Considerations for floating-point arithmetic
+- **Geometric Interpretation**: Understanding decompositions as coordinate transformations
+
+### Machine Learning Applications
+- **PCA**: Dimensionality reduction using SVD
+- **Recommender Systems**: Matrix factorization for collaborative filtering
+- **Linear Regression**: QR decomposition for least squares
+- **Neural Networks**: Orthogonal initialization and weight analysis
+
+### Practical Skills
+- **Implementation**: Writing robust decomposition algorithms
+- **Numerical Analysis**: Understanding stability and conditioning
+- **Problem Solving**: Choosing appropriate decompositions for different problems
+- **Performance Analysis**: Computational complexity and efficiency
+
+### Advanced Topics
+- **Condition Numbers**: Measuring numerical stability
+- **Low-Rank Approximations**: Optimal matrix approximations
+- **Regularization**: Incorporating prior knowledge in decompositions
+- **Parallel Algorithms**: Scalable implementations for large matrices
+
+Matrix decompositions are essential tools for understanding matrix structure and implementing efficient algorithms in machine learning and data science. They provide the mathematical foundation for many advanced techniques and help us design better models and understand data structure.
 
 ## Next Steps
 
