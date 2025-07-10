@@ -304,7 +304,7 @@ Where $`dZ(\omega)`$ is the spectral measure.
 **Recession**: Economic decline, decreasing employment
 **Trough**: Minimum economic activity
 
-### Random Component (R_t)
+### Random Component ($`R_t`$)
 
 The residual component captures unexplained variation.
 
