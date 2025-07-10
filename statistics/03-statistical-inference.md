@@ -429,8 +429,8 @@ Where $`s_1^2 \geq s_2^2`$ (larger variance in numerator).
 #### Example: Process Comparison
 
 Comparing variability of two manufacturing processes:
-- Process A: $`n_1 = 15``, $`s_1^2 = 4.2`$
-- Process B: $`n_2 = 12``, $`s_2^2 = 2.8`$
+- Process A: $`n_1 = 15`$, $`s_1^2 = 4.2`$
+- Process B: $`n_2 = 12`$, $`s_2^2 = 2.8`$
 - $`F = \frac{4.2}{2.8} = 1.5`$
 - Degrees of freedom: $`(14, 11)`$
 - p-value ≈ 0.25
