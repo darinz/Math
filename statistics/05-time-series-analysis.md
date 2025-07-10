@@ -113,7 +113,7 @@ Y_t = T_t \times S_t \times C_t \times R_t
 **Log-Additive**: Transforms multiplicative model to additive form
 - **Example**: Economic data with exponential growth
 
-### Trend Component (T_t)
+### Trend Component ($`T_t`$)
 
 The trend represents the long-term systematic change in the series.
 
