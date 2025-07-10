@@ -106,12 +106,12 @@ The Mann-Whitney U test compares two independent samples to assess whether their
 1. **Combine and rank**: Pool all observations and assign ranks
 2. **Sum ranks**: Calculate sum of ranks for each group
 3. **Compute U statistic**:
-   ```math
-   U_1 = n_1 n_2 + \frac{n_1(n_1+1)}{2} - R_1
-   ```
-   ```math
-   U_2 = n_1 n_2 + \frac{n_2(n_2+1)}{2} - R_2
-   ```
+```math
+U_1 = n_1 n_2 + \frac{n_1(n_1+1)}{2} - R_1
+```
+```math
+U_2 = n_1 n_2 + \frac{n_2(n_2+1)}{2} - R_2
+```
    Where $`R_1`$ and $`R_2`$ are the sums of ranks for groups 1 and 2, and $`n_1`$, $`n_2`$ are their sizes.
 
 4. **Test statistic**: Use the smaller U value for significance testing
