@@ -12,22 +12,21 @@ This guide provides a comprehensive introduction to calculus concepts essential 
 
 ## Table of Contents
 
-### Interactive Jupyter Notebooks
-1. [Limits and Continuity](01-limits-continuity.ipynb) - [📖 Markdown](01-limits-continuity.md)
-2. [Derivatives and Differentiation](02-derivatives.ipynb) - [📖 Markdown](02-derivatives.md)
-3. [Applications of Derivatives](03-derivative-applications.ipynb) - [📖 Markdown](03-derivative-applications.md)
-4. [Integration](04-integration.ipynb) - [📖 Markdown](04-integration.md)
-5. [Applications of Integration](05-integration-applications.ipynb) - [📖 Markdown](05-integration-applications.md)
-6. [Multivariable Calculus](06-multivariable-calculus.ipynb) - [📖 Markdown](06-multivariable-calculus.md)
-7. [Vector Calculus](07-vector-calculus.ipynb) - [📖 Markdown](07-vector-calculus.md)
-8. [Optimization Techniques](08-optimization.ipynb) - [📖 Markdown](08-optimization.md)
-9. [Calculus in Machine Learning](09-ml-applications.ipynb) - [📖 Markdown](09-ml-applications.md)
-10. [Numerical Methods](10-numerical-methods.ipynb) - [📖 Markdown](10-numerical-methods.md)
+### Learning Materials
+1. [Limits and Continuity](01-limits-continuity.md) - [Python Implementation](01-limits-continuity.py)
+2. [Derivatives and Differentiation](02-derivatives.md) - [Python Implementation](02-derivatives.py)
+3. [Applications of Derivatives](03-derivative-applications.md) - [Python Implementation](03-derivative-applications.py)
+4. [Integration](04-integration.md) - [Python Implementation](04-integration.py)
+5. [Applications of Integration](05-integration-applications.md) - [Python Implementation](05-integration-applications.py)
+6. [Multivariable Calculus](06-multivariable-calculus.md) - [Python Implementation](06-multivariable-calculus.py)
+7. [Vector Calculus](07-vector-calculus.md) - [Python Implementation](07-vector-calculus.py)
+8. [Optimization Techniques](08-optimization.md) - [Python Implementation](08-optimization.py)
+9. [Calculus in Machine Learning](09-ml-applications.md) - [Python Implementation](09-ml-applications.py)
+10. [Numerical Methods](10-numerical-methods.md) - [Python Implementation](10-numerical-methods.py)
 
 ### Additional Resources
-- [📓 Comprehensive Examples Notebook](calculus_examples.ipynb) - Interactive examples covering all topics
-- [📋 Summary](SUMMARY.md) - Quick reference guide
-- [📦 Requirements](requirements.txt) - Python dependencies
+- [Summary](SUMMARY.md) - Quick reference guide
+- [Requirements](requirements.txt) - Python dependencies
 
 ## Prerequisites
 
@@ -37,20 +36,9 @@ This guide provides a comprehensive introduction to calculus concepts essential 
 
 ## Required Python Libraries
 
-```python
-import numpy as np
-import matplotlib.pyplot as plt
-import sympy as sp
-import scipy.optimize as opt
-import scipy.integrate as integrate
-from scipy import linalg
-import pandas as pd
-import seaborn as sns
-```
-
 ## Quick Start
 
-Each section can be read independently, but we recommend following the order for a complete understanding. Code examples are designed to be run in Jupyter notebooks or Python scripts.
+Each section can be read independently, but we recommend following the order for a complete understanding. Code examples are designed to be run in Python scripts.
 
 ### Setup and Installation
 
@@ -59,28 +47,26 @@ Each section can be read independently, but we recommend following the order for
    pip install -r requirements.txt
    ```
 
-2. **Interactive learning**: Use the individual chapter notebooks (`.ipynb` files) for hands-on practice with specific topics:
-   - Each notebook contains executable code examples
+2. **Interactive learning**: Use the individual chapter Python files (`.py` files) for hands-on practice with specific topics:
+   - Each Python file contains executable code examples
    - Interactive visualizations and demonstrations
    - Step-by-step explanations with working code
 
-3. **Comprehensive examples**: Use the `calculus_examples.ipynb` Jupyter notebook for hands-on practice with all concepts covered in this guide.
-
-4. **Progressive learning**: Follow the chapter order for a complete understanding of calculus fundamentals and applications.
+3. **Progressive learning**: Follow the chapter order for a complete understanding of calculus fundamentals and applications.
 
 ## Learning Formats
 
-### 📓 Jupyter Notebooks (`.ipynb`)
-- **Interactive code execution** - Run examples directly in the notebook
-- **Rich visualizations** - Dynamic plots and graphs
-- **Step-by-step demonstrations** - See calculus concepts in action
-- **Immediate feedback** - Experiment with parameters and see results
-
-### 📖 Markdown Files (`.md`)
+### Markdown Files (`.md`)
 - **Detailed theoretical explanations** - Comprehensive mathematical foundations
 - **Reference material** - Quick lookup for formulas and concepts
 - **GitHub-friendly** - Easy to read in any markdown viewer
 - **Print-friendly** - Clean formatting for documentation
+
+### Python Files (`.py`)
+- **Interactive code execution** - Run examples directly in Python
+- **Rich visualizations** - Dynamic plots and graphs
+- **Step-by-step demonstrations** - See calculus concepts in action
+- **Immediate feedback** - Experiment with parameters and see results
 
 ## Applications in AI/ML
 
@@ -92,4 +78,4 @@ Each section can be read independently, but we recommend following the order for
 
 ## Contributing
 
-Feel free to contribute improvements, additional examples, or corrections to this guide. Both markdown and notebook formats are welcome! 
+Feel free to contribute improvements, additional examples, or corrections to this guide. Both markdown and Python formats are welcome! 
