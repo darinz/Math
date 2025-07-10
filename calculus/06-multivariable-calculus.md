@@ -231,9 +231,9 @@ The gradient of a function $`f(x, y)`$ is the vector of partial derivatives:
 2. **Magnitude**: $`\|\nabla f\|`$ gives the rate of change in the direction of steepest ascent
 3. **Orthogonality**: The gradient is perpendicular to level curves
 4. **Linear Approximation**: For small changes $`(\Delta x, \Delta y)`$:
-   ```math
-   f(x + \Delta x, y + \Delta y) \approx f(x, y) + \frac{\partial f}{\partial x}\Delta x + \frac{\partial f}{\partial y}\Delta y
-   ```
+```math
+f(x + \Delta x, y + \Delta y) \approx f(x, y) + \frac{\partial f}{\partial x}\Delta x + \frac{\partial f}{\partial y}\Delta y
+```
 
 #### Geometric Interpretation
 
@@ -297,9 +297,9 @@ A critical point of $`f(x, y)`$ is a point where $`\nabla f = \mathbf{0}`$ or wh
 #### Finding Critical Points
 
 1. **Set partial derivatives to zero**:
-   ```math
-   \frac{\partial f}{\partial x} = 0, \quad \frac{\partial f}{\partial y} = 0
-   ```
+```math
+\frac{\partial f}{\partial x} = 0, \quad \frac{\partial f}{\partial y} = 0
+```
 2. **Solve the system of equations**
 3. **Check for points where derivatives are undefined**
 
@@ -359,14 +359,14 @@ Lagrange multipliers provide a method for finding extrema of a function subject 
 To find extrema of $`f(x, y)`$ subject to constraint $`g(x, y) = 0`$:
 
 1. **Form the Lagrangian**:
-   ```math
-   \mathcal{L}(x, y, \lambda) = f(x, y) - \lambda g(x, y)
-   ```
+```math
+\mathcal{L}(x, y, \lambda) = f(x, y) - \lambda g(x, y)
+```
 
 2. **Set partial derivatives to zero**:
-   ```math
-   \frac{\partial \mathcal{L}}{\partial x} = 0, \quad \frac{\partial \mathcal{L}}{\partial y} = 0, \quad \frac{\partial \mathcal{L}}{\partial \lambda} = 0
-   ```
+```math
+\frac{\partial \mathcal{L}}{\partial x} = 0, \quad \frac{\partial \mathcal{L}}{\partial y} = 0, \quad \frac{\partial \mathcal{L}}{\partial \lambda} = 0
+```
 
 3. **Solve the system of equations**
 
