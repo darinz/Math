@@ -1,195 +1,124 @@
-# Mathematics for AI/ML and Data Science
+# Comprehensive Mathematics Guide for AI/ML and Data Science
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-orange.svg)](https://jupyter.org/)
 [![NumPy](https://img.shields.io/badge/NumPy-1.21+-green.svg)](https://numpy.org/)
 [![Pandas](https://img.shields.io/badge/Pandas-1.3+-blue.svg)](https://pandas.pydata.org/)
 [![Matplotlib](https://img.shields.io/badge/Matplotlib-3.4+-orange.svg)](https://matplotlib.org/)
 [![Scikit-learn](https://img.shields.io/badge/Scikit--learn-1.0+-orange.svg)](https://scikit-learn.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A comprehensive collection of mathematical concepts, methods, and Python implementations essential for artificial intelligence, machine learning, and data science applications. This repository provides structured learning materials with theoretical foundations, practical code examples, and real-world applications.
+This guide provides comprehensive introductions to essential mathematical concepts for artificial intelligence, machine learning, and data science applications. Each section includes theoretical explanations, practical Python code examples, and real-world applications.
 
-## Overview
+## Table of Contents
 
-This repository contains three major mathematical disciplines, each organized into progressive learning modules, plus a comprehensive resource collection:
+### Linear Algebra
+1. [Vectors and Vector Operations](linear-algebra/01-vectors.md) - [Python Implementation](linear-algebra/01-vectors.py)
+2. [Matrices and Matrix Operations](linear-algebra/02-matrices.md) - [Python Implementation](linear-algebra/02-matrices.py)
+3. [Linear Transformations](linear-algebra/03-linear-transformations.md) - [Python Implementation](linear-algebra/03-linear-transformations.py)
+4. [Eigenvalues and Eigenvectors](linear-algebra/04-eigenvalues-eigenvectors.md) - [Python Implementation](linear-algebra/04-eigenvalues-eigenvectors.py)
+5. [Vector Spaces](linear-algebra/05-vector-spaces.md) - [Python Implementation](linear-algebra/05-vector-spaces.py)
+6. [Linear Independence](linear-algebra/06-linear-independence.md) - [Python Implementation](linear-algebra/06-linear-independence.py)
+7. [Matrix Decompositions](linear-algebra/07-matrix-decompositions.md) - [Python Implementation](linear-algebra/07-matrix-decompositions.py)
+8. [Machine Learning Applications](linear-algebra/08-ml-applications.md) - [Python Implementation](linear-algebra/08-ml-applications.py)
+9. [Numerical Linear Algebra](linear-algebra/09-numerical-linear-algebra.md) - [Python Implementation](linear-algebra/09-numerical-linear-algebra.py)
 
-### [Calculus](calculus/)
-Comprehensive coverage from fundamental concepts to advanced applications in machine learning:
-- Limits, continuity, and derivatives
-- Integration and its applications
-- Multivariable and vector calculus
-- Optimization techniques
-- Numerical methods
-- Machine learning applications (gradient descent, backpropagation)
+### Calculus
+1. [Limits and Continuity](calculus/01-limits-continuity.md) - [Python Implementation](calculus/01-limits-continuity.py)
+2. [Derivatives and Differentiation](calculus/02-derivatives.md) - [Python Implementation](calculus/02-derivatives.py)
+3. [Applications of Derivatives](calculus/03-derivative-applications.md) - [Python Implementation](calculus/03-derivative-applications.py)
+4. [Integration](calculus/04-integration.md) - [Python Implementation](calculus/04-integration.py)
+5. [Applications of Integration](calculus/05-integration-applications.md) - [Python Implementation](calculus/05-integration-applications.py)
+6. [Multivariable Calculus](calculus/06-multivariable-calculus.md) - [Python Implementation](calculus/06-multivariable-calculus.py)
+7. [Vector Calculus](calculus/07-vector-calculus.md) - [Python Implementation](calculus/07-vector-calculus.py)
+8. [Optimization Techniques](calculus/08-optimization.md) - [Python Implementation](calculus/08-optimization.py)
+9. [Calculus in Machine Learning](calculus/09-ml-applications.md) - [Python Implementation](calculus/09-ml-applications.py)
+10. [Numerical Methods](calculus/10-numerical-methods.md) - [Python Implementation](calculus/10-numerical-methods.py)
 
-### [Linear Algebra](linear-algebra/)
-Essential linear algebra concepts with practical implementations:
-- Vector and matrix operations
-- Linear transformations and eigenvalues
-- Vector spaces and matrix decompositions
-- Applications in dimensionality reduction and neural networks
-- Numerical linear algebra methods
+### Statistics
+1. [Descriptive Statistics](statistics/01-descriptive-statistics.md) - [Python Implementation](statistics/01-descriptive-statistics.py)
+2. [Probability Fundamentals](statistics/02-probability-fundamentals.md) - [Python Implementation](statistics/02-probability-fundamentals.py)
+3. [Statistical Inference](statistics/03-statistical-inference.md) - [Python Implementation](statistics/03-statistical-inference.py)
+4. [Regression Analysis](statistics/04-regression-analysis.md) - [Python Implementation](statistics/04-regression-analysis.py)
+5. [Time Series Analysis](statistics/05-time-series-analysis.md) - [Python Implementation](statistics/05-time-series-analysis.py)
+6. [Multivariate Statistics](statistics/06-multivariate-statistics.md) - [Python Implementation](statistics/06-multivariate-statistics.py)
+7. [Bayesian Statistics](statistics/07-bayesian-statistics.md) - [Python Implementation](statistics/07-bayesian-statistics.py)
+8. [Experimental Design](statistics/08-experimental-design.md) - [Python Implementation](statistics/08-experimental-design.py)
+9. [Statistical Learning](statistics/09-statistical-learning.md) - [Python Implementation](statistics/09-statistical-learning.py)
+10. [Advanced Topics](statistics/10-advanced-topics.md) - [Python Implementation](statistics/10-advanced-topics.py)
 
-### [Statistics](statistics/)
-Statistical foundations and methods for data science:
-- Descriptive statistics and probability theory
-- Statistical inference and hypothesis testing
-- Regression analysis and time series
-- Multivariate statistics and Bayesian methods
-- Experimental design and statistical learning
+### Additional Resources
+- [Linear Algebra Summary](linear-algebra/SUMMARY.md) - Quick reference guide
+- [Calculus Summary](calculus/SUMMARY.md) - Quick reference guide
+- [Statistics Summary](statistics/SUMMARY.md) - Quick reference guide
+- [Requirements](requirements.txt) - Python dependencies
 
-### [Reference](reference/)
-Additional reference materials and supplementary content:
-- Mathematical reference guides and textbooks
-- Probability and statistics resources
-- Linear algebra materials for deep learning
-- Numerical methods documentation
-- MIT course materials and additional learning resources
-- Chain rule and derivative references
-- Matrix cookbook and calculation references
-- Gradient review materials
-- Stanford Math 51 textbook
-- Probability for Computer Science materials
+## Prerequisites
 
-## Repository Structure
-
-```
-Math/
-├── calculus/           # 10 comprehensive chapters
-│   ├── 01-limits-continuity.md
-│   ├── 02-derivatives.md
-│   ├── 03-derivative-applications.md
-│   ├── 04-integration.md
-│   ├── 05-integration-applications.md
-│   ├── 06-multivariable-calculus.md
-│   ├── 07-vector-calculus.md
-│   ├── 08-optimization.md
-│   ├── 09-ml-applications.md
-│   ├── 10-numerical-methods.md
-│   ├── calculus_examples.ipynb    # Interactive Jupyter notebook
-│   ├── requirements.txt           # Python dependencies
-│   ├── README.md                  # Learning guide
-│   └── SUMMARY.md                 # Complete summary
-├── linear-algebra/     # 9 structured modules
-│   ├── 01-vectors.md
-│   ├── 02-matrices.md
-│   ├── 03-linear-transformations.md
-│   ├── 04-eigenvalues-eigenvectors.md
-│   ├── 05-vector-spaces.md
-│   ├── 06-linear-independence.md
-│   ├── 07-matrix-decompositions.md
-│   ├── 08-ml-applications.md
-│   ├── 09-numerical-linear-algebra.md
-│   ├── README.md                  # Learning guide
-│   └── SUMMARY.md                 # Complete summary
-├── statistics/         # 10 statistical topics
-│   ├── 01-descriptive-statistics.md
-│   ├── 02-probability-fundamentals.md
-│   ├── 03-statistical-inference.md
-│   ├── 04-regression-analysis.md
-│   ├── 05-time-series-analysis.md
-│   ├── 06-multivariate-statistics.md
-│   ├── 07-bayesian-statistics.md
-│   ├── 08-experimental-design.md
-│   ├── 09-statistical-learning.md
-│   ├── 10-advanced-topics.md
-│   ├── README.md                  # Learning guide
-│   └── SUMMARY.md                 # Complete summary
-├── reference/                           # Reference materials and supplementary content
-│   ├── calculation_ref.pdf              # Mathematical calculation reference
-│   ├── derivatives_Section14_5.pdf      # Derivatives reference (Section 14.5)
-│   ├── gradient_review.pdf              # Gradient review materials
-│   ├── Greek_Alphabet.pdf               # Greek alphabet reference
-│   ├── linear_algebra_for_dl.pdf        # Linear Algebra for Deep Learning
-│   ├── math-of-ml-book.pdf              # Mathematics of Machine Learning
-│   ├── math51book.pdf                   # Stanford Math 51 textbook
-│   ├── matrixcookbook.pdf               # Matrix cookbook reference
-│   ├── MIT_ProbStats.zip                # MIT Probability & Statistics materials
-│   ├── ML-Math_18-657-fall-2015.zip     # MIT Math for ML course (Fall 2015)
-│   ├── ML-Matrix_18-065-spring-2018.zip # MIT Matrix Methods course (Spring 2018)
-│   ├── numerical_for_dl.pdf             # Numerical for Deep Learning
-│   ├── prob_for_dl.pdf                  # Probability for Deep Learning
-│   ├── prob_reference.pdf               # Probability reference guide
-│   ├── ProbabilityForCS.pdf             # Probability for Computer Science
-│   ├── the_chain_rule.pdf               # Chain rule reference
-│   └── the-chain-rule_lecture9.pdf      # Chain rule lecture materials
-└── README.md                            # This file
-```
-
-Each discipline folder contains:
-- Detailed markdown chapters with theoretical explanations
-- Python code examples and implementations
-- Practical exercises and applications
-- Comprehensive README with learning paths
-- Summary files for navigation
-- Additional resources (Jupyter notebooks, requirements files)
-
-## Getting Started
-
-### Prerequisites
-- Python 3.8 or higher
-- Basic programming knowledge
-- Familiarity with mathematical notation
+- Basic Python programming knowledge
 - Understanding of algebra and trigonometry
+- Familiarity with mathematical notation
 
-### Installation
+## Required Python Libraries
+
 ```bash
-# Clone the repository
-git clone https://github.com/darinz/Math
-cd Math
-
-# Install required dependencies
-pip install numpy pandas matplotlib seaborn scipy scikit-learn sympy statsmodels
+pip install numpy pandas matplotlib seaborn scipy scikit-learn statsmodels
 ```
 
-### Learning Path
-1. **Choose your discipline**: Start with calculus, linear algebra, or statistics based on your background
-2. **Follow the structure**: Each discipline has a README.md with learning objectives and prerequisites
-3. **Progressive learning**: Chapters are designed to build upon previous concepts
-4. **Practice**: Run code examples and complete exercises in each chapter
-5. **Apply**: Use concepts in your own AI/ML projects
+## Quick Start
 
-## Key Features
+Each section can be read independently, but we recommend following the order for a complete understanding. Code examples are designed to be run in Python scripts.
 
-- **Comprehensive Coverage**: From fundamentals to advanced applications
-- **Practical Implementation**: Python code examples for all concepts
-- **Real-world Applications**: Direct connections to AI/ML use cases
-- **Progressive Learning**: Structured chapters that build upon each other
-- **Interactive Examples**: Jupyter notebook compatibility
-- **Professional Quality**: Rigorous mathematical foundations with clear explanations
+### Setup and Installation
+
+1. **Install dependencies** using the provided requirements file:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Interactive learning**: Use the individual chapter Python files (`.py` files) for hands-on practice with specific topics:
+   - Each Python file contains executable code examples
+   - Interactive visualizations and demonstrations
+   - Step-by-step explanations with working code
+
+3. **Progressive learning**: Follow the chapter order for a complete understanding of mathematical fundamentals and applications.
+
+## Learning Formats
+
+### Markdown Files (`.md`)
+- **Detailed theoretical explanations** - Comprehensive mathematical foundations
+- **Reference material** - Quick lookup for formulas and concepts
+- **GitHub-friendly** - Easy to read in any markdown viewer
+- **Print-friendly** - Clean formatting for documentation
+
+### Python Files (`.py`)
+- **Interactive code execution** - Run examples directly in Python
+- **Rich visualizations** - Dynamic plots and graphs
+- **Step-by-step demonstrations** - See mathematical concepts in action
+- **Immediate feedback** - Experiment with parameters and see results
+- **Educational annotations** - Detailed explanations of concepts and implementations
 
 ## Applications in AI/ML
 
-### Calculus Applications
-- Gradient descent optimization algorithms
-- Neural network backpropagation
-- Loss function derivatives
-- Probability distribution calculations
-- Feature engineering transformations
+### Linear Algebra
+- **Neural Networks**: Weight matrices and transformations
+- **Principal Component Analysis**: Eigenvalue decomposition
+- **Computer Vision**: Image transformations and filters
+- **Natural Language Processing**: Word embeddings and similarity
 
-### Linear Algebra Applications
-- Principal Component Analysis (PCA)
-- Neural network weight matrices
-- Singular Value Decomposition (SVD)
-- Dimensionality reduction techniques
-- Optimization algorithms
+### Calculus
+- **Gradient Descent**: Understanding derivatives for optimization
+- **Backpropagation**: Chain rule applications in neural networks
+- **Loss Functions**: Derivatives for model training
+- **Probability Distributions**: Integration for probability calculations
+- **Feature Engineering**: Calculus for data transformations
 
-### Statistics Applications
-- Model evaluation and validation
-- Hypothesis testing for A/B testing
-- Regression analysis for predictive modeling
-- Bayesian inference for uncertainty quantification
-- Experimental design for ML experiments
+### Statistics
+- **Data Analysis**: Descriptive and inferential statistics
+- **Machine Learning**: Probability theory and Bayesian methods
+- **A/B Testing**: Experimental design and hypothesis testing
+- **Time Series**: Forecasting and trend analysis
+- **Statistical Learning**: Cross-validation, model selection, and regularization
 
 ## Contributing
 
-Contributions are welcome to improve content, add examples, or correct errors. Please ensure all mathematical content is accurate and code examples are well-documented.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-This repository serves as a comprehensive mathematical foundation for AI/ML practitioners, combining theoretical rigor with practical implementation.
+Feel free to contribute improvements, additional examples, or corrections to this guide. Both markdown and Python formats are welcome!
