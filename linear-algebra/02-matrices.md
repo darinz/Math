@@ -83,7 +83,9 @@ Multiplying a matrix by a scalar multiplies each element:
 
 **Geometric Interpretation:**
 - Scalar multiplication scales the linear transformation.
-- $`(cA)\vec{x}`$ = c($`A\vec{x}`$)
+```math
+(cA)\vec{x} = c(A\vec{x})
+```
 
 ### Matrix Multiplication
 
@@ -102,7 +104,12 @@ Where $`A`$ is $`m \times n`$ and $`B`$ is $`n \times p`$, resulting in an $`m \
 
 **Geometric Interpretation:**
 - Matrix multiplication represents composition of linear transformations.
-- $`(AB)\vec{x} = A(B\vec{x})`$: Apply transformation $`B`$ first, then $`A`$.
+
+```math
+(AB)\vec{x} = A(B\vec{x})
+```
+
+- Apply transformation $`B`$ first, then $`A`$.
 
 **Step-by-Step Process:**
 1. Take the $`i`$-th row of matrix $`A`$.
@@ -126,7 +133,10 @@ I_n = \begin{bmatrix}
 ```
 **Properties:**
 - $`AI = A`$ and $`IA = A`$ for any matrix $`A`$ of appropriate size.
-- $`I`$ represents the identity transformation: $`I\vec{x} = \vec{x}`$.
+- $`I`$ represents the identity transformation:
+```math
+I\vec{x} = \vec{x}
+```
 - $`I`$ is the multiplicative identity for matrices.
 
 ### Zero Matrix
@@ -137,7 +147,10 @@ A zero matrix $`0`$ has all elements equal to zero.
 **Properties:**
 - $`A + 0 = A`$ for any matrix $`A`$.
 - $`0A = 0`$ and $`A0 = 0`$ for any matrix $`A`$ of appropriate size.
-- $`0`$ represents the zero transformation: $`0\vec{x} = \vec{0}`$.
+- $`0`$ represents the zero transformation:
+```math
+0\vec{x} = \vec{0}
+```
 
 ### Diagonal Matrix
 
