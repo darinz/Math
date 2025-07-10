@@ -722,7 +722,7 @@ Testing two website designs:
 
 Testing a new drug for blood pressure reduction:
 - **Placebo**: $`n_1 = 50`$, $`\bar{x}_1 = 140`$ mmHg, $`s_1 = 15`$
-- **Drug**: $`n_2 = 50``, $`\bar{x}_2 = 130`$ mmHg, $`s_2 = 12``
+- **Drug**: $`n_2 = 50`$, $`\bar{x}_2 = 130`$ mmHg, $`s_2 = 12`$
 
 **Hypothesis Test:**
 - $`H_0: \mu_1 = \mu_2`$ vs $`H_1: \mu_1 > \mu_2`$
@@ -738,13 +738,13 @@ Testing a new drug for blood pressure reduction:
 
 Monitoring manufacturing process:
 - **Target**: Mean weight = 100g, SD = 5g
-- **Sample**: $`n = 25``, $`\bar{x} = 102g`$, $`s = 4.5g``
+- **Sample**: $`n = 25`$, $`\bar{x} = 102g`$, $`s = 4.5g`$
 
 **Hypothesis Test:**
-- $`H_0: \mu = 100`$ vs $`H_1: \mu \neq 100``
-- $`t = \frac{102 - 100}{4.5/\sqrt{25}} = 2.22``
+- $`H_0: \mu = 100`$ vs $`H_1: \mu \neq 100`$
+- $`t = \frac{102 - 100}{4.5/\sqrt{25}} = 2.22`$
 - p-value ≈ 0.036
-- Conclusion: Reject $`H_0`$ at $`\alpha = 0.05``
+- Conclusion: Reject $`H_0`$ at $`\alpha = 0.05`$
 
 **Confidence Interval:**
 - 95% CI: $`102 \pm 2.064 \times \frac{4.5}{\sqrt{25}} = 102 \pm 1.86 = [100.14, 103.86]`$
