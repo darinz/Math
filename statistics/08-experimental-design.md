@@ -778,7 +778,7 @@ Y = \beta_0 + \sum_{i=1}^k \beta_i X_i + \epsilon
 
 **Second-order model**:
 ```math
-Y = \beta_0 + \sum_{i=1}^k \beta_i X_i + \sum_{i=1}^k \beta_{ii} X_i^2 + \sum_{i<j} \beta_{ij} X_i X_j + \epsilon
+Y = \beta_0 + \sum_{i=1}^k \beta_i X_i + \sum_{i=1}^k \beta_{ii} X_i^2 + \sum_{i=1}^k \sum_{j=i+1}^k \beta_{ij} X_i X_j + \epsilon
 ```
 
 #### Example: Chemical Process
